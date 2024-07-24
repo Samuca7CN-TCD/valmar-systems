@@ -70,49 +70,63 @@ class ItemController extends Controller
 
     public function use_table($month = null)
     {
+        $page = Department::where('type', 'warehouse')->first();
         if (!$month)
         {
-            $month = date('m-y');
+            $month = date('Y-m');
         }
 
+        // Carregar todos os itens e funcionários
         $items = Item::where('list_in_uses', true)->get();
         $employees = Employee::all();
 
-        $itemCounts = [];
-
+        // Assumindo que você tem um relacionamento adequado 'procedure' e 'movement' em Record
+        // e que a data está no formato correto (yyyy-mm)
         $records = Record::whereHas('procedure.movement', function ($query) {
             $query->where('type', 3);
-        })->where('register_date', 'like', $month)->get();
+        })
+            ->where('register_date', 'like', "{$month}%")
+            ->with('procedure.movement') // Carregar os relacionamentos necessários
+            ->get();
+
+        // Contar o uso de itens por funcionários
+        $itemCounts = [];
+        foreach ($items as $item)
+        {
+            $itemCounts[$item->id] = [];
+            foreach ($employees as $employee)
+            {
+                $itemCounts[$item->id][$employee->id] = 0;
+            }
+        }
 
         foreach ($records as $record)
         {
-            $employeeId = $record->employee_id;
+            $employeeId = $record->procedure->movement->employee_id;
             $itemId = $record->item_id;
+            $quantity = $record->movement_quantity;
 
-            // Inicialize a contagem para este funcionário, se ainda não estiver definida
-            if (!isset($itemCounts[$employeeId]))
+            if (isset($itemCounts[$itemId][$employeeId]))
             {
-                $itemCounts[$employeeId] = [];
-            }
-
-            // Incremente a contagem para este item
-            if (isset($itemCounts[$employeeId][$itemId]))
-            {
-                $itemCounts[$employeeId][$itemId]++;
+                $itemCounts[$itemId][$employeeId] += $quantity;
             } else
             {
-                $itemCounts[$employeeId][$itemId] = 1;
+                $itemCounts[$itemId][$employeeId] = $quantity;
             }
         }
 
         // Passe os dados para a visualização Inertia
-        return Inertia::render('UseTable', [
+        return Inertia::render('Warehouse/UseTable', [
+            'page' => $page,
             'items' => $items,
             'employees' => $employees,
             'itemCounts' => $itemCounts,
             'selectedMonth' => $month, // Você pode usar isso na sua visualização para exibir o mês selecionado
         ]);
     }
+
+
+
 
     /**
      * Show the form for creating a new resource.

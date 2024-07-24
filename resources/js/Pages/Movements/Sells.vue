@@ -210,7 +210,7 @@ const submit = () => {
                                             <tbody>
                                                 <tr v-if="filtered_sells_list.length"
                                                     v-for="sell in filtered_sells_list"
-                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-600">
+                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
         sell.id }}
                                                     </td>
@@ -245,7 +245,7 @@ const submit = () => {
                                                     </td>
                                                 </tr>
                                                 <tr v-else
-                                                    class="transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-600">
+                                                    class="transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
                                                     <td class="whitespace-nowrap px-6 py-4 text-center" colspan="9">Não
                                                         há
                                                         vendas cadastradas no momento!</td>

@@ -225,7 +225,7 @@ const submit = () => {
                                     </thead>
                                     <tbody>
                                         <tr v-for="(item) in props.entry.items_list" :key="item.id"
-                                            class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-600"
+                                            class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid"
                                             :class="{ 'bg-yellow-100': item.movement_quantity == item.quantity, 'bg-red-100': item.movement_quantity > item.quantity }">
                                             <!--<td class="whitespace-nowrap py-4 text-center font-medium"><input
                                                     type="checkbox"
@@ -276,8 +276,8 @@ const submit = () => {
             </SecondaryButton>
             <PrimaryButton :class="{ 'disabled': (entry.processing || !enableSubmit) }"
                 :disabled="(entry.processing || !enableSubmit)" @click="submit()">{{
-        modal.primary_button_txt
-    }}</PrimaryButton>
+                modal.primary_button_txt
+                }}</PrimaryButton>
         </template>
     </CreateUpdateModal>
 </template>

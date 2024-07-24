@@ -37,7 +37,7 @@ const logout = () => {
     <div class="min-w-[320px]">
         <div class="flex flex-row">
             <div v-if="page_options"
-                class="hidden md:block md:w-1/4 lg:1/5 xl:1/6 min-h-screen relative bg-white text-black shadow-xl">
+                class="hidden md:block print:hidden md:w-1/4 lg:1/5 xl:1/6 min-h-screen relative bg-white text-black shadow-xl">
                 <div class="w-full flex-col-config">
                     <!-- Logo -->
                     <div class="p-10 bg-slate-100">
@@ -72,12 +72,12 @@ const logout = () => {
                     <Dropdown />
                 </div>
             </div>
-            <div class="min-h-screen"
+            <div class="min-h-screen print:w-full"
                 :class="{ 'w-full': !page_options, 'w-full md:w-3/4 lg:4/5 xl:w-5/6': page_options }">
 
                 <Head :title="page ? page.name : 'Nada'" />
 
-                <Banner />
+                <Banner class="print:hidden" />
 
                 <div class="min-h-screen bg-gray-100">
                     <nav class="bg-white border-b border-gray-100 print:hidden">
@@ -186,6 +186,30 @@ const logout = () => {
                                                 </svg>
                                             </span>
                                             <span class="inline-block">Serviços</span>
+                                        </NavLink>
+                                        <NavLink :has_dropdown="true" :href="'#'"
+                                            :active="route().current('employees.*')">
+                                            <template #trigger>
+                                                <span class="inline-block mx-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="w-4 h-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                                    </svg>
+                                                </span>
+                                                Funcionários
+                                                <ChevronDownIcon class="ml-2 -mr-0.5 mt-0.5 h-4 w-4 text-gray-700" />
+                                            </template>
+                                            <template #options>
+                                                <DropdownLink :href="route('employees.index')">Funcionários
+                                                </DropdownLink>
+                                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                                    Pagamento de Funcionários
+                                                </div>
+                                                <DropdownLink :href="route('payslips.index')">Holerite
+                                                </DropdownLink>
+                                            </template>
                                         </NavLink>
                                     </div>
                                 </div>
@@ -445,7 +469,7 @@ const logout = () => {
                     </nav>
 
                     <!-- Page Heading -->
-                    <header v-if="$slots.header" class="bg-white shadow border-b md:border-none">
+                    <header v-if="$slots.header" class="bg-white shadow border-b md:border-none print:hidden">
                         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                             <slot name="header" />
                         </div>
@@ -453,7 +477,7 @@ const logout = () => {
 
 
                     <div v-if="page_options"
-                        class="md:hidden bg-white shadow border-b md:border-none text-gray-700 select-none cursor-pointer"
+                        class="md:hidden print:hidden bg-white shadow border-b md:border-none text-gray-700 select-none cursor-pointer"
                         title="Clique para ver as opções da página" @click="options_collapse = !options_collapse">
                         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-row space-x-3 items-center">
                             <p>Opções da Página</p>
@@ -489,7 +513,7 @@ const logout = () => {
                     </div>
 
                     <!-- Page Content -->
-                    <main>
+                    <main class="print:break-inside-avoid">
                         <slot />
                     </main>
                 </div>

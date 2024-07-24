@@ -46,13 +46,13 @@ class MovementUseController extends Controller
                 return $movement;
             });
 
-
-        // dd($uses);
+        $employees = Employee::all();
 
         return Inertia::render('Movements/Uses', [
             'page' => $page,
             'uses_list' => $uses,
             'items' => $items,
+            'employees_list' => $employees,
         ]);
     }
 
@@ -69,9 +69,9 @@ class MovementUseController extends Controller
      */
     public function store(Request $request)
     {
-        //dd($request);
         return DB::transaction(function () use ($request) {
             $validated = $request->validate([
+                'employee_id' => ['nullable', 'numeric'],
                 'employee' => ['required', 'string'],
                 'motive' => ['required', 'string'],
                 'date' => ['required', 'date', 'date_format:Y-m-d'],
@@ -97,6 +97,7 @@ class MovementUseController extends Controller
                 'type' => 3,
                 'accounting_id' => $accounting->id,
                 'motive' => $validated['motive'],
+                'employee_id' => $validated['employee_id'],
                 'entity_name' => $validated['employee'],
                 'date' => $validated['date'],
                 'observations' => $validated['observations'],

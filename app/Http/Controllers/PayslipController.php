@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use Illuminate\Http\Request;
 use \Inertia\Inertia;
 
@@ -14,7 +15,12 @@ class PayslipController extends Controller
      */
     public function index()
     {
-        //
+        $page = Department::where('type', 'payslip')->first();
+        $payslips = Payslip::all();
+        return Inertia::render('Employees/Payslip', [
+            'page' => $page,
+            'payslips_list' => $payslips,
+        ]);
     }
 
     /**

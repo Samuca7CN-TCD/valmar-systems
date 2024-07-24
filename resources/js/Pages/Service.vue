@@ -41,7 +41,7 @@ const search_term = ref("")
 const filtered_services_list = computed(() => {
     const searchTermLower = search_term.value.toLowerCase()
 
-    return props.services_list.filter(el => 
+    return props.services_list.filter(el =>
         (el.motive.toLowerCase().includes(searchTermLower)) ||
         (el.entity_name.toLowerCase().includes(searchTermLower)) ||
         (el.observations.toLowerCase().includes(searchTermLower)) ||
@@ -94,7 +94,7 @@ const openModal = (mode, service_id = null) => {
     const isUpdateOrPayMode = ['update', 'pay'].includes(mode);
 
     if (service_id !== null && isUpdateOrPayMode) {
-        const  service = props.services_list.find(service => service.id === service_id);
+        const service = props.services_list.find(service => service.id === service_id);
 
         if (service) {
             const { id, motive, entity_name, observations, records, accounting } = service;
@@ -128,7 +128,7 @@ const createService = () => {
     service_data.post(route('services.store'), {
         preserveScroll: true,
         onSuccess: () => closeModal(),
-        onError: (error) => {console.log(error)}
+        onError: (error) => { console.log(error) }
     })
 }
 
@@ -147,10 +147,10 @@ const payService = () => {
 }
 
 const concludeService = (service_id, service_partial_value) => {
-    if(service_partial_value !== 0){
-        if(!confirm("O serviço será considerado como concluído e será listado apenas na página de pagamentos")) return
-    }else{
-        if(!confirm("O serviço será considerado concluído e pago!")) return
+    if (service_partial_value !== 0) {
+        if (!confirm("O serviço será considerado como concluído e será listado apenas na página de pagamentos")) return
+    } else {
+        if (!confirm("O serviço será considerado concluído e pago!")) return
     }
     service_data.put(route('services.conclude', service_id), {
         preserveScroll: true,
@@ -167,7 +167,7 @@ const deleteService = (service_id, service_name) => {
 }
 
 const submit = () => {
-    switch(modal.value.mode){
+    switch (modal.value.mode) {
         case 'create': return createService()
         case 'update': return updateService()
         case 'pay': return payService()
@@ -177,6 +177,7 @@ const submit = () => {
 </script>
 
 <template>
+
     <Head :title="page.name" />
     <AppLayout :page="page" :page_options="page_options">
         <template #header>
@@ -185,16 +186,14 @@ const submit = () => {
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Service" class="print:hidden" />
         </template>
-        
+
         <div class="pt-12 print:hidden print:pt-0">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 print:w-full">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-5">
                     <div class="flex flex-row items-center space-x-3">
                         <MagnifyingGlassIcon class="w-5 y-5" />
-                        <input type="text" name="search_term" id="search_term" autocomplete="on"
-                            class="simple-input" autofocus="true"
-                            placeholder="Pesquisar termo..."
-                            v-model="search_term" />
+                        <input type="text" name="search_term" id="search_term" autocomplete="on" class="simple-input"
+                            autofocus="true" placeholder="Pesquisar termo..." v-model="search_term" />
                     </div>
                 </div>
             </div>
@@ -217,8 +216,11 @@ const submit = () => {
                                                     <th scope="col" class="px-6 py-4 text-center">Cliente</th>
                                                     <th scope="col" class="px-6 py-4 text-center">À pagar</th>
                                                     <th scope="col" class="px-6 py-4 text-center">Valor total</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden">Entrega</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden" colspan="4">Ações</th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden">Entrega
+                                                    </th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        colspan="4">Ações
+                                                    </th>
                                                     <!--
                                                     <th scope="col" class="px-6 py-4 text-center print:hidden">Concluir</th>
                                                     <th scope="col" class="px-6 py-4 text-center print:hidden">Pagar</th>
@@ -228,36 +230,38 @@ const submit = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-if="filtered_services_list.length" v-for="service in filtered_services_list"
-                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-600">
+                                                <tr v-if="filtered_services_list.length"
+                                                    v-for="service in filtered_services_list"
+                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
-                                                        service.id }}
+        service.id }}
                                                     </td>
-                                                    <td class="whitespace-nowrap py-4 text-center font-medium" :class="deadlineClass(service.deadline)">
+                                                    <td class="whitespace-nowrap py-4 text-center font-medium"
+                                                        :class="deadlineClass(service.deadline)">
                                                         {{ calcDeadlineDays(service.deadline) }} dias
                                                     </td>
                                                     <td class="whitespace-normal px-6 py-4 text-center trim">{{
-                                                        service.motive }}
+        service.motive }}
                                                         <span v-if="service.observations" :title="service.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
                                                     <td class="whitespace-normal px-6 py-4 text-center">{{
-                                                        service.entity_name }}</td>
+        service.entity_name }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
-                                                        toMoney(service.accounting.partial_value) }}</td>
+        toMoney(service.accounting.partial_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
-                                                        toMoney(service.accounting.total_value) }}</td>
+        toMoney(service.accounting.total_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">{{
-                                                        formatDate(service.deadline, true) }}</td>
+        formatDate(service.deadline, true) }}</td>
                                                     <td class="whitespace-nowrap px-4 py-4 pl-10 text-center cursor-pointer hover:text-blue-700 active:text-blue-900 select-none print:hidden"
                                                         :title="'CONCLUIR: ' + service.motive + '(' + service.entity_name + ')'"
                                                         @click="concludeService(service.id, service.accounting.partial_value)">
-                                                        <CheckBadgeIcon  class="w-4 h-4 m-auto" />
+                                                        <CheckBadgeIcon class="w-4 h-4 m-auto" />
                                                     </td>
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-green-700 active:text-green-900 select-none print:hidden"
                                                         :title="'PAGAR: ' + service.motive + '(' + service.entity_name + ')'"
                                                         @click="openModal('pay', service.id)">
-                                                        <span v-if="service.accounting.partial_value !== 0" >
+                                                        <span v-if="service.accounting.partial_value !== 0">
                                                             <BanknotesIcon class="w-4 h-4 m-auto" />
                                                         </span>
                                                         <span v-else class="m-auto text-center">PAGO</span>
@@ -274,8 +278,9 @@ const submit = () => {
                                                     </td>
                                                 </tr>
                                                 <tr v-else
-                                                    class="transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-600">
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center" colspan="9">Não há
+                                                    class="transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
+                                                    <td class="whitespace-nowrap px-6 py-4 text-center" colspan="9">Não
+                                                        há
                                                         serviços cadastrados no momento!</td>
                                                 </tr>
                                             </tbody>
@@ -288,10 +293,11 @@ const submit = () => {
                 </div>
             </div>
         </div>
-        
+
         <CreateUpdatePayModal :show="modal.show" :modal="modal" :service="service_data" @submit="submit"
             @close="closeModal" />
 
-        <ExtraOptionsButton :mode="['rollup', 'print_page', 'link']" :link_type="['previous']" :link="[route('services.previous')]" />
+        <ExtraOptionsButton :mode="['rollup', 'print_page', 'link']" :link_type="['previous']"
+            :link="[route('services.previous')]" />
     </AppLayout>
 </template>

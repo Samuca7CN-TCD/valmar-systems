@@ -103,7 +103,7 @@ const image_modal = ref({
 })
 
 const resolveItemImg = (profile_img) => {
-    return profile_img ? '/storage/img/items/' + profile_img.split('/')[3] : '/storage/img/items/default.jpg'
+    return profile_img ? '/storage/img/items/' + profile_img.split('/')[3] : '/storage/img/items/default.jpeg'
 }
 
 const openImage = (image_url) => {

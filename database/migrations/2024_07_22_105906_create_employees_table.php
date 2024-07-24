@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->double('salary')->nullable();
             $table->double('agreement')->nullable();
             $table->json('contacts');
-            $table->string('function');
+            $table->string('function_name');
             $table->boolean('transportation voucher');
             $table->unsignedBigInteger('payment_method_id')->nullable();
             $table->unsignedBigInteger('bank_id')->nullable();

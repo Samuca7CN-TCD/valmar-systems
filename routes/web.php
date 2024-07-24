@@ -12,6 +12,8 @@ use App\Http\Controllers\MovementEntryController;
 use App\Http\Controllers\MovementUseController;
 use App\Http\Controllers\MovementSellController;
 use App\Http\Controllers\RecordController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\PayslipController;
 
 require_once 'fortify.php';
 
@@ -45,6 +47,10 @@ Route::middleware([
 
     Route::resource('/records', RecordController::class);
 
+    Route::resource('/movements/sells', MovementSellController::class);
+    Route::resource('/movements/uses', MovementUseController::class);
+    Route::resource('/movements/entries', MovementEntryController::class);
+
     Route::resource('/payments', PaymentController::class);
     Route::put('/payments/pay/{payment}', [PaymentController::class, 'pay'])->where('payment', '[0-9]+')->name('payments.pay');
     Route::get('/previous/payments', [PaymentController::class, 'previous'])->name('payments.previous');
@@ -54,7 +60,7 @@ Route::middleware([
     Route::put('/services/conclude/{service}', [ServiceController::class, 'conclude'])->where('service', '[0-9]+')->name('services.conclude');
     Route::get('/previous/services', [ServiceController::class, 'previous'])->name('services.previous');
 
-    Route::resource('/movements/sells', MovementSellController::class);
-    Route::resource('/movements/uses', MovementUseController::class);
-    Route::resource('/movements/entries', MovementEntryController::class);
+    Route::resource('/employees', EmployeeController::class);
+    Route::post('/employees/fire', [EmployeeController::class, 'fire'])->name('employees.fire');
+    Route::resource('/payslips', PayslipController::class);
 });

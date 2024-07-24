@@ -2,20 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employee;
-use Illuminate\Http\Request;
-use \Inertia\Inertia;
-
 use App\Models\Department;
+use Illuminate\Http\Request;
+use App\Models\Employee;
+use Inertia\Inertia;
 
-class DepartmentController extends Controller
+class EmployeeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        $page = Department::where('type', 'employee')->first();
+        $employees = Employee::all();
+        return Inertia::render('Employee', [
+            'page' => $page,
+            'employees_list' => $employees,
+        ]);
     }
 
     /**

@@ -29,7 +29,7 @@ const use_data = useForm({
     'employee': '',
     'employee_id': null,
     'motive': '',
-    'date': "",
+    'date': formatDate(),
     'total_value': 0,
     'observations': '',
     'items_list': [],
@@ -203,7 +203,7 @@ const submit = () => {
                                             </thead>
                                             <tbody>
                                                 <tr v-if="filtered_uses_list.length" v-for="use in filtered_uses_list"
-                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-600">
+                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
         use.id }}
                                                     </td>
@@ -235,7 +235,7 @@ const submit = () => {
                                                     </td>
                                                 </tr>
                                                 <tr v-else
-                                                    class="transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-600">
+                                                    class="transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
                                                     <td class="whitespace-nowrap px-6 py-4 text-center" colspan="9">Não
                                                         há
                                                         usos cadastradas no momento!</td>
@@ -251,7 +251,8 @@ const submit = () => {
             </div>
         </div>
 
-        <CreateUpdateUsesModal :modal="modal" :use="use_data" :items="items" @submit="submit" @close="closeModal" />
+        <CreateUpdateUsesModal :modal="modal" :use="use_data" :items="items" :employees_list="employees_list"
+            @submit="submit" @close="closeModal" />
 
     </AppLayout>
 </template>

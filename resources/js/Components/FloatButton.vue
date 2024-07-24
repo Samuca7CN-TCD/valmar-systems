@@ -16,7 +16,8 @@ const props = defineProps({
     </a>
     -->
 
-    <div class="bg-red-500 rounded-full absolute right-10 cursor-pointer p-3 hover:bg-red-600 active:bg-red-500">
+    <div
+        class="print:hidden bg-red-500 rounded-full absolute right-10 cursor-pointer p-3 hover:bg-red-600 active:bg-red-500">
         <PlusIcon v-if="icon == 'plus'" class="text-white w-7 h-7" />
         <PrinterIcon v-if="icon == 'printer'" class="text-white w-7 h-7" />
     </div>

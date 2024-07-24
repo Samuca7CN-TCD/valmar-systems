@@ -156,7 +156,8 @@ const submit = () => {
                     <!-- SEÇÃO DE INFORMAÇÕES DE PAGAMENTOS -->
                     <section class="py-4">
                         <h2 class="text-base font-semibold leading-7 text-gray-900">Informações Básicas</h2>
-                        <p class="mt-1 text-sm leading-6 text-gray-600">Informações sobre a venda como nome do cliente, data
+                        <p class="mt-1 text-sm leading-6 text-gray-600">Informações sobre a venda como nome do cliente,
+                            data
                             da venda e observações</p>
 
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
@@ -168,20 +169,21 @@ const submit = () => {
                                         class="simple-input disabled:bg-gray-200" placeholder="Nome do cliente"
                                         v-model="sell.client" required>
                                     <p v-if="sell.errors.client" class="text-red-500 text-sm">{{
-                                        sell.errors.client }}</p>
+        sell.errors.client }}</p>
                                 </div>
                             </div>
 
                             <div class="sm:col-span-3">
                                 <label for="sell-date"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Data da
+                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Data
+                                    da
                                     Venda</label>
                                 <div class="mt-2">
                                     <input type="date" name="sell-date" id="sell-date" autocomplete="on"
                                         class="simple-input disabled:bg-gray-200" autofocus="true"
                                         placeholder="Data da Venda" :max="formatDate()" v-model="sell.date" required>
                                     <p v-if="sell.errors.date" class="text-red-500 text-sm">{{
-                                        sell.errors.date }}</p>
+        sell.errors.date }}</p>
                                 </div>
                             </div>
 
@@ -194,7 +196,7 @@ const submit = () => {
                                         placeholder="Descreva a título mais detalhadamente ou insira informações adicionais"
                                         v-model="sell.observations"></textarea>
                                     <p v-if="sell.errors.observations" class="text-red-500 text-sm">{{
-                                        sell.errors.observations }}</p>
+        sell.errors.observations }}</p>
                                 </div>
                             </div>
                         </div>
@@ -222,11 +224,11 @@ const submit = () => {
                                             class="py-2 px-4 cursor-pointer hover:bg-gray-200"
                                             @mousedown="selectItem(item)">
                                             <span class="inline" :class="{
-                                                'text-blue-500': item.quantity != 0 && item.quantity >= item.max_quantity,
-                                                'text-green-500': item.quantity < item.max_quantity && item.quantity >= item.min_quantity,
-                                                'text-yellow-500': item.quantity < item.min_quantity && item.quantity > 0,
-                                                'text-red-500': item.quantity == 0
-                                            }">({{ item.quantity }})</span> {{ item.name }}
+        'text-blue-500': item.quantity != 0 && item.quantity >= item.max_quantity,
+        'text-green-500': item.quantity < item.max_quantity && item.quantity >= item.min_quantity,
+        'text-yellow-500': item.quantity < item.min_quantity && item.quantity > 0,
+        'text-red-500': item.quantity == 0
+    }">({{ item.quantity }})</span> {{ item.name }}
                                         </li>
                                     </ul>
                                 </div>
@@ -241,13 +243,14 @@ const submit = () => {
                                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <span class="text-gray-500 sm:text-sm">R$</span>
                                     </div>
-                                    <input id="sell-estimated-amount" type="number" step="0.01" min="0" autocomplete="off"
-                                        readonly
+                                    <input id="sell-estimated-amount" type="number" step="0.01" min="0"
+                                        autocomplete="off" readonly
                                         class="block w-full rounded-md border-0 py-1.5 pl-9 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6 disabled:bg-gray-200"
-                                        placeholder="Valor total estimado" :disabled="!sell.items_list.length || see_disabled"
+                                        placeholder="Valor total estimado"
+                                        :disabled="!sell.items_list.length || see_disabled"
                                         v-model="sell.estimated_value" required>
                                     <p v-if="sell.errors.estimated_value" class="text-red-500 text-sm">{{
-                                        sell.errors.estimated_value }}</p>
+        sell.errors.estimated_value }}</p>
                                 </div>
                             </div>
 
@@ -261,11 +264,12 @@ const submit = () => {
                                     </div>
                                     <input id="sell-total-amount" type="number" step="0.01" min="0" autocomplete="off"
                                         class="block w-full rounded-md border-0 py-1.5 pl-9 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6 disabled:bg-gray-200"
-                                        placeholder="Valor total estimado" :disabled="!sell.items_list.length || see_disabled"
+                                        placeholder="Valor total estimado"
+                                        :disabled="!sell.items_list.length || see_disabled"
                                         :value="decimal_format(sell.total_value, 2)"
                                         @input="e => handleInputValue(e, 'total_value')" required>
                                     <p v-if="sell.errors.total_value" class="text-red-500 text-sm">{{
-                                        sell.errors.total_value }}</p>
+        sell.errors.total_value }}</p>
                                 </div>
                             </div>
 
@@ -275,16 +279,18 @@ const submit = () => {
                                 </label>
                                 <div class="relative mt-2 rounded-md shadow-sm">
 
-                                    <input id="sell-discount-percent" type="number" step="0.01" min="0" autocomplete="off"
+                                    <input id="sell-discount-percent" type="number" step="0.01" min="0"
+                                        autocomplete="off"
                                         class="block w-full rounded-md border-0 py-1.5 pr-9 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6 disabled:bg-gray-200"
-                                        placeholder="Valor total estimado" :disabled="!sell.items_list.length || see_disabled"
+                                        placeholder="Valor total estimado"
+                                        :disabled="!sell.items_list.length || see_disabled"
                                         :value="decimal_format(sell.discount_percent, 3)"
                                         @input="e => handleInputValue(e, 'discount_percent')" required>
                                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                                         <span class="text-gray-500 sm:text-sm">%</span>
                                     </div>
                                     <p v-if="sell.errors.discount_percent" class="text-red-500 text-sm">{{
-                                        sell.errors.discount_percent }}</p>
+        sell.errors.discount_percent }}</p>
                                 </div>
                             </div>
 
@@ -298,11 +304,12 @@ const submit = () => {
                                     </div>
                                     <input id="sell-discount" type="number" step="0.01" min="0" autocomplete="off"
                                         class="block w-full rounded-md border-0 py-1.5 pl-9 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6 disabled:bg-gray-200"
-                                        placeholder="Valor total estimado" :disabled="!sell.items_list.length || see_disabled"
+                                        placeholder="Valor total estimado"
+                                        :disabled="!sell.items_list.length || see_disabled"
                                         :value="decimal_format(sell.discount, 2)"
                                         @input="e => handleInputValue(e, 'discount')" required>
                                     <p v-if="sell.errors.discount" class="text-red-500 text-sm">{{
-                                        sell.errors.discount }}</p>
+        sell.errors.discount }}</p>
                                 </div>
                             </div>
 
@@ -319,39 +326,46 @@ const submit = () => {
                                             <th scope="col" class="px-6 py-4 text-center">Und. Medida</th>
                                             <th scope="col" class="px-6 py-4 text-center">Preço unitário</th>
                                             <th scope="col" class="px-6 py-4 text-center">Preço montante</th>
-                                            <th v-if="modal.mode !== 'see'" scope="col" class="px-6 py-4 text-center">Deletar</th>
+                                            <th v-if="modal.mode !== 'see'" scope="col" class="px-6 py-4 text-center">
+                                                Deletar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr v-for="(item) in props.sell.items_list" :key="item.id"
-                                            class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 dark:border-neutral-500 dark:hover:bg-neutral-600"
+                                            class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid"
                                             :class="{ 'bg-yellow-100': item.movement_quantity == item.quantity, 'bg-red-100': item.movement_quantity > item.quantity }">
                                             <!--<td class="whitespace-nowrap py-4 text-center font-medium"><input
                                                     type="checkbox"
                                                     class="rounded border-gray-500 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50"
                                                     checked></td>-->
-                                            <td class="whitespace-nowrap py-4 text-center font-medium">{{ item.id }}</td>
-                                            <td class="whitespace-nowrap py-4 text-center font-medium">{{ item.name }}</td>
+                                            <td class="whitespace-nowrap py-4 text-center font-medium">{{ item.id }}
+                                            </td>
+                                            <td class="whitespace-nowrap py-4 text-center font-medium">{{ item.name }}
+                                            </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium" :class="{
-                                                'text-blue-500': item.quantity != 0 && item.quantity >= item.max_quantity,
-                                                'text-green-500': item.quantity < item.max_quantity && item.quantity >= item.min_quantity,
-                                                'text-yellow-500': item.quantity < item.min_quantity && item.quantity > 0,
-                                                'text-red-500': item.quantity == 0,
-                                            }"> {{ item.quantity }}
+        'text-blue-500': item.quantity != 0 && item.quantity >= item.max_quantity,
+        'text-green-500': item.quantity < item.max_quantity && item.quantity >= item.min_quantity,
+        'text-yellow-500': item.quantity < item.min_quantity && item.quantity > 0,
+        'text-red-500': item.quantity == 0,
+    }"> {{ item.quantity }}
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium flex
                                                 justify-center">
-                                                <input type="number" min="0.01" step="0.01" :value="item.movement_quantity"
+                                                <input type="number" min="0.01" step="0.01"
+                                                    :value="item.movement_quantity"
                                                     @input="(e) => { item.movement_quantity = e.target.value; item.amount = item.price * e.target.value; updateEstimatedValue() }"
-                                                    class="simple-input disabled:bg-gray-200 w-2/3" :disabled="modal.mode !== 'create'">
+                                                    class="simple-input disabled:bg-gray-200 w-2/3"
+                                                    :disabled="modal.mode !== 'create'">
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{
-                                                item.measurement_unit }}</td>
+        item.measurement_unit }}</td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{
-                                                toMoney(item.price) }}</td>
+        toMoney(item.price) }}</td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{
-                                                toMoney(item.amount ? item.amount : 10) }}</td> <!-- Substitua 1 pela quantidade real -->
-                                            <td v-if="modal.mode !== 'see'" class="whitespace-nowrap py-4 text-center font-mono text-2xl"><button
+        toMoney(item.amount ? item.amount : 10) }}</td>
+                                            <!-- Substitua 1 pela quantidade real -->
+                                            <td v-if="modal.mode !== 'see'"
+                                                class="whitespace-nowrap py-4 text-center font-mono text-2xl"><button
                                                     @click="removeSelectedItem(item.id)"
                                                     :title="'Remover ' + item.name">&times;</button></td>
                                         </tr>
@@ -363,31 +377,34 @@ const submit = () => {
                             </div>
                         </div>
                     </section>
-                    <section v-if="canAddItems && sell.items_list.length && modal.mode === 'create'" class="w-full py-4">
+                    <section v-if="canAddItems && sell.items_list.length && modal.mode === 'create'"
+                        class="w-full py-4">
                         <h2 class="text-base font-semibold leading-7 text-gray-900">Pagamento de entrada</h2>
-                        <p class="mt-1 text-sm leading-6 text-gray-600">Após a conclusão da compra, um registro de pagamento
+                        <p class="mt-1 text-sm leading-6 text-gray-600">Após a conclusão da compra, um registro de
+                            pagamento
                             será criado na página de PAGAMENTOS.
                         </p>
-                        <p class="mt-1 text-sm leading-6 text-gray-600">Se algum pagamento de entrada (ou pagamento total)
+                        <p class="mt-1 text-sm leading-6 text-gray-600">Se algum pagamento de entrada (ou pagamento
+                            total)
                             for realizado, registre aqui.</p>
 
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-4">
 
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Valor estimado: <span
                                     class="font-extrabold text-green-500">{{
-                                        toMoney(sell.estimated_value) }}</span>
+        toMoney(sell.estimated_value) }}</span>
                             </div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Valor final: <span
                                     class="font-extrabold text-green-500">{{
-                                        toMoney(sell.total_value)
-                                    }}</span></div>
+        toMoney(sell.total_value)
+    }}</span></div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Desconto (%): <span
                                     class="font-extrabold text-green-500">{{
-                                        decimal_format(sell.discount_percent,
-                                            3) }}%</span></div>
+            decimal_format(sell.discount_percent,
+                3) }}%</span></div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Desconto (R$): <span
                                     class="font-extrabold text-green-500">{{
-                                        toMoney(sell.discount)
+        toMoney(sell.discount)
                                     }}</span></div>
 
                             <div class="sm:col-span-2">
@@ -400,8 +417,9 @@ const submit = () => {
                                     </div>
                                     <input id="sell-entry-value" type="number" step="0.01" min="0" autocomplete="off"
                                         class="block w-full rounded-md border-0 py-1.5 pl-9 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6 disabled:bg-gray-200"
-                                        placeholder="Valor de pagamneto de entrada" :disabled="!sell.items_list.length || see_disabled"
-                                        v-model="sell.entry_value" required>
+                                        placeholder="Valor de pagamneto de entrada"
+                                        :disabled="!sell.items_list.length || see_disabled" v-model="sell.entry_value"
+                                        required>
                                     <p v-if="sell.errors.entry_value" class="text-red-500 text-sm">{{
                                         sell.errors.entry_value }}</p>
                                 </div>
@@ -419,8 +437,8 @@ const submit = () => {
                                     <input id="sell-partial-value" type="number" step="0.01" min="0" autocomplete="off"
                                         class="block w-full rounded-md border-0 py-1.5 pl-9 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6 disabled:bg-gray-200"
                                         placeholder="Valor restante para pagamento posterior"
-                                        :disabled="!sell.items_list.length || see_disabled" :value="decimal_format(partialValue, 2)"
-                                        readonly required>
+                                        :disabled="!sell.items_list.length || see_disabled"
+                                        :value="decimal_format(partialValue, 2)" readonly required>
                                     <p v-if="sell.errors.partial_value" class="text-red-500 text-sm">{{
                                         sell.errors.partial_value }}</p>
                                 </div>
@@ -438,7 +456,7 @@ const submit = () => {
             </SecondaryButton>
             <PrimaryButton :class="{ 'disabled': (sell.processing || !enableSubmit) }"
                 :disabled="(sell.processing || !enableSubmit)" @click="submit()">{{
-                    modal.primary_button_txt
+                modal.primary_button_txt
                 }}</PrimaryButton>
         </template>
     </CreateUpdateModal>
