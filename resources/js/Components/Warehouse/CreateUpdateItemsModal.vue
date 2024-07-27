@@ -92,15 +92,16 @@ const submit = () => {
                                     <img :src="item.profile_img_url" class="h-max-[200px] m-auto" />
                                     <p v-if="item.profile_img"
                                         class="w-full text-center text-sm text-gray-500 py-2 font-mono">{{
-                                            item.profile_img.name
-                                        }}</p>
+        item.profile_img.name
+    }}</p>
                                 </div>
 
                                 <p v-if="item.errors.profile_img_url"
                                     class="w-full text-center text-red-500 font-mono py-2">{{
-                                        item.errors.profile_img_url }}</p>
-                                <p v-if="item.errors.profile_img" class="w-full text-center text-red-500 font-mono py-2">{{
-                                    item.errors.profile_img }}</p>
+        item.errors.profile_img_url }}</p>
+                                <p v-if="item.errors.profile_img"
+                                    class="w-full text-center text-red-500 font-mono py-2">{{
+        item.errors.profile_img }}</p>
 
                                 <button
                                     v-if="item.profile_img || item.profile_img_url || item.errors.profile_img || item.errors.profile_img_url"
@@ -119,7 +120,7 @@ const submit = () => {
                                         placeholder="Insira um nome completo e de fácil pesquisa" v-model="item.name"
                                         required>
                                     <p v-if="item.errors.name" class="text-red-500 font-mono">{{
-                                        item.errors.name }}</p>
+        item.errors.name }}</p>
                                 </div>
                             </div>
 
@@ -130,21 +131,21 @@ const submit = () => {
                                     <select id="item-category" name="item-category" class="simple-select"
                                         v-model="item.category_id" required>
                                         <option v-for=" category  in  categories_list " :value="category.id">{{
-                                            category.name }}</option>
+        category.name }}</option>
                                     </select>
                                     <p v-if="item.errors.category_id" class="text-red-500 font-mono">{{
-                                        item.errors.category_id }}</p>
+        item.errors.category_id }}</p>
                                 </div>
                             </div>
 
                             <div class="sm:col-span-3">
-                                <label for="item-value"
+                                <label for="item-price"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Preço</label>
                                 <div class="mt-2">
-                                    <input id="item-value" name="item-value" type="number" step="0.01" min="0"
-                                        autocomplete="on" class="simple-input" v-model="item.value" required>
-                                    <p v-if="item.errors.value" class="text-red-500 font-mono">{{
-                                        item.errors.value }}</p>
+                                    <input id="item-price" name="item-price" type="number" step="0.01" min="0"
+                                        autocomplete="on" class="simple-input" v-model="item.price" required>
+                                    <p v-if="item.errors.price" class="text-red-500 font-mono">{{
+        item.errors.price }}</p>
                                 </div>
                             </div>
                         </div>
@@ -159,10 +160,10 @@ const submit = () => {
                                 <label for="item-qtd"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Quantidade</label>
                                 <div class="mt-2">
-                                    <input id="item-qtd" name="item-qtd" type="number" step="0.01" min="0" autocomplete="on"
-                                        class="simple-input" v-model="item.quantity" required>
+                                    <input id="item-qtd" name="item-qtd" type="number" step="0.01" min="0"
+                                        autocomplete="on" class="simple-input" v-model="item.quantity" required>
                                     <p v-if="item.errors.quantity" class="text-red-500 font-mono">{{
-                                        item.errors.quantity }}</p>
+        item.errors.quantity }}</p>
                                 </div>
                             </div>
                             <div class="sm:col-span-2">
@@ -173,7 +174,7 @@ const submit = () => {
                                     <input id="item-qtd-min" name="item-qtd-min" type="number" step="0.01" min="1"
                                         autocomplete="on" class="simple-input" v-model="item.min_quantity">
                                     <p v-if="item.errors.min_quantity" class="text-red-500 font-mono">{{
-                                        item.errors.min_quantity }}</p>
+        item.errors.min_quantity }}</p>
                                 </div>
                             </div>
                             <div class="sm:col-span-2">
@@ -184,7 +185,7 @@ const submit = () => {
                                     <input id="item-qtd-max" name="item-qtd-max" type="number" step="0.01" min="2"
                                         autocomplete="on" class="simple-input" v-model="item.max_quantity">
                                     <p v-if="item.errors.max_quantity" class="text-red-500 font-mono">{{
-                                        item.errors.max_quantity }}</p>
+        item.errors.max_quantity }}</p>
                                 </div>
                             </div>
                         </div>
@@ -201,11 +202,11 @@ const submit = () => {
                                     de
                                     medida</label>
                                 <div class="mt-2">
-                                    <select id="item-measurement-unit" name="item-measurement-unit" class="simple-select"
-                                        v-model="item.measurement_unit_id" required>
+                                    <select id="item-measurement-unit" name="item-measurement-unit"
+                                        class="simple-select" v-model="item.measurement_unit_id" required>
                                         <option v-for=" measurement_unit  in  measurement_units_list "
                                             :value="measurement_unit.id">{{
-                                                measurement_unit.name }}</option>
+        measurement_unit.name }}</option>
                                     </select>
                                     <p v-if="item.errors.measurement_unit_id" class="text-red-500 font-mono">{{
                                         item.errors.measurement_unit_id }}</p>
@@ -260,7 +261,7 @@ const submit = () => {
             <SecondaryButton :class="{ 'disabled': item.processing }" @click="close()">Cancelar
             </SecondaryButton>
             <PrimaryButton :class="{ 'disabled': item.processing }" @click="submit()">{{ modal.primary_button_txt
-            }}</PrimaryButton>
+                }}</PrimaryButton>
         </template>
     </CreateUpdateModal>
 </template>

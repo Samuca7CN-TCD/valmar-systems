@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use \Inertia\Inertia;
 
@@ -13,13 +14,48 @@ class PayslipController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index($employee_id = null)
     {
         $page = Department::where('type', 'payslip')->first();
         $payslips = Payslip::all();
-        return Inertia::render('Employees/Payslip', [
+        $employees = Employee::where('id', '>', 1)->get();
+
+        if ($employee_id)
+        {
+            $employee = Employee::findOrFail($employee_id);
+        } else
+        {
+            $employee = Employee::first();
+        }
+
+        $payslips = Payslip::where('employ_id', $employee->id);
+
+        return Inertia::render('Employees/Payslips', [
             'page' => $page,
+            'page_options' => $employees,
             'payslips_list' => $payslips,
+            'employee' => $employee,
+        ]);
+    }
+
+    public function inkdex($category_id = null)
+    {
+        $page = Department::where('type', 'warehouse')->first();
+        $categories = Category::select('id', 'name', 'name_plural')->get();
+
+        if ($category_id)
+            $items = array($categories->find($category_id)->load(['items' => fn($query) => $query->orderBy('name')->get()]));
+        else
+            $items = $categories->load(['items' => fn($query) => $query->orderBy('name')->get()]);
+
+        $measurement_units = MeasurementUnit::get();
+
+        return Inertia::render('Warehouse/Items', [
+            'page' => $page,
+            'page_options' => $categories,
+            'items_list' => $items,
+            'categories_list' => $categories,
+            'measurement_units_list' => $measurement_units,
         ]);
     }
 

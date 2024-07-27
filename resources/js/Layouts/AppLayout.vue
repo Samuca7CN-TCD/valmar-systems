@@ -12,7 +12,7 @@ import { RectangleGroupIcon, ChevronDownIcon, ChevronUpIcon, ArrowDownIcon } fro
 const props = defineProps({
     page: Object,
     page_options: {
-        type: Object,
+        type: Array,
         default: null,
     }
 })
@@ -45,8 +45,8 @@ const logout = () => {
                         <img class="xl:hidden" src="/storage/img/theme/logos/complete_logo.svg" />
                     </div>
                     <ul class="w-full">
-                        <SubNavLink :href="route(page.type + '.index')" :active="route().current(page.type + '.index')"
-                            class="w-full hover:bg-gray-100 py-5"
+                        <SubNavLink v-if="page.type === 'warehouse'" :href="route(page.type + '.index')"
+                            :active="route().current(page.type + '.index')" class="w-full hover:bg-gray-100 py-5"
                             :class="{ 'bg-gray-200': route().current(page.type + '.index') }">
                             <li class="text-gray-600 flex flex-row justify-center items-center align-middle md:ml-10
                             ">
@@ -79,7 +79,7 @@ const logout = () => {
 
                 <Banner class="print:hidden" />
 
-                <div class="min-h-screen bg-gray-100">
+                <div class="min-h-screen bg-gray-100 print:bg-white">
                     <nav class="bg-white border-b border-gray-100 print:hidden">
                         <!-- Primary Navigation Menu -->
                         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -207,7 +207,10 @@ const logout = () => {
                                                 <div class="block px-4 py-2 text-xs text-gray-400">
                                                     Pagamento de Funcionários
                                                 </div>
-                                                <DropdownLink :href="route('payslips.index')">Holerite
+                                                <DropdownLink :href="route('payslip.index')">Holerite
+                                                </DropdownLink>
+                                                <DropdownLink :href="route('employee.overtime_calculation')">Cálculo de
+                                                    Horas Extras
                                                 </DropdownLink>
                                             </template>
                                         </NavLink>
@@ -385,7 +388,7 @@ const logout = () => {
                             <div class="pt-4 pb-1 border-t border-gray-200">
                                 <div class="flex items-center px-4">
                                     <div v-if="$page.props.jetstream.managesProfilePhotos" class="shrink-0 mr-3">
-                                        <img class="h-10 w-10 rounded-full object-cover"
+                                        <img class="w-fit rounded-full object-cover"
                                             :src="$page.props.auth.user.profile_photo_url"
                                             :alt="$page.props.auth.user.name">
                                     </div>

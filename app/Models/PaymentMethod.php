@@ -11,8 +11,13 @@ class PaymentMethod extends Model
     use HasFactory;
     use SoftDeletes;
 
-    public function employee()
+    public function employees()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->hasMany(Employee::class, 'payment_method_id');
+    }
+
+    public function overtimeEmployees()
+    {
+        return $this->hasMany(Employee::class, 'overtime_payment_method_id');
     }
 }

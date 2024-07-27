@@ -15,7 +15,7 @@ class Item extends Model
         'profile_img',
         'name',
         'category_id',
-        'value',
+        'price',
         'quantity',
         'min_quantity',
         'max_quantity',

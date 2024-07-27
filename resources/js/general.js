@@ -30,29 +30,111 @@ export const formatDate = (date = null, format = null) => {
     }
 };
 
-export const formatPhoneNumber = (phone_number, format = null) => {
-    if (!format) {
-        // Remove todos os caracteres que não são números
-        const cleaned = ('' + phone_number).replace(/\D/g, '');
-
-        // Verifica se o número tem o código de país (+55)
-        if (cleaned.length === 13 && cleaned.startsWith('55')) {
-            const country = cleaned.slice(0, 2); // 55
-            const area = cleaned.slice(2, 4); // 73
-            const firstPart = cleaned.slice(4, 5); // 9
-            const secondPart = cleaned.slice(5, 9); // 8812
-            const thirdPart = cleaned.slice(9); // 1518
-
-            return `(${area}) ${firstPart} ${secondPart}-${thirdPart}`;
-        } else {
-            // Caso não tenha o formato esperado, retorna o número original
-            return phone_number;
-        }
+export const formatPhoneNumber = (phone_number) => {
+    // Remove todos os caracteres que não são números
+    let cleaned = clearFormat(phone_number);
+    // Verifica se o número tem o código de país (+55)
+    if (cleaned.length < 11) {
+        return cleaned;
     } else {
-        // Implementação para outros formatos, se necessário
+        if (cleaned.startsWith('55')) {
+            cleaned = cleaned.substring(2);
+        }
+        const area = cleaned.substring(0, 2);
+        const nine = cleaned.substring(2, 3);
+        const firstPart = cleaned.substring(3, 7);
+        const secondPart = cleaned.substring(7);
+
+        return `(${area}) ${nine} ${firstPart}-${secondPart}`;
     }
 };
 
+export const validateCPF = (cpf) => {
+    // Remove todos os caracteres que não são números
+    let cleaned = clearFormat(cpf);
+
+    // Verifica se o CPF tem 11 dígitos
+    if (cleaned.length !== 11) {
+        return false;
+    }
+
+    // Verifica se todos os dígitos são iguais (casos inválidos como 111.111.111-11)
+    const invalidCPFs = [
+        '00000000000', '11111111111', '22222222222', '33333333333',
+        '44444444444', '55555555555', '66666666666', '77777777777',
+        '88888888888', '99999999999'
+    ];
+    if (invalidCPFs.includes(cleaned)) {
+        return false;
+    }
+
+    // Função para calcular o dígito verificador
+    const calculateCheckDigit = (cpf, length) => {
+        let sum = 0;
+        let multiplier = length + 1;
+        for (let i = 0; i < length; i++) {
+            sum += parseInt(cpf.charAt(i)) * multiplier--;
+        }
+        const remainder = (sum * 10) % 11;
+        return (remainder === 10 || remainder === 11) ? 0 : remainder;
+    };
+
+    // Calcula os dois dígitos verificadores
+    const firstCheckDigit = calculateCheckDigit(cleaned, 9);
+    const secondCheckDigit = calculateCheckDigit(cleaned, 10);
+
+    // Verifica se os dígitos verificadores são válidos
+    return firstCheckDigit === parseInt(cleaned.charAt(9)) &&
+        secondCheckDigit === parseInt(cleaned.charAt(10));
+};
+
+export const formatCPF = (cpf) => {
+    // Remove todos os caracteres que não são números
+    let cleaned = clearFormat(cpf);
+
+    // Verifica se o CPF tem 11 dígitos
+    if (cleaned.length !== 11) {
+        return cleaned;
+    }
+
+    const part1 = cleaned.substring(0, 3);
+    const part2 = cleaned.substring(3, 6);
+    const part3 = cleaned.substring(6, 9);
+    const part4 = cleaned.substring(9, 11);
+
+    return `${part1}.${part2}.${part3}-${part4}`;
+};
+
+export const formatAgency = (agency) => {
+    // Remove todos os caracteres que não são números
+    let cleaned = clearFormat(agency);
+    return cleaned;
+};
+
+export const formatBankAccount = (account) => {
+    // Remove todos os caracteres que não são números
+    let cleaned = clearFormat(account);
+
+    // Verifica se a conta tem pelo menos 2 dígitos (um número de conta e um dígito verificador)
+    if (cleaned.length < 2 || cleaned.length > 13) {
+        return cleaned;
+    }
+
+    const mainPart = cleaned.substring(0, cleaned.length - 1);
+    const digit = cleaned.substring(cleaned.length - 1);
+
+    return `${mainPart}-${digit}`;
+};
+
+export const validatePixToken = (key) => {
+    const re = /^[a-zA-Z0-9]{32,36}$/;
+    return re.test(String(key));
+};
+
+export const clearFormat = (text) => {
+    // Remove todos os caracteres que não são números
+    return ('' + text).replace(/\D/g, '');
+};
 
 export const calcDeadlineDays = (deadline) => {
     const date1 = Date.parse(deadline + ' 17:30:00')

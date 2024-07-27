@@ -315,7 +315,7 @@ const submit = () => {
 
                             <div class="sm:col-span-4">
                                 <table v-if="props.sell.items_list.length"
-                                    class="min-w-full text-left block text-sm font-medium leading-6 text-gray-900">
+                                    class="min-w-full text-left text-sm font-medium leading-6 text-gray-900">
                                     <thead class="border-b font-medium dark:border-neutral-500">
                                         <tr>
                                             <th scope="col" class="px-6 py-4 text-center">#</th>
@@ -405,7 +405,7 @@ const submit = () => {
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Desconto (R$): <span
                                     class="font-extrabold text-green-500">{{
         toMoney(sell.discount)
-                                    }}</span></div>
+    }}</span></div>
 
                             <div class="sm:col-span-2">
                                 <label for="sell-entry-value"

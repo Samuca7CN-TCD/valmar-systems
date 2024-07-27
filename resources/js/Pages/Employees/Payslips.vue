@@ -10,7 +10,12 @@ import { toMoney } from '@/general.js'
 
 
 const props = defineProps({
-    page: Object
+    page: Object,
+    page_options: Array,
+    employee: {
+        type: Object,
+        default: null,
+    }
 })
 
 const printList = () => {
@@ -20,7 +25,7 @@ const printList = () => {
 <template>
 
     <Head :title="page.name" />
-    <AppLayout :page="page">
+    <AppLayout :page="page" :page_options="page_options">
         <template #header class="print:hidden">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Holerite

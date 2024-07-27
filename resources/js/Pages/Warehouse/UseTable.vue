@@ -61,7 +61,7 @@ const printList = () => {
             <FloatButton icon="printer" @click="printList" title="Imprimir Lista" />
         </template>
         <div class="py-12 print:py-0">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 print:max-w-full print:mx-0 print:sm:px-0 print:lg:px-0">
+            <div class="max-w-8xl mx-auto sm:px-6 lg:px-8 print:max-w-full print:mx-0 print:sm:px-0 print:lg:px-0">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg min-h-[300px] print:shadow-none">
                     <div class="flex flex-col gap-5 mx-auto w-full p-5 print:hidden">
                         <div class="text-center text-neutral-500 text-sm space-y-3">
@@ -74,19 +74,20 @@ const printList = () => {
                         <div class="overflow-x-auto print:overflow-hidden sm:-mx-6 lg:-mx-8">
                             <div class="inline-block min-w-full sm:px-6 lg:px-8">
                                 <div class="overflow-hidden">
-                                    <table class="min-w-full text-center text-sm font-light print:break-inside-avoid">
-                                        <thead
-                                            class="border-b bg-neutral-800 font-medium text-white dark:border-neutral-500 dark:bg-neutral-900">
-                                            <tr class="">
+                                    <table
+                                        class="min-w-full text-center text-sm font-light print:break-inside-avoid border-collapse">
+                                        <thead class="border-b font-medium">
+                                            <tr class="divide-x">
                                                 <th scope="col" class="px-6 py-2">Material</th>
                                                 <th v-for="employee in employees" :key="employee.id"
                                                     :title="employee.name + ' ' + employee.surname">{{ employee.name }}
                                                 </th>
                                             </tr>
                                         </thead>
-                                        <tbody v-if="items.length && employees.length" class="print:break-inside-avoid">
+                                        <tbody v-if="items.length && employees.length"
+                                            class="print:break-inside-avoid ">
                                             <tr v-for="item in items" :key="item.id"
-                                                class="border-b transition duration-150 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
+                                                class="border-b transition duration-150 ease-in-out hover:bg-neutral-100 print:break-inside-avoid divide-x">
                                                 <td class="px-6 py-2 text-right">{{ item.name }}</td>
                                                 <td v-for="(qtd, index) in itemCounts[item.id]" :key="index"
                                                     :class="'use-table-col-' + index"

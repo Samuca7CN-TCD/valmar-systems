@@ -18,23 +18,6 @@ const props = defineProps({
     services_list: Object,
 })
 
-
-// =============================================
-// Informações do OBJETO
-const service_data = useForm({
-    'id': null,
-    'title': 'Teste',
-    'client': 'Samuel',
-    'total_value': 5000,
-    'partial_value': 5000,
-    'observations': 'Testando 123...',
-    'deadline': formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date'),
-    'records_list': {
-        'enable_records': false,
-        'data': [],
-    }
-})
-
 const search_term = ref("")
 
 const filtered_services_list = computed(() => {
@@ -50,49 +33,12 @@ const filtered_services_list = computed(() => {
     );
 });
 
-// =============================================
-// Controle de Modal
-const modal = ref({
-    mode: 'create',
-    show: false,
-    title: 'Ver Serviço',
-    primary_button_txt: 'Fechar',
-})
-
-const openModal = (mode, service_id = null) => {
-
-    const service = props.services_list.find(service => service.id === service_id);
-
-    if (service) {
-        const { id, motive, entity_name, observations, records, accounting } = service;
-
-        service_data.id = id;
-        service_data.title = motive;
-        service_data.client = entity_name;
-        service_data.total_value = accounting.total_value;
-        service_data.partial_value = accounting.partial_value;
-        service_data.observations = observations;
-        service_data.records_list.enable_records = Boolean(records.length);
-        service_data.records_list.data = records.map((record) => { return useForm(record) })
-    }
-
-    modal.value.mode = 'see';
-    modal.value.show = true;
-};
-
 
 const closeModal = () => {
     service_data.reset()
     modal.value.show = false
 }
 
-
-const payService = () => {
-    service_data.put(route('services.pay', service_data.id), {
-        preserveScroll: true,
-        onSuccess: () => closeModal()
-    })
-}
 </script>
 
 <template>
@@ -176,7 +122,5 @@ const payService = () => {
         </div>
 
         <ExtraOptionsButton :mode="['rollup', 'print_page']" />
-        <CreateUpdatePayModal :show="modal.show" :modal="modal" :service="service_data" @submit="closeModal"
-            @close="closeModal" />
     </AppLayout>
 </template>

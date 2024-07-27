@@ -16,7 +16,10 @@ const props = defineProps({
         type: Array,
         default: null,
     },
-    employees_list: Object,
+    employees_list: Array,
+    account_types_list: Array,
+    payment_methods_list: Array,
+    banks_list: Array,
 })
 
 
@@ -30,8 +33,9 @@ const employee_data = useForm({
     'agreement': 0,
     'contacts': [],
     'function_name': '',
-    'transpotation_voucher': false,
+    'transportation_voucher': false,
     'payment_method_id': null,
+    'overtime_payment_method_id': null,
     'bank_id': null,
     'pix_cpf': '',
     'pix_email': '',
@@ -40,6 +44,10 @@ const employee_data = useForm({
     'bank_ag': '',
     'account_type_id': null,
     'account_number': '',
+})
+
+const contacts_length = computed(() => {
+    return props.employees_list.contacts ? JSON.parse(props.employees_list.contacts).length : 0
 })
 
 const search_term = ref("")
@@ -105,7 +113,7 @@ const openModal = (mode, employee_id = null) => {
     if (employee_id !== null && isUpdateOrSeeMode) {
         const employee = props.employees_list.find(employee => employee.id === employee_id);
         if (employee) {
-            const { id, name, surname, salary, agreement, contacts, function_name, transpotation_voucher, payment_method_id, bank_id, pix_cpf, pix_email, pix_phone_number, pix_token, bank_ag, account_type_id, account_number } = employee;
+            const { id, name, surname, salary, agreement, contacts, function_name, transportation_voucher, payment_method_id, overtime_payment_method_id, bank_id, pix_cpf, pix_email, pix_phone_number, pix_token, bank_ag, account_type_id, account_number } = employee;
 
             employee_data.id = id;
             employee_data.name = name;
@@ -114,8 +122,9 @@ const openModal = (mode, employee_id = null) => {
             employee_data.agreement = agreement;
             employee_data.contacts = JSON.parse(contacts);
             employee_data.function_name = function_name;
-            employee_data.transpotation_voucher = transpotation_voucher;
+            employee_data.transportation_voucher = transportation_voucher;
             employee_data.payment_method_id = payment_method_id;
+            employee_data.overtime_payment_method_id = overtime_payment_method_id;
             employee_data.bank_id = bank_id;
             employee_data.pix_cpf = pix_cpf;
             employee_data.pix_email = pix_email;
@@ -156,7 +165,7 @@ const updateEmployee = () => {
 
 const fireEmployee = (employee_id, employee_name) => {
     if (confirm(`Você tem certeza que deseja DEMITIR o funcionário "${employee_name}"?`)) {
-        employee_data.post(route('employees.fire', employee_id), {
+        employee_data.delete(route('employees.fire', employee_id), {
             preserveScroll: true,
             onSuccess: () => alert('Funcionário demitido com sucesso!')
         })
@@ -213,7 +222,7 @@ const submit = () => {
                             <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
                                 <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                                     <div class="overflow-hidden">
-                                        <table class="min-w-full text-left text-sm font-light">
+                                        <table class="min-w-full text-left text-sm print:text-xs font-light">
                                             <thead class="border-b font-medium dark:border-neutral-500">
                                                 <tr>
                                                     <th scope="col" class="px-6 py-4 text-center">#</th>
@@ -242,15 +251,17 @@ const submit = () => {
                                                             :title="'Salário: ' + toMoney(employee.salary) + ' + Acordo: ' + toMoney(employee.agreement)"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
-                                                    <td
-                                                        class="whitespace-nowrap px-2 py-4 text-center print:hidden divide-x divide-neutral-500">
+                                                    <td class="grid px-2 py-4 text-center" :class="{
+        'grid-cols-1': contacts_length === 1,
+        'grid-cols-2': contacts_length > 1
+    }">
                                                         <a v-for="contact in JSON.parse(employee.contacts)"
                                                             :href="'tel:' + contact"
                                                             class="px-2 hover:text-green-500 active:text-green-700">{{
         formatPhoneNumber(contact)
     }}</a>
                                                     </td>
-                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center">
                                                         {{ employee.function_name }}</td>
 
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-yellow-700 active:text-yellow-900 select-none print:hidden"
@@ -265,12 +276,12 @@ const submit = () => {
                                                     </td>
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-orange-700 active:text-orange-900 select-none print:hidden"
                                                         :title="'Demitir: ' + employee.name + ' ' + employee.surname"
-                                                        @click="fireEmployee(employee.id, employee.entity_name)">
+                                                        @click="fireEmployee(employee.id, employee.name + ' ' + employee.surname)">
                                                         <XCircleIcon class="w-5 h-5 m-auto" />
                                                     </td>
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-red-700 active:text-red-900 select-none print:hidden"
                                                         :title="'EXCLUIR: ' + employee.name + ' ' + employee.surname"
-                                                        @click="deleteEmployee(employee.id, employee.entity_name)">
+                                                        @click="deleteEmployee(employee.id, employee.name + ' ' + employee.surname)">
                                                         <XMarkIcon class="w-5 h-5 m-auto" />
                                                     </td>
                                                 </tr>
@@ -291,7 +302,11 @@ const submit = () => {
             </div>
         </div>
 
-        <CreateUpdateEmployeesModal :modal="modal" :employee="employee_data" @submit="submit" @close="closeModal" />
+        <CreateUpdateEmployeesModal :modal="modal" :employee="employee_data" :account_types_list="account_types_list"
+            :payment_methods_list="payment_methods_list" :banks_list="banks_list" @submit="submit"
+            @close="closeModal" />
 
+        <ExtraOptionsButton :mode="['rollup', 'print_page', 'link']" :link_type="['previous']"
+            :link="[route('employees.previous')]" />
     </AppLayout>
 </template>

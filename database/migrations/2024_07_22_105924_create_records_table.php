@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->string('filepath')->nullable();
             $table->boolean('past')->default(true);
             $table->date('register_date')->nullable();
+            $table->text('content')->nullable();
             $table->softDeletes();
             $table->timestamps();
             $table->foreign('procedure_id')->references('id')->on('procedures');

@@ -61,6 +61,9 @@ Route::middleware([
     Route::get('/previous/services', [ServiceController::class, 'previous'])->name('services.previous');
 
     Route::resource('/employees', EmployeeController::class);
-    Route::post('/employees/fire', [EmployeeController::class, 'fire'])->name('employees.fire');
-    Route::resource('/payslips', PayslipController::class);
+    Route::delete('/employees/fire/{id}', [EmployeeController::class, 'fire'])->name('employees.fire');
+    Route::get('/previous/employees', [EmployeeController::class, 'previous'])->name('employees.previous');
+    Route::get('overtime-calculation/employees', [EmployeeController::class, 'overtime_calculation'])->name('employee.overtime_calculation');
+    Route::resource('/payslip', PayslipController::class);
+    Route::get('/payslip/filter/{employee?}', [PayslipController::class, 'index'])->where('employee', '[0-9]+')->name('payslip.filter');
 });

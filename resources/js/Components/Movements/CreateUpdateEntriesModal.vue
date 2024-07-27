@@ -35,7 +35,7 @@ const enableSubmit = computed(() => {
     if (!date || !dateRegex.test(date)) return false;
     if (items_list.length < 1) return false;
     const items_okay = items_list.every(item => {
-        return item.quantity > 0 && item.movement_quantity > 0 && item.movement_quantity <= item.quantity;
+        return item.movement_quantity > 0;
     });
     return items_okay; // Early return based on item checks
 });
@@ -210,7 +210,7 @@ const submit = () => {
 
                             <div class="sm:col-span-4">
                                 <table v-if="props.entry.items_list.length"
-                                    class="min-w-full text-left block text-sm font-medium leading-6 text-gray-900">
+                                    class="min-w-full text-left text-sm font-medium leading-6 text-gray-900">
                                     <thead class="border-b font-medium dark:border-neutral-500">
                                         <tr>
                                             <th scope="col" class="px-6 py-4 text-center">#</th>

@@ -141,7 +141,7 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validate = (object) $request->validate([
             'profile_img_url' => ['nullable', 'string'],
             'profile_img' => ['nullable', 'file', 'max:2097152',],
             'name' => ['required', 'string', 'max:255', 'unique:items'],
@@ -155,32 +155,31 @@ class ItemController extends Controller
             'list_in_uses' => ['required', 'boolean'],
         ]);
 
-        $profile_img = $request->profile_img ?: null;
+        $profile_img = $validate->profile_img ?: null;
         if ($profile_img)
         {
             $profile_img = $profile_img->store('public/img/items');
-        } else if ($request->profile_img_url)
+        } else if ($validate->profile_img_url)
         {
-            $profile_img = "copy_" . explode('/', $request->profile_img_url)[4];
+            $profile_img = "copy_" . explode('/', $validate->profile_img_url)[4];
             while (Storage::disk('public')->exists('img/items/' . $profile_img))
             {
                 $profile_img = 'copy_' . $profile_img;
             }
-            Storage::disk('public')->copy('img/items/' . explode('/', $request->profile_img_url)[4], 'img/items/' . $profile_img);
+            Storage::disk('public')->copy('img/items/' . explode('/', $validate->profile_img_url)[4], 'img/items/' . $profile_img);
             $profile_img = "public/img/items/" . $profile_img;
         }
-
         $item = Item::create([
             'profile_img' => $profile_img,
-            'name' => $request->name,
-            'category_id' => $request->category_id,
-            'price' => $request->price,
-            'quantity' => $request->quantity,
-            'min_quantity' => $request->min_quantity,
-            'max_quantity' => $request->max_quantity,
-            'measurement_unit_id' => $request->measurement_unit_id,
-            'unit_equivalent' => $request->unit_equivalent,
-            'list_in_uses' => $request->list_in_uses
+            'name' => $validate->name,
+            'category_id' => $validate->category_id,
+            'price' => $validate->price,
+            'quantity' => $validate->quantity,
+            'min_quantity' => $validate->min_quantity,
+            'max_quantity' => $validate->max_quantity,
+            'measurement_unit_id' => $validate->measurement_unit_id,
+            'unit_equivalent' => $validate->unit_equivalent,
+            'list_in_uses' => $validate->list_in_uses
         ]);
 
         $procedure = Procedure::create([
@@ -196,10 +195,11 @@ class ItemController extends Controller
         $record = Record::create([
             'procedure_id' => $procedure->id,
             'item_id' => $item->id,
-            'item_name' => $item->name,
-            'item_quantity' => $item->quantity,
-            'item_measurement_unit' => $measuremtent_unit,
+            'name' => $item->name,
+            'quantity' => 0,
+            'measurement_unit' => $measuremtent_unit,
             'price' => $item->price,
+            'movement_quantity' => $item->quantity,
             'amount' => $item->price * $item->quantity,
             'past' => true,
             'register_date' => Carbon::now()->format('Y-m-d H:i:s'),

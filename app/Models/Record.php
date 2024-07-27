@@ -20,6 +20,7 @@ class Record extends Model
         'price',
         'movement_quantity',
         'amount',
+        'content',
         'register_date',
         'filepath',
         'past',
