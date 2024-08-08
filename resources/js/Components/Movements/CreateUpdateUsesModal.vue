@@ -6,6 +6,8 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { ref, computed, reactive } from 'vue';
 import { formatDate, toMoney } from '@/general.js';
 import { useForm } from '@inertiajs/vue3';
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
 
 const emit = defineEmits(['close', 'submit']);
 const props = defineProps({
@@ -18,17 +20,19 @@ const props = defineProps({
     employees_list: Array,
 });
 
+const $toast = useToast();
+
 const choose_employee = ref(true)
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/
 const canAddItems = computed(() => {
     const { motive, employee_id, employee, date } = props.use;
 
-    if (choose_employee.value) {
+    /*if (choose_employee.value) {
         if (!employee_id) return false;
     } else {
         if (!employee) return false;
-    }
+    }*/
 
     if (!motive || !motive.length) return false;
     const isDateValid = date && dateRegex.test(date);
@@ -59,7 +63,7 @@ const updateEmployee = (employee_data) => {
     if (choose_employee.value) {
         const selected_employee = props.employees_list.find(employee => employee.id === parseInt(employee_data))
         if (!selected_employee) {
-            alert("Funcionário não encontrado!")
+            $toast.error('Funcionário não encontrado');
             return;
         }
         props.use.employee_id = employee_data
@@ -81,8 +85,7 @@ const showResults = ref(false);
 
 const filteredItems = computed(() => {
     return props.items.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.value.toLowerCase()) &&
-        !props.use.items_list.some(useItem => useItem.id === item.id)
+        item.name.toLowerCase().includes(searchTerm.value.toLowerCase())
     );
 });
 
@@ -96,6 +99,7 @@ const updateEstimatedValue = () => {
     props.use.total_value = props.use.estimated_value
 }
 
+const last_selected_employee = ref(props.employees_list ? props.employees_list[0]?.id : null);
 const selectItem = (item) => {
     props.use.items_list.push({
         id: item.id,
@@ -107,6 +111,7 @@ const selectItem = (item) => {
         measurement_unit: item.measurement_unit.abbreviation,
         price: item.price,
         amount: item.price,
+        employee_id: last_selected_employee.value,
     })
 
     searchTerm.value = "";
@@ -155,6 +160,7 @@ const submit = () => {
                             da uso e observações</p>
 
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                            <!--
                             <div class="sm:col-span-3">
                                 <label for="use-employee"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Responsável</label>
@@ -187,8 +193,9 @@ const submit = () => {
                                         Funcionário?</label>
                                 </span>
                             </div>
+                        -->
 
-                            <div class="sm:col-span-3">
+                            <div class="sm:col-span-6">
                                 <label for="use-date"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Data
                                     do
@@ -264,7 +271,7 @@ const submit = () => {
                             <div class="sm:col-span-4">
                                 <table v-if="props.use.items_list.length"
                                     class="min-w-full text-left text-sm font-medium leading-6 text-gray-900">
-                                    <thead class="border-b font-medium dark:border-neutral-500">
+                                    <thead class="border-b font-medium">
                                         <tr>
                                             <th scope="col" class="px-6 py-4 text-center">#</th>
                                             <!--<th scope="col" class="px-6 py-4 text-center">Retirado?</th>-->
@@ -272,6 +279,7 @@ const submit = () => {
                                             <th scope="col" class="px-6 py-4 text-center">Qtd. Estoque</th>
                                             <th scope="col" class="px-6 py-4 text-center">Qtd. Uso</th>
                                             <th scope="col" class="px-6 py-4 text-center">Und. Medida</th>
+                                            <th scope="col" class="px-6 py-4 text-center">Funcionário</th>
                                             <th v-if="modal.mode !== 'see'" scope="col" class="px-6 py-4 text-center">
                                                 Deletar</th>
                                         </tr>
@@ -305,6 +313,19 @@ const submit = () => {
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{
         item.measurement_unit }}</td>
+                                            <td class="whitespace-nowrap py-4 text-center font-medium flex
+                                                justify-center">
+                                                <select name="use-employee" class="simple-select disabled:bg-gray-200"
+                                                    placeholder="Nome do funcionario" v-model="item.employee_id"
+                                                    @change="last_selected_employee = $event.target.value" required
+                                                    :disabled="!canAddItems || disableAllInputs">
+                                                    <option :value="null" disabled selected>Escolha um funcionário
+                                                    </option>
+                                                    <option v-for="employee in employees_list" :key="employee.id"
+                                                        :value="employee.id">{{ employee.name }} {{ employee.surname }}
+                                                    </option>
+                                                </select>
+                                            </td>
 
                                             <td v-if="modal.mode !== 'see'"
                                                 class="whitespace-nowrap py-4 text-center font-mono text-2xl"><button

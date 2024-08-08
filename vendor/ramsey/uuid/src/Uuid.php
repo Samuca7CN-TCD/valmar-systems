@@ -51,21 +51,21 @@ class Uuid implements UuidInterface
      * When this namespace is specified, the name string is a fully-qualified
      * domain name
      *
-     * @link http://tools.ietf.org/html/rfc4122#appendix-C RFC 4122, Appendix C: Some Name Space IDs
+     * @link http://tools.ietf.org/html/rfc4122#appendix-C RFC 4122, Appendix C: Some Nome Space IDs
      */
     public const NAMESPACE_DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 
     /**
      * When this namespace is specified, the name string is a URL
      *
-     * @link http://tools.ietf.org/html/rfc4122#appendix-C RFC 4122, Appendix C: Some Name Space IDs
+     * @link http://tools.ietf.org/html/rfc4122#appendix-C RFC 4122, Appendix C: Some Nome Space IDs
      */
     public const NAMESPACE_URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 
     /**
      * When this namespace is specified, the name string is an ISO OID
      *
-     * @link http://tools.ietf.org/html/rfc4122#appendix-C RFC 4122, Appendix C: Some Name Space IDs
+     * @link http://tools.ietf.org/html/rfc4122#appendix-C RFC 4122, Appendix C: Some Nome Space IDs
      */
     public const NAMESPACE_OID = '6ba7b812-9dad-11d1-80b4-00c04fd430c8';
 
@@ -73,7 +73,7 @@ class Uuid implements UuidInterface
      * When this namespace is specified, the name string is an X.500 DN in DER
      * or a text output format
      *
-     * @link http://tools.ietf.org/html/rfc4122#appendix-C RFC 4122, Appendix C: Some Name Space IDs
+     * @link http://tools.ietf.org/html/rfc4122#appendix-C RFC 4122, Appendix C: Some Nome Space IDs
      */
     public const NAMESPACE_X500 = '6ba7b814-9dad-11d1-80b4-00c04fd430c8';
 
@@ -312,10 +312,12 @@ class Uuid implements UuidInterface
      */
     public function unserialize(string $data): void
     {
-        if (strlen($data) === 16) {
+        if (strlen($data) === 16)
+        {
             /** @var Uuid $uuid */
             $uuid = self::getFactory()->fromBytes($data);
-        } else {
+        } else
+        {
             /** @var Uuid $uuid */
             $uuid = self::getFactory()->fromString($data);
         }
@@ -332,7 +334,8 @@ class Uuid implements UuidInterface
     public function __unserialize(array $data): void
     {
         // @codeCoverageIgnoreStart
-        if (!isset($data['bytes'])) {
+        if (!isset($data['bytes']))
+        {
             throw new ValueError(sprintf('%s(): Argument #1 ($data) is invalid', __METHOD__));
         }
         // @codeCoverageIgnoreEnd
@@ -344,11 +347,13 @@ class Uuid implements UuidInterface
     {
         $compare = strcmp($this->toString(), $other->toString());
 
-        if ($compare < 0) {
+        if ($compare < 0)
+        {
             return -1;
         }
 
-        if ($compare > 0) {
+        if ($compare > 0)
+        {
             return 1;
         }
 
@@ -357,7 +362,8 @@ class Uuid implements UuidInterface
 
     public function equals(?object $other): bool
     {
-        if (!$other instanceof UuidInterface) {
+        if (!$other instanceof UuidInterface)
+        {
             return false;
         }
 
@@ -405,7 +411,8 @@ class Uuid implements UuidInterface
      */
     public static function getFactory(): UuidFactoryInterface
     {
-        if (self::$factory === null) {
+        if (self::$factory === null)
+        {
             self::$factory = new UuidFactory();
         }
 
@@ -446,20 +453,21 @@ class Uuid implements UuidInterface
      */
     public static function fromBytes(string $bytes): UuidInterface
     {
-        if (!self::$factoryReplaced && strlen($bytes) === 16) {
+        if (!self::$factoryReplaced && strlen($bytes) === 16)
+        {
             $base16Uuid = bin2hex($bytes);
 
             // Note: we are calling `fromString` internally because we don't know if the given `$bytes` is a valid UUID
             return self::fromString(
                 substr($base16Uuid, 0, 8)
-                    . '-'
-                    . substr($base16Uuid, 8, 4)
-                    . '-'
-                    . substr($base16Uuid, 12, 4)
-                    . '-'
-                    . substr($base16Uuid, 16, 4)
-                    . '-'
-                    . substr($base16Uuid, 20, 12)
+                . '-'
+                . substr($base16Uuid, 8, 4)
+                . '-'
+                . substr($base16Uuid, 12, 4)
+                . '-'
+                . substr($base16Uuid, 16, 4)
+                . '-'
+                . substr($base16Uuid, 20, 12)
             );
         }
 
@@ -485,7 +493,8 @@ class Uuid implements UuidInterface
     public static function fromString(string $uuid): UuidInterface
     {
         $uuid = strtolower($uuid);
-        if (!self::$factoryReplaced && preg_match(LazyUuidFromString::VALID_REGEX, $uuid) === 1) {
+        if (!self::$factoryReplaced && preg_match(LazyUuidFromString::VALID_REGEX, $uuid) === 1)
+        {
             assert($uuid !== '');
 
             return new LazyUuidFromString($uuid);
@@ -531,7 +540,8 @@ class Uuid implements UuidInterface
     {
         $factory = self::getFactory();
 
-        if (method_exists($factory, 'fromHexadecimal')) {
+        if (method_exists($factory, 'fromHexadecimal'))
+        {
             /**
              * @phpstan-ignore-next-line
              * @psalm-suppress UndefinedInterfaceMethod
@@ -716,7 +726,8 @@ class Uuid implements UuidInterface
     {
         $factory = self::getFactory();
 
-        if (method_exists($factory, 'uuid7')) {
+        if (method_exists($factory, 'uuid7'))
+        {
             /** @var UuidInterface */
             return $factory->uuid7($dateTime);
         }
@@ -746,7 +757,8 @@ class Uuid implements UuidInterface
     {
         $factory = self::getFactory();
 
-        if (method_exists($factory, 'uuid8')) {
+        if (method_exists($factory, 'uuid8'))
+        {
             /** @var UuidInterface */
             return $factory->uuid8($bytes);
         }

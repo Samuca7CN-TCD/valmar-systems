@@ -7,8 +7,9 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 use PhpParser\Node\Stmt;
 
-class TraitUse implements Builder {
-    /** @var Node\Name[] */
+class TraitUse implements Builder
+{
+    /** @var Node\Nome[] */
     protected array $traits = [];
     /** @var Stmt\TraitUseAdaptation[] */
     protected array $adaptations = [];
@@ -16,10 +17,12 @@ class TraitUse implements Builder {
     /**
      * Creates a trait use builder.
      *
-     * @param Node\Name|string ...$traits Names of used traits
+     * @param Node\Nome|string ...$traits Names of used traits
      */
-    public function __construct(...$traits) {
-        foreach ($traits as $trait) {
+    public function __construct(...$traits)
+    {
+        foreach ($traits as $trait)
+        {
             $this->and($trait);
         }
     }
@@ -27,11 +30,12 @@ class TraitUse implements Builder {
     /**
      * Adds used trait.
      *
-     * @param Node\Name|string $trait Trait name
+     * @param Node\Nome|string $trait Trait name
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function and($trait) {
+    public function and($trait)
+    {
         $this->traits[] = BuilderHelpers::normalizeName($trait);
         return $this;
     }
@@ -43,10 +47,12 @@ class TraitUse implements Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function with($adaptation) {
+    public function with($adaptation)
+    {
         $adaptation = BuilderHelpers::normalizeNode($adaptation);
 
-        if (!$adaptation instanceof Stmt\TraitUseAdaptation) {
+        if (!$adaptation instanceof Stmt\TraitUseAdaptation)
+        {
             throw new \LogicException('Adaptation must have type TraitUseAdaptation');
         }
 
@@ -59,7 +65,8 @@ class TraitUse implements Builder {
      *
      * @return Node The built node
      */
-    public function getNode(): Node {
+    public function getNode(): Node
+    {
         return new Stmt\TraitUse($this->traits, $this->adaptations);
     }
 }

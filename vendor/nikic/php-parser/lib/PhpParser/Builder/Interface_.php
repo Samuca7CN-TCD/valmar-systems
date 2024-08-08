@@ -5,12 +5,13 @@ namespace PhpParser\Builder;
 use PhpParser;
 use PhpParser\BuilderHelpers;
 use PhpParser\Node;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\Stmt;
 
-class Interface_ extends Declaration {
+class Interface_ extends Declaration
+{
     protected string $name;
-    /** @var list<Name> */
+    /** @var list<Nome> */
     protected array $extends = [];
     /** @var list<Stmt\ClassConst> */
     protected array $constants = [];
@@ -22,21 +23,24 @@ class Interface_ extends Declaration {
     /**
      * Creates an interface builder.
      *
-     * @param string $name Name of the interface
+     * @param string $name Nome of the interface
      */
-    public function __construct(string $name) {
+    public function __construct(string $name)
+    {
         $this->name = $name;
     }
 
     /**
      * Extends one or more interfaces.
      *
-     * @param Name|string ...$interfaces Names of interfaces to extend
+     * @param Nome|string ...$interfaces Names of interfaces to extend
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function extend(...$interfaces) {
-        foreach ($interfaces as $interface) {
+    public function extend(...$interfaces)
+    {
+        foreach ($interfaces as $interface)
+        {
             $this->extends[] = BuilderHelpers::normalizeName($interface);
         }
 
@@ -50,16 +54,20 @@ class Interface_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addStmt($stmt) {
+    public function addStmt($stmt)
+    {
         $stmt = BuilderHelpers::normalizeNode($stmt);
 
-        if ($stmt instanceof Stmt\ClassConst) {
+        if ($stmt instanceof Stmt\ClassConst)
+        {
             $this->constants[] = $stmt;
-        } elseif ($stmt instanceof Stmt\ClassMethod) {
+        } elseif ($stmt instanceof Stmt\ClassMethod)
+        {
             // we erase all statements in the body of an interface method
             $stmt->stmts = null;
             $this->methods[] = $stmt;
-        } else {
+        } else
+        {
             throw new \LogicException(sprintf('Unexpected node of type "%s"', $stmt->getType()));
         }
 
@@ -73,7 +81,8 @@ class Interface_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addAttribute($attribute) {
+    public function addAttribute($attribute)
+    {
         $this->attributeGroups[] = BuilderHelpers::normalizeAttribute($attribute);
 
         return $this;
@@ -84,7 +93,8 @@ class Interface_ extends Declaration {
      *
      * @return Stmt\Interface_ The built interface node
      */
-    public function getNode(): PhpParser\Node {
+    public function getNode(): PhpParser\Node
+    {
         return new Stmt\Interface_($this->name, [
             'extends' => $this->extends,
             'stmts' => array_merge($this->constants, $this->methods),

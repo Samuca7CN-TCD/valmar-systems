@@ -5,9 +5,10 @@ import FloatButton from '@/Components/FloatButton.vue'
 import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
-import { EyeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, ChevronUpIcon, InformationCircleIcon, EyeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
-
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
 // =============================================
 // Informações exteriores
 const props = defineProps({
@@ -18,15 +19,16 @@ const props = defineProps({
     },
     sells_list: Object,
     items: Object,
+    parameters: Object,
 })
-
+const $toast = useToast();
 
 // =============================================
 // Informações do OBJETO
 const sell_data = useForm({
     'id': null,
     'client': '',
-    'date': "",
+    'date': formatDate(),
     'estimated_value': 0,
     'total_value': 0,
     'partial_value': 0,
@@ -35,6 +37,13 @@ const sell_data = useForm({
     'entry_value': 0,
     'observations': '',
     'items_list': [],
+})
+
+const sell_filter_toggle = ref(false)
+const sell_filter = useForm({
+    entity_name: props.parameters.entity_name,
+    start_date: props.parameters.start_date,
+    end_date: props.parameters.end_date,
 })
 
 const search_term = ref("")
@@ -129,6 +138,12 @@ const createSell = () => {
     })
 }
 
+const get_filtered_data = () => {
+    sell_filter.post(route('sells.filter'), {
+        preserveScroll: true,
+    });
+};
+
 const updateSell = () => {
     sell_data.put(route('sells.update', sell_data.id), {
         preserveScroll: true,
@@ -141,7 +156,7 @@ const deleteSell = (sell_id, sell_name) => {
     if (confirm(`Você tem certeza que deseja excluir a venda de material para "${sell_name}"? Todos os materiais comprados voltarão para o estoque! Esta ação não poderá ser desfeita!`)) {
         sell_data.delete(route('sells.destroy', sell_id), {
             preserveScroll: true,
-            onSuccess: () => alert('Venda deletado com sucesso!')
+            onSuccess: () => $toast.success('Venda deletado com sucesso!')
         })
     }
 }
@@ -151,7 +166,7 @@ const submit = () => {
         case 'create': return createSell()
         case 'update': return updateSell()
         case 'see': return closeModal()
-        default: alert('Método desconhecido. Informar o Técnico.')
+        default: $toast.error('Método desconhecido. Informar o Técnico.')
     }
 }
 </script>
@@ -162,7 +177,8 @@ const submit = () => {
     <AppLayout :page="page" :page_options="page_options">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }} | {{ toMoney(total_sells_amount) }}
+                {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{ toMoney(total_sells_amount)
+                    }}</span>
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Sell" class="print:hidden" />
         </template>
@@ -174,7 +190,70 @@ const submit = () => {
                         <MagnifyingGlassIcon class="w-5 y-5" />
                         <input type="text" name="search_term" id="search_term" autocomplete="on" class="simple-input"
                             autofocus="true" placeholder="Pesquisar termo..." v-model="search_term" />
+                        <span class="cursor-help select-none"
+                            title="O campo de pesquisa ao lado filtra as informações carregadas na pagina. O formulário de pesquisa abaixo busca as informações filtradas no banco de dados e lista na página.">
+                            <InformationCircleIcon class="w-5 h-5" />
+                        </span>
+
+                        <span v-if="!sell_filter_toggle" class="select-none cursor-pointer"
+                            title="Abrir opções de filtro" @click="sell_filter_toggle = true">
+                            <ChevronDownIcon class="w-5 y-5" />
+                        </span>
+                        <span v-else class="select-none cursor-pointer" title="Fechar opções de filtro"
+                            @click="sell_filter_toggle = false">
+                            <ChevronUpIcon class="w-5 y-5" />
+                        </span>
+
                     </div>
+                    <div v-show="sell_filter_toggle" class="mt-3 grid grid-cols-3 gap-2">
+                        <div class="col-span-3 md:col-span-1">
+                            <label for="search-by-entity-name"
+                                class="block text-sm font-medium leading-6 text-gray-900">Cliente</label>
+                            <div class="mt-2">
+                                <input type="text" name="search-by-entity-name" id="search-by-entity-name"
+                                    class="simple-input disabled:bg-gray-200" placeholder="Filtrar por nome do cliente"
+                                    v-model="sell_filter.entity_name" @input="get_filtered_data" required>
+                                <p v-if="sell_filter.errors.entity_name" class="text-red-500 text-sm">{{
+        sell_filter.errors.entity_name }}</p>
+                            </div>
+                        </div>
+
+                        <div class="col-span-3 md:col-span-1">
+                            <label for="search-by-start-date"
+                                class="block text-sm font-medium leading-6 text-gray-900">Data
+                                (início)</label>
+                            <div class="mt-2">
+                                <input type="date" name="search-by-start-date" id="search-by-start-date"
+                                    class="simple-input disabled:bg-gray-200" placeholder="Filtrar por período (início)"
+                                    v-model="sell_filter.start_date" @input="get_filtered_data" required>
+                                <p v-if="sell_filter.errors.start_date" class="text-red-500 text-sm">{{
+        sell_filter.errors.start_date }}</p>
+                            </div>
+                        </div>
+
+                        <div class="col-span-3 md:col-span-1">
+                            <label for="search-by-end-date"
+                                class="block text-sm font-medium leading-6 text-gray-900">Data
+                                (fim)</label>
+                            <div class="mt-2">
+                                <input type="date" name="search-by-end-date" id="search-by-end-date"
+                                    class="simple-input disabled:bg-gray-200" placeholder="Filtrar por período (fim)"
+                                    v-model="sell_filter.end_date" @input="get_filtered_data" required>
+                                <p v-if="sell_filter.errors.end_date" class="text-red-500 text-sm">{{
+        sell_filter.errors.end_date }}</p>
+                            </div>
+                        </div>
+
+                        <!--<button type="button"
+                            class="col-span-4 p-1 text-white rounded-md bg-green-500 hover:bg-green-700 active:bg-green-900"
+                            @click="get_filtered_data">
+                            Pesquisar
+                        </button>-->
+                        <a :href="route('sells.index')"
+                            class="text-red-500 hover:text-red-700 active:text-red-900 text-sm select-none mt-2"
+                            @click="sell_filter.reset()">Resetar busca</a>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -188,7 +267,7 @@ const submit = () => {
                                 <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                                     <div class="overflow-hidden">
                                         <table class="min-w-full text-left text-sm font-light">
-                                            <thead class="border-b font-medium dark:border-neutral-500">
+                                            <thead class="border-b font-medium ">
                                                 <tr>
                                                     <th scope="col" class="px-6 py-4 text-center">#</th>
                                                     <th scope="col" class="px-6 py-4 text-center">Cliente</th>
@@ -225,7 +304,7 @@ const submit = () => {
         sell.accounting.total_value > 0 ?
             toMoney(sell.accounting.total_value) : 'Pago' }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">{{
-        formatDate(sell.date, true) }}</td>
+                                                        formatDate(sell.date, true) }}</td>
                                                     <!--
                                                         <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-yellow-700 active:text-yellow-900 select-none print:hidden"
                                                         :title="'EDITAR: Compra de ' + sell.entity_name"

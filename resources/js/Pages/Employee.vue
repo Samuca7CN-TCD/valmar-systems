@@ -7,6 +7,8 @@ import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import { EyeIcon, MagnifyingGlassIcon, PencilIcon, XCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { toMoney, formatDate, formatPhoneNumber, calcDeadlineDays } from '@/general.js'
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
 
 // =============================================
 // Informações exteriores
@@ -22,6 +24,7 @@ const props = defineProps({
     banks_list: Array,
 })
 
+const $toast = useToast();
 
 // =============================================
 // Informações do OBJETO
@@ -167,7 +170,7 @@ const fireEmployee = (employee_id, employee_name) => {
     if (confirm(`Você tem certeza que deseja DEMITIR o funcionário "${employee_name}"?`)) {
         employee_data.delete(route('employees.fire', employee_id), {
             preserveScroll: true,
-            onSuccess: () => alert('Funcionário demitido com sucesso!')
+            onSuccess: () => $toast.success('Funcionário demitido com sucesso!')
         })
     }
 }
@@ -176,7 +179,7 @@ const deleteEmployee = (employee_id, employee_name) => {
     if (confirm(`Você tem certeza que deseja EXCLUIR o funcionário "${employee_name}"?`)) {
         employee_data.delete(route('employees.destroy', employee_id), {
             preserveScroll: true,
-            onSuccess: () => alert('Funcionário deletado com sucesso!')
+            onSuccess: () => $toast.success('Funcionário deletado com sucesso!')
         })
     }
 }
@@ -186,7 +189,7 @@ const submit = () => {
         case 'create': return createEmployee()
         case 'update': return updateEmployee()
         case 'see': return closeModal()
-        default: alert('Método desconhecido. Informar o Técnico.')
+        default: $toast.error('Método desconhecido. Informar o Técnico.')
     }
 }
 </script>
@@ -223,7 +226,7 @@ const submit = () => {
                                 <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                                     <div class="overflow-hidden">
                                         <table class="min-w-full text-left text-sm print:text-xs font-light">
-                                            <thead class="border-b font-medium dark:border-neutral-500">
+                                            <thead class="border-b font-medium ">
                                                 <tr>
                                                     <th scope="col" class="px-6 py-4 text-center">#</th>
                                                     <th scope="col" class="px-6 py-4 text-center">Funcionário</th>

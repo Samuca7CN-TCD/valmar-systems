@@ -53,20 +53,23 @@ class EntityPopulator
     public function guessColumnFormatters(\Faker\Generator $generator, Mandango $mandango)
     {
         $formatters = [];
-        $nameGuesser = new \Faker\Guesser\Name($generator);
+        $nameGuesser = new \Faker\Guesser\Nome($generator);
         $columnTypeGuesser = new \Faker\ORM\Mandango\ColumnTypeGuesser($generator);
 
         $metadata = $mandango->getMetadata($this->class);
 
         // fields
-        foreach ($metadata['fields'] as $fieldName => $field) {
-            if ($formatter = $nameGuesser->guessFormat($fieldName)) {
+        foreach ($metadata['fields'] as $fieldName => $field)
+        {
+            if ($formatter = $nameGuesser->guessFormat($fieldName))
+            {
                 $formatters[$fieldName] = $formatter;
 
                 continue;
             }
 
-            if ($formatter = $columnTypeGuesser->guessFormat($field)) {
+            if ($formatter = $columnTypeGuesser->guessFormat($field))
+            {
                 $formatters[$fieldName] = $formatter;
 
                 continue;
@@ -74,14 +77,17 @@ class EntityPopulator
         }
 
         // references
-        foreach (array_merge($metadata['referencesOne'], $metadata['referencesMany']) as $referenceName => $reference) {
-            if (!isset($reference['class'])) {
+        foreach (array_merge($metadata['referencesOne'], $metadata['referencesMany']) as $referenceName => $reference)
+        {
+            if (!isset($reference['class']))
+            {
                 continue;
             }
             $referenceClass = $reference['class'];
 
             $formatters[$referenceName] = static function ($insertedEntities) use ($referenceClass) {
-                if (isset($insertedEntities[$referenceClass])) {
+                if (isset($insertedEntities[$referenceClass]))
+                {
                     return Base::randomElement($insertedEntities[$referenceClass]);
                 }
 
@@ -101,16 +107,22 @@ class EntityPopulator
 
         $obj = $mandango->create($this->class);
 
-        foreach ($this->columnFormatters as $column => $format) {
-            if (null !== $format) {
+        foreach ($this->columnFormatters as $column => $format)
+        {
+            if (null !== $format)
+            {
                 $value = is_callable($format) ? $format($insertedEntities, $obj) : $format;
 
-                if (isset($metadata['fields'][$column])
-                    || isset($metadata['referencesOne'][$column])) {
+                if (
+                    isset($metadata['fields'][$column])
+                    || isset($metadata['referencesOne'][$column])
+                )
+                {
                     $obj->set($column, $value);
                 }
 
-                if (isset($metadata['referencesMany'][$column])) {
+                if (isset($metadata['referencesMany'][$column]))
+                {
                     $adder = 'add' . ucfirst($column);
                     $obj->$adder($value);
                 }

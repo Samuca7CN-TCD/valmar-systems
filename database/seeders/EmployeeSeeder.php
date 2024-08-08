@@ -459,6 +459,28 @@ class EmployeeSeeder extends Seeder
                 'created_at' => '2024-06-25 00:00:00',
                 'updated_at' => $now
             ],
+            [
+                'name' => 'Eduardo',
+                'surname' => 'Oliveira de Jesus Filho',
+                'salary' => 1600,
+                'agreement' => 0,
+                'contacts' => json_encode(['+5573981860935']),
+                'function_name' => 'Ajudante de Serralheiro',
+                'transportation_voucher' => false,
+                'payment_method_id' => 7,
+                'overtime_payment_method_id' => 7,
+                'bank_id' => null,
+                'pix_cpf' => null,
+                'pix_email' => null,
+                'pix_phone_number' => null,
+                'pix_token' => '80ee828f-b49e-473f-ade2-3f9451a237a1',
+                'bank_ag' => null,
+                'account_type_id' => null,
+                'account_number' => null,
+                'fired' => false,
+                'created_at' => '2024-06-30 00:00:00',
+                'updated_at' => $now
+            ],
         ]);
     }
 }

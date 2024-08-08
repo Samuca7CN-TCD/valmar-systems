@@ -12,7 +12,7 @@
 namespace Psy\CodeCleaner;
 
 use PhpParser\Node;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Namespace_;
@@ -55,27 +55,34 @@ class ValidConstructorPass extends CodeCleanerPass
      */
     public function enterNode(Node $node)
     {
-        if ($node instanceof Namespace_) {
+        if ($node instanceof Namespace_)
+        {
             $this->namespace = isset($node->name) ? $this->getParts($node->name) : [];
-        } elseif ($node instanceof Class_) {
+        } elseif ($node instanceof Class_)
+        {
             $constructor = null;
-            foreach ($node->stmts as $stmt) {
-                if ($stmt instanceof ClassMethod) {
+            foreach ($node->stmts as $stmt)
+            {
+                if ($stmt instanceof ClassMethod)
+                {
                     // If we find a new-style constructor, no need to look for the old-style
-                    if ('__construct' === \strtolower($stmt->name)) {
+                    if ('__construct' === \strtolower($stmt->name))
+                    {
                         $this->validateConstructor($stmt, $node);
 
                         return;
                     }
 
                     // We found a possible old-style constructor (unless there is also a __construct method)
-                    if (empty($this->namespace) && \strtolower($node->name) === \strtolower($stmt->name)) {
+                    if (empty($this->namespace) && \strtolower($node->name) === \strtolower($stmt->name))
+                    {
                         $constructor = $stmt;
                     }
                 }
             }
 
-            if ($constructor) {
+            if ($constructor)
+            {
                 $this->validateConstructor($constructor, $node);
             }
         }
@@ -90,7 +97,8 @@ class ValidConstructorPass extends CodeCleanerPass
      */
     private function validateConstructor(Node $constructor, Node $classNode)
     {
-        if ($constructor->isStatic()) {
+        if ($constructor->isStatic())
+        {
             $msg = \sprintf(
                 'Constructor %s::%s() cannot be static',
                 \implode('\\', \array_merge($this->namespace, (array) $classNode->name->toString())),
@@ -99,7 +107,8 @@ class ValidConstructorPass extends CodeCleanerPass
             throw new FatalErrorException($msg, 0, \E_ERROR, null, $classNode->getStartLine());
         }
 
-        if (\method_exists($constructor, 'getReturnType') && $constructor->getReturnType()) {
+        if (\method_exists($constructor, 'getReturnType') && $constructor->getReturnType())
+        {
             $msg = \sprintf(
                 'Constructor %s::%s() cannot declare a return type',
                 \implode('\\', \array_merge($this->namespace, (array) $classNode->name->toString())),
@@ -112,9 +121,9 @@ class ValidConstructorPass extends CodeCleanerPass
     /**
      * Backwards compatibility shim for PHP-Parser 4.x.
      *
-     * At some point we might want to make $namespace a plain string, to match how Name works?
+     * At some point we might want to make $namespace a plain string, to match how Nome works?
      */
-    protected function getParts(Name $name): array
+    protected function getParts(Nome $name): array
     {
         return \method_exists($name, 'getParts') ? $name->getParts() : $name->parts;
     }

@@ -70,44 +70,6 @@ const toggle_enable_records = () => {
     props.service.records_list.enable_records = !props.service.records_list.enable_records;
 };
 
-/*
-const seeRecord = (file) => {
-    // Abre o arquivo em uma nova aba
-    window.open(URL.createObjectURL(new Blob([file], { type: file.type })), '_blank');
-
-    // Limpa a URL temporária após algum tempo (opcional)
-    window.addEventListener('load', () => {
-        URL.revokeObjectURL(URL.createObjectURL(new Blob([file], { type: file.type })));
-    });
-}
-
-const removeRecordFile = (record_item = null) => {
-    if (record_item == null) {
-        record.filepath = null
-        record.errors.file = ''
-    } else {
-        record_item.file = null
-        record_item.errors.file = ''
-    }
-    document.querySelector("input[type='file']").value = ''
-}
-
-const setRecordFile = (event, record_item = null) => {
-    const file = event.target.files[0];
-
-    if (file.size > 2 * 1024 * 1024) {
-        document.querySelector("input[type='file']").value = '';
-        alert("O arquivo que você tentou inserir é maior do que o tamanho permitido (2MB)");
-        return;
-    }
-
-    removeRecordFile(record_item);
-    if (record_item === null) record.filepath = file;
-    else record_item.file = file;
-};
-
-*/
-
 const addRecord = () => {
     if (!record.amount || record.amount > remaining_amount.value) {
         record.errors.amount = `O valor do registro deve ser maior que R$ 0,00 e menor que ${toMoney(remaining_amount.value)}`;
@@ -177,7 +139,8 @@ const submit = () => {
                     <!-- SEÇÃO DE INFORMAÇÕES DE PAGAMENTOS -->
                     <section class="py-4">
                         <h2 class="text-base font-semibold leading-7 text-gray-900">Informações Básicas</h2>
-                        <p class="mt-1 text-sm leading-6 text-gray-600">Informações sobre o serviço como título do serviço,
+                        <p class="mt-1 text-sm leading-6 text-gray-600">Informações sobre o serviço como título do
+                            serviço,
                             nome do cliente, valores de pagamento e prazo para conclusão</p>
 
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
@@ -191,7 +154,7 @@ const submit = () => {
                                         placeholder="Título da título" :disabled="disable_services_inputs"
                                         v-model="service.title" required>
                                     <p v-if="service.errors.title" class="text-red-500 text-sm">{{
-                                        service.errors.title }}</p>
+        service.errors.title }}</p>
                                 </div>
                             </div>
 
@@ -203,7 +166,7 @@ const submit = () => {
                                         class="simple-input disabled:bg-gray-200" placeholder="Nome do cliente"
                                         :disabled="disable_services_inputs" v-model="service.client" required>
                                     <p v-if="service.errors.client" class="text-red-500 text-sm">{{
-                                        service.errors.client }}</p>
+        service.errors.client }}</p>
                                 </div>
                             </div>
 
@@ -212,12 +175,12 @@ const submit = () => {
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Valor
                                     total</label>
                                 <div class="mt-2">
-                                    <input id="service-total-amount" name="service-total-amount" type="number" step="0.01"
-                                        min="0" autocomplete="off" class="simple-input disabled:bg-gray-200"
+                                    <input id="service-total-amount" name="service-total-amount" type="number"
+                                        step="0.01" min="0" autocomplete="off" class="simple-input disabled:bg-gray-200"
                                         placeholder="Valor total inicial da título" :disabled="disable_services_inputs"
                                         v-model="service.total_value" required>
                                     <p v-if="service.errors.total_value" class="text-red-500 text-sm">{{
-                                        service.errors.total_value }}</p>
+        service.errors.total_value }}</p>
                                 </div>
                             </div>
 
@@ -231,7 +194,7 @@ const submit = () => {
                                         placeholder="Prazo para conclusão" :min="formatDate()"
                                         :disabled="disable_services_inputs" v-model="service.deadline" required>
                                     <p v-if="service.errors.deadline" class="text-red-500 text-sm">{{
-                                        service.errors.deadline }}</p>
+        service.errors.deadline }}</p>
                                 </div>
                             </div>
 
@@ -244,7 +207,7 @@ const submit = () => {
                                         placeholder="Descreva a título mais detalhadamente ou insira informações adicionais"
                                         :disabled="disable_services_inputs" v-model="service.observations"></textarea>
                                     <p v-if="service.errors.observations" class="text-red-500 text-sm">{{
-                                        service.errors.observations }}</p>
+        service.errors.observations }}</p>
                                 </div>
                             </div>
                         </div>
@@ -276,12 +239,14 @@ const submit = () => {
                     <section class="py-4" v-if="enable_records_inputs">
                         <div v-if="modal.mode === 'create'">
                             <h2 class="text-base font-semibold leading-7 text-gray-900">Pagamentos concluídos</h2>
-                            <p class="mt-1 text-sm leading-6 text-gray-600">Insira o adiantamento ou os serviços parciais
+                            <p class="mt-1 text-sm leading-6 text-gray-600">Insira o adiantamento ou os serviços
+                                parciais
                                 já
                                 realizando desta título</p>
                         </div>
                         <div v-if="modal.mode === 'update'">
-                            <h2 class="text-base font-semibold leading-7 text-gray-900">Lista de pagamentos concluídos</h2>
+                            <h2 class="text-base font-semibold leading-7 text-gray-900">Lista de pagamentos concluídos
+                            </h2>
                             <p class="mt-1 text-sm leading-6 text-gray-600">Abaixo está listado os registros de serviços
                                 realizados. Para adicionar novos serviços, ou remover algum serviço existente, entre na
                                 seção de serviço.</p>
@@ -294,7 +259,8 @@ const submit = () => {
                         <div v-if="modal.mode === 'see'">
                             <h2 class="text-base font-semibold leading-7 text-gray-900">Veja a lista de pagamentos
                                 realizados</h2>
-                            <p class="mt-1 text-sm leading-6 text-gray-600">Abaixo segue a lista dos pagamentos concluídos
+                            <p class="mt-1 text-sm leading-6 text-gray-600">Abaixo segue a lista dos pagamentos
+                                concluídos
                                 deste serviço</p>
                         </div>
 
@@ -310,16 +276,18 @@ const submit = () => {
                                         class="simple-input disabled:bg-gray-200 disabled:opacity-75"
                                         :disabled="remaining_amount == 0" placeholder="Valor do serviço parcial"
                                         v-model="record.amount" />
-                                    <p class="text-gray-400 text-xs py-1">Valor Restante:y {{ toMoney(remaining_amount) }}
+                                    <p class="text-gray-400 text-xs py-1">Valor Restante:y {{ toMoney(remaining_amount)
+                                        }}
                                     </p>
                                     <p v-if="record.errors.amount" class="text-red-500 text-sm">{{
-                                        record.errors.amount }}</p>
+        record.errors.amount }}</p>
                                 </div>
                             </div>
 
                             <div class="sm:col-span-3">
                                 <label for="record-date"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Data do
+                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Data
+                                    do
                                     serviço</label>
                                 <div class="mt-2">
                                     <input id="record-date" name="record-date" type="date" :max="formatDate()"
@@ -328,7 +296,7 @@ const submit = () => {
                                         v-model="record.register_date" />
                                     <p class="text-gray-400 text-xs py-1">Não aceita datas no futuro</p>
                                     <p v-if="record.errors.date" class="text-red-500 text-sm">{{
-                                        record.errors.date }}</p>
+        record.errors.date }}</p>
                                 </div>
                             </div>
                             <!-- UPLOAD FILE
@@ -387,7 +355,8 @@ const submit = () => {
                         </div>
 
 
-                        <div v-if="modal.mode !== 'update' && modal.mode !== 'see'" class="w-full py-5 flex justify-end">
+                        <div v-if="modal.mode !== 'update' && modal.mode !== 'see'"
+                            class="w-full py-5 flex justify-end">
                             <button type="button"
                                 class="w-full px-4 py-2 bg-blue-600 border border-gray-300 rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-blue-700 focus:outline-none focus:border-blue-300 focus:ring focus:ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition"
                                 :disabled="!record.amount || !record.register_date || record.amount > remaining_amount"
@@ -401,8 +370,7 @@ const submit = () => {
                                 <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                                     <div class="overflow-hidden">
                                         <table class="min-w-full text-left text-sm font-light">
-                                            <thead
-                                                class="border-b bg-white font-medium dark:border-neutral-500 dark:bg-neutral-600">
+                                            <thead class="border-b bg-white font-medium ">
                                                 <tr>
                                                     <th scope="col" class="px-6 py-4 text-center">Valor</th>
                                                     <th scope="col" class="px-6 py-4 text-center">Data</th>
@@ -415,18 +383,17 @@ const submit = () => {
                                             </thead>
                                             <tbody>
 
-                                                <tr v-for=" record_item in records_list"
-                                                    class="border-b bg-white dark:border-neutral-500 dark:bg-neutral-700">
+                                                <tr v-for=" record_item in records_list" class="border-b bg-white ">
                                                     <td class="whitespace-nowrap px-6  text-center">
                                                         <div v-if="modal.mode !== 'update' && !record_item.past"
                                                             class="w-full relative flex flex-wrap items-stretch">
                                                             <span
-                                                                class="w-1/4 select-none flex items-center whitespace-nowrap rounded-l border border-r-0 border-solid border-neutral-300 px-3 py-[0.25rem] text-center text-xs font-normal leading-[1.6] text-neutral-700 dark:border-neutral-600 dark:text-neutral-200 dark:placeholder:text-neutral-200"
+                                                                class="w-1/4 select-none flex items-center whitespace-nowrap rounded-l border border-r-0 border-solid border-neutral-300 px-3 py-[0.25rem] text-center text-xs font-normal leading-[1.6] text-neutral-700 "
                                                                 id="basic-addon1">R$</span>
                                                             <input id="record_item-amount-edit"
                                                                 name="record_item-amount-edit" type="number" step="0.01"
                                                                 min="0" :max="remaining_amount" autocomplete="off"
-                                                                class="relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-3 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none dark:border-neutral-600 dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:focus:border-primary disabled:bg-gray-200"
+                                                                class="relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-3 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
                                                                 placeholder="Editar serviço parcial"
                                                                 v-model="record_item.amount" />
                                                         </div>
@@ -437,7 +404,7 @@ const submit = () => {
                                                             class="w-full relative flex flex-wrap items-stretch">
                                                             <input id="record-date" name="record-date" type="date"
                                                                 :max="formatDate()" autocomplete="off"
-                                                                class="w-3/4 relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-3 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none dark:border-neutral-600 dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:focus:border-primary disabled:bg-gray-200"
+                                                                class="w-3/4 relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-3 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
                                                                 placeholder="Data de serviço do valor parcial"
                                                                 v-model="record_item.register_date" />
 
@@ -486,28 +453,33 @@ const submit = () => {
                                                             title="Remover este registro" />
                                                     </td>
                                                     <p v-if="record_item.errors.amount" class="text-red-500 text-sm">{{
-                                                        record_item.errors.amount }}</p>
+        record_item.errors.amount }}</p>
 
                                                     <p v-if="record_item.errors.date" class="text-red-500 text-sm">{{
-                                                        record_item.errors.date }}</p>
+        record_item.errors.date }}</p>
 
                                                 </tr>
                                             </tbody>
                                         </table>
-                                        <p v-if="remaining_amount < 0" class="text-red-500 text-sm py-5 text-center">A soma
+                                        <p v-if="remaining_amount < 0" class="text-red-500 text-sm py-5 text-center">A
+                                            soma
                                             dos
                                             serviços
                                             não pode ser maior que {{ toMoney(service.total_value) }}</p>
-                                        <p v-if="invalid_record_date" class="text-red-500 text-sm py-5 text-center">Todas as
-                                            datas de registro devem ser não nulas e menores ou iguais a {{ formatDate(new
-                                                Date()) }}</p>
-                                        <p v-if="invalid_record_amount" class="text-red-500 text-sm py-5 text-center">Todos
+                                        <p v-if="invalid_record_date" class="text-red-500 text-sm py-5 text-center">
+                                            Todas as
+                                            datas de registro devem ser não nulas e menores ou iguais a {{
+        formatDate(new
+            Date()) }}</p>
+                                        <p v-if="invalid_record_amount" class="text-red-500 text-sm py-5 text-center">
+                                            Todos
                                             os valores devem ser maiores que R$ 0,00</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="py-5 text-gray-400 text-center">Não há registro de pagamento no momento.</div>
+                        <div v-else class="py-5 text-gray-400 text-center">Não há registro de pagamento no momento.
+                        </div>
                     </section>
 
                 </div>
@@ -518,11 +490,12 @@ const submit = () => {
             <SecondaryButton v-if="modal.mode !== 'see'" :class="{ 'disabled': service.processing }" @click="close()">
                 Cancelar
             </SecondaryButton>
-        <PrimaryButton
-            :class="{ 'disabled': (service.processing || remaining_amount < 0 || invalid_record_date || invalid_record_amount) }"
-            :disabled="(service.processing || remaining_amount < 0 || invalid_record_date || invalid_record_amount)"
-            @click="submit()">{{
-            modal.primary_button_txt
-            }}</PrimaryButton>
-    </template>
-</CreateUpdateModal></template>
+            <PrimaryButton
+                :class="{ 'disabled': (service.processing || remaining_amount < 0 || invalid_record_date || invalid_record_amount) }"
+                :disabled="(service.processing || remaining_amount < 0 || invalid_record_date || invalid_record_amount)"
+                @click="modal.mode === 'see' ? close() : submit()">{{
+                modal.primary_button_txt
+                }}</PrimaryButton>
+        </template>
+    </CreateUpdateModal>
+</template>

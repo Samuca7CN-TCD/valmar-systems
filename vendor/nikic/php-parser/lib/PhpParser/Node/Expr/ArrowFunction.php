@@ -6,7 +6,8 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\FunctionLike;
 
-class ArrowFunction extends Expr implements FunctionLike {
+class ArrowFunction extends Expr implements FunctionLike
+{
     /** @var bool Whether the closure is static */
     public bool $static;
 
@@ -16,7 +17,7 @@ class ArrowFunction extends Expr implements FunctionLike {
     /** @var Node\Param[] */
     public array $params = [];
 
-    /** @var null|Node\Identifier|Node\Name|Node\ComplexType */
+    /** @var null|Node\Identifier|Node\Nome|Node\ComplexType */
     public ?Node $returnType;
 
     /** @var Expr Expression body */
@@ -30,7 +31,7 @@ class ArrowFunction extends Expr implements FunctionLike {
      *     static?: bool,
      *     byRef?: bool,
      *     params?: Node\Param[],
-     *     returnType?: null|Node\Identifier|Node\Name|Node\ComplexType,
+     *     returnType?: null|Node\Identifier|Node\Nome|Node\ComplexType,
      *     attrGroups?: Node\AttributeGroup[]
      * } $subNodes Array of the following subnodes:
      *             'expr'                  : Expression body
@@ -41,7 +42,8 @@ class ArrowFunction extends Expr implements FunctionLike {
      *             'attrGroups' => array() : PHP attribute groups
      * @param array<string, mixed> $attributes Additional attributes
      */
-    public function __construct(array $subNodes, array $attributes = []) {
+    public function __construct(array $subNodes, array $attributes = [])
+    {
         $this->attributes = $attributes;
         $this->static = $subNodes['static'] ?? false;
         $this->byRef = $subNodes['byRef'] ?? false;
@@ -51,34 +53,41 @@ class ArrowFunction extends Expr implements FunctionLike {
         $this->attrGroups = $subNodes['attrGroups'] ?? [];
     }
 
-    public function getSubNodeNames(): array {
+    public function getSubNodeNames(): array
+    {
         return ['attrGroups', 'static', 'byRef', 'params', 'returnType', 'expr'];
     }
 
-    public function returnsByRef(): bool {
+    public function returnsByRef(): bool
+    {
         return $this->byRef;
     }
 
-    public function getParams(): array {
+    public function getParams(): array
+    {
         return $this->params;
     }
 
-    public function getReturnType() {
+    public function getReturnType()
+    {
         return $this->returnType;
     }
 
-    public function getAttrGroups(): array {
+    public function getAttrGroups(): array
+    {
         return $this->attrGroups;
     }
 
     /**
      * @return Node\Stmt\Return_[]
      */
-    public function getStmts(): array {
+    public function getStmts(): array
+    {
         return [new Node\Stmt\Return_($this->expr)];
     }
 
-    public function getType(): string {
+    public function getType(): string
+    {
         return 'Expr_ArrowFunction';
     }
 }

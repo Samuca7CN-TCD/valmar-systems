@@ -57,8 +57,7 @@ const showResults = ref(false);
 
 const filteredItems = computed(() => {
     return props.items.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.value.toLowerCase()) &&
-        !props.sell.items_list.some(sellItem => sellItem.id === item.id)
+        item.name.toLowerCase().includes(searchTerm.value.toLowerCase())
     );
 });
 
@@ -316,7 +315,7 @@ const submit = () => {
                             <div class="sm:col-span-4">
                                 <table v-if="props.sell.items_list.length"
                                     class="min-w-full text-left text-sm font-medium leading-6 text-gray-900">
-                                    <thead class="border-b font-medium dark:border-neutral-500">
+                                    <thead class="border-b font-medium">
                                         <tr>
                                             <th scope="col" class="px-6 py-4 text-center">#</th>
                                             <!--<th scope="col" class="px-6 py-4 text-center">Retirado?</th>-->

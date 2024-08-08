@@ -4,7 +4,7 @@ The purpose of this list is to help in finding the methods when working with PSR
 
 The interfaces defined in PSR-7 are the following:
 
-| Class Name | Description |
+| Class Nome | Description |
 |---|---|
 | [Psr\Http\Message\MessageInterface](http://www.php-fig.org/psr/psr-7/#psrhttpmessagemessageinterface) | Representation of a HTTP message |
 | [Psr\Http\Message\RequestInterface](http://www.php-fig.org/psr/psr-7/#psrhttpmessagerequestinterface) | Representation of an outgoing, client-side request. |
@@ -16,7 +16,7 @@ The interfaces defined in PSR-7 are the following:
 
 ## `Psr\Http\Message\MessageInterface` Methods
 
-| Method Name                        | Description | Notes |
+| Method Nome                        | Description | Notes |
 |------------------------------------| ----------- | ----- |
 | `getProtocolVersion()`             | Retrieve HTTP protocol version          |  1.0 or 1.1 |
 | `withProtocolVersion($version)`    | Returns new message instance with given HTTP protocol version          |      |
@@ -35,7 +35,7 @@ The interfaces defined in PSR-7 are the following:
 
 Same methods as `Psr\Http\Message\MessageInterface`  + the following methods:
 
-| Method Name                        | Description | Notes |
+| Method Nome                        | Description | Notes |
 |------------------------------------| ----------- | ----- |
 | `getRequestTarget()`                | Retrieves the message's request target              | origin-form, absolute-form, authority-form, asterisk-form ([RFC7230](https://www.rfc-editor.org/rfc/rfc7230.txt)) |
 | `withRequestTarget($requestTarget)` | Return a new message instance with the specific request-target |      |
@@ -49,7 +49,7 @@ Same methods as `Psr\Http\Message\MessageInterface`  + the following methods:
 
 Same methods as `Psr\Http\Message\RequestInterface`  + the following methods:
 
-| Method Name                        | Description | Notes |
+| Method Nome                        | Description | Notes |
 |------------------------------------| ----------- | ----- |
 | `getServerParams() `               | Retrieve server parameters  | Typically derived from `$_SERVER`  |
 | `getCookieParams()`                | Retrieves cookies sent by the client to the server. | Typically derived from `$_COOKIES` |
@@ -68,7 +68,7 @@ Same methods as `Psr\Http\Message\RequestInterface`  + the following methods:
 
 Same methods as `Psr\Http\Message\MessageInterface`  + the following methods:
 
-| Method Name                        | Description | Notes |
+| Method Nome                        | Description | Notes |
 |------------------------------------| ----------- | ----- |
 | `getStatusCode()` | Gets the response status code. | |
 | `withStatus($code, $reasonPhrase = '')` | Returns a new response instance with the specified status code and, optionally, reason phrase. | |
@@ -76,7 +76,7 @@ Same methods as `Psr\Http\Message\MessageInterface`  + the following methods:
 
 ##  `Psr\Http\Message\StreamInterface` Methods
 
-| Method Name                        | Description | Notes |
+| Method Nome                        | Description | Notes |
 |------------------------------------| ----------- | ----- |
 | `__toString()` | Reads all data from the stream into a string, from the beginning to end. | |
 | `close()` | Closes the stream and any underlying resources. | |
@@ -95,7 +95,7 @@ Same methods as `Psr\Http\Message\MessageInterface`  + the following methods:
 
 ## `Psr\Http\Message\UriInterface` Methods
 
-| Method Name                        | Description | Notes |
+| Method Nome                        | Description | Notes |
 |------------------------------------| ----------- | ----- |
 | `getScheme()` | Retrieve the scheme component of the URI. | |
 | `getAuthority()` | Retrieve the authority component of the URI. | |
@@ -116,7 +116,7 @@ Same methods as `Psr\Http\Message\MessageInterface`  + the following methods:
 
 ## `Psr\Http\Message\UploadedFileInterface` Methods
 
-| Method Name                        | Description | Notes |
+| Method Nome                        | Description | Notes |
 |------------------------------------| ----------- | ----- |
 | `getStream()` | Retrieve a stream representing the uploaded file. | |
 | `moveTo($targetPath)` | Move the uploaded file to a new location. | |

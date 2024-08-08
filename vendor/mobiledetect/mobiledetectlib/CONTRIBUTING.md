@@ -85,7 +85,7 @@ Now go to your repo on GitHub and ["Submit the PR"](https://help.github.com/arti
 
 ### 2. Add new module, plugin, plugin or port
 
-[Submit new module, plugin, port](../../issues/new?title=New%203rd%20party%20module&body=Name,%20Link%20and%20Description%20of%20the%20module.)
+[Submit new module, plugin, port](../../issues/new?title=New%203rd%20party%20module&body=Nome,%20Link%20and%20Description%20of%20the%20module.)
  including the following information:
 * Module name
 * Description

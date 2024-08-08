@@ -35,7 +35,7 @@ class CreateMiddleware extends GeneratorCommand
      */
     protected function getStub(): string
     {
-        return __DIR__.'/../../stubs/middleware.stub';
+        return __DIR__ . '/../../stubs/middleware.stub';
     }
 
     /**
@@ -45,7 +45,7 @@ class CreateMiddleware extends GeneratorCommand
      */
     protected function getDefaultNamespace($rootNamespace): string
     {
-        return $rootNamespace.'\Http\Middleware';
+        return $rootNamespace . '\Http\Middleware';
     }
 
     /**
@@ -54,7 +54,7 @@ class CreateMiddleware extends GeneratorCommand
     protected function getArguments(): array
     {
         return [
-            ['name', InputOption::VALUE_REQUIRED, 'Name of the Middleware that should be created', 'HandleInertiaRequests'],
+            ['name', InputOption::VALUE_REQUIRED, 'Nome of the Middleware that should be created', 'HandleInertiaRequests'],
         ];
     }
 

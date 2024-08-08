@@ -13,7 +13,7 @@ use function assert;
 use function is_array;
 use PhpParser\Node;
 use PhpParser\Node\Expr\New_;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\Stmt;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -39,21 +39,26 @@ final class ComplexityCalculatingVisitor extends NodeVisitorAbstract
 
     public function enterNode(Node $node): ?int
     {
-        if (!$node instanceof ClassMethod && !$node instanceof Function_) {
+        if (!$node instanceof ClassMethod && !$node instanceof Function_)
+        {
             return null;
         }
 
-        if ($node instanceof ClassMethod) {
-            if ($node->getAttribute('parent') instanceof Interface_) {
+        if ($node instanceof ClassMethod)
+        {
+            if ($node->getAttribute('parent') instanceof Interface_)
+            {
                 return null;
             }
 
-            if ($node->isAbstract()) {
+            if ($node->isAbstract())
+            {
                 return null;
             }
 
             $name = $this->classMethodName($node);
-        } else {
+        } else
+        {
             $name = $this->functionName($node);
         }
 
@@ -66,7 +71,8 @@ final class ComplexityCalculatingVisitor extends NodeVisitorAbstract
             $this->cyclomaticComplexity($statements),
         );
 
-        if ($this->shortCircuitTraversal) {
+        if ($this->shortCircuitTraversal)
+        {
             return NodeVisitor::DONT_TRAVERSE_CHILDREN;
         }
 
@@ -106,12 +112,13 @@ final class ComplexityCalculatingVisitor extends NodeVisitorAbstract
 
         assert($parent instanceof Class_ || $parent instanceof Trait_);
 
-        if ($parent->getAttribute('parent') instanceof New_) {
+        if ($parent->getAttribute('parent') instanceof New_)
+        {
             return 'anonymous class';
         }
 
         assert(isset($parent->namespacedName));
-        assert($parent->namespacedName instanceof Name);
+        assert($parent->namespacedName instanceof Nome);
 
         return $parent->namespacedName->toString() . '::' . $node->name->toString();
     }
@@ -122,7 +129,7 @@ final class ComplexityCalculatingVisitor extends NodeVisitorAbstract
     private function functionName(Function_ $node): string
     {
         assert(isset($node->namespacedName));
-        assert($node->namespacedName instanceof Name);
+        assert($node->namespacedName instanceof Nome);
 
         $functionName = $node->namespacedName->toString();
 

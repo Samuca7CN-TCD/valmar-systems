@@ -20,7 +20,7 @@ trait Fallback
     protected static array $fallbacks = [];
 
     /**
-     * Enable the fallback implementation.
+     * Habilitar the fallback implementation.
      */
     public static function fallbackWhen(bool $condition): void
     {
@@ -52,8 +52,9 @@ trait Fallback
     {
         $fallback = static::$fallbacks[static::class] ?? null;
 
-        if ($fallback === null) {
-            throw new RuntimeException('No fallback implementation registered for ['.static::class.']');
+        if ($fallback === null)
+        {
+            throw new RuntimeException('No fallback implementation registered for [' . static::class . ']');
         }
 
         return $fallback($this);

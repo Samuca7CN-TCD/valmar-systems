@@ -107,7 +107,7 @@ See [UPGRADING](UPGRADING.md#upgrading-from-1x-to-2x) for detailed upgrade instr
 
 **Changed**
 
-- Enable provenance for npm package by @saibotk in https://github.com/tighten/ziggy/pull/684
+- Habilitar provenance for npm package by @saibotk in https://github.com/tighten/ziggy/pull/684
 - Handle generated file extensions more robustly by @bakerkretzmar in https://github.com/tighten/ziggy/pull/687
 
 ## [v1.8.1] - 2023-10-12

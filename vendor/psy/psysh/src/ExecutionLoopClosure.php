@@ -30,15 +30,19 @@ class ExecutionLoopClosure extends ExecutionClosure
             // Restore execution scope variables
             \extract($__psysh__->getScopeVariables(false));
 
-            while (true) {
+            while (true)
+            {
                 $__psysh__->beforeLoop();
 
-                try {
+                try
+                {
                     $__psysh__->getInput();
 
-                    try {
+                    try
+                    {
                         // Pull in any new execution scope variables
-                        if ($__psysh__->getLastExecSuccess()) {
+                        if ($__psysh__->getLastExecSuccess())
+                        {
                             \extract($__psysh__->getScopeVariablesDiff(\get_defined_vars()));
                         }
 
@@ -49,15 +53,18 @@ class ExecutionLoopClosure extends ExecutionClosure
                         \set_error_handler([$__psysh__, 'handleError']);
 
                         // Evaluate the current code buffer
-                        $_ = eval($__psysh__->onExecute($__psysh__->flushCode() ?: ExecutionClosure::NOOP_INPUT));
-                    } catch (\Throwable $_e) {
+                        $_ = eval ($__psysh__->onExecute($__psysh__->flushCode() ?: ExecutionClosure::NOOP_INPUT));
+                    } catch (\Throwable $_e)
+                    {
                         // Clean up on our way out.
-                        if (\ob_get_level() > 0) {
+                        if (\ob_get_level() > 0)
+                        {
                             \ob_end_clean();
                         }
 
                         throw $_e;
-                    } finally {
+                    } finally
+                    {
                         // Won't be needing this anymore
                         \restore_error_handler();
                     }
@@ -65,19 +72,22 @@ class ExecutionLoopClosure extends ExecutionClosure
                     // Flush stdout (write to shell output, plus save to magic variable)
                     \ob_end_flush();
 
-                    // Save execution scope variables for next time
+                    // Salvar execution scope variables for next time
                     $__psysh__->setScopeVariables(\get_defined_vars());
 
                     $__psysh__->writeReturnValue($_);
-                } catch (BreakException $_e) {
+                } catch (BreakException $_e)
+                {
                     $__psysh__->writeException($_e);
 
                     return;
-                } catch (ThrowUpException $_e) {
+                } catch (ThrowUpException $_e)
+                {
                     $__psysh__->writeException($_e);
 
                     throw $_e;
-                } catch (\Throwable $_e) {
+                } catch (\Throwable $_e)
+                {
                     $__psysh__->writeException($_e);
                 }
 

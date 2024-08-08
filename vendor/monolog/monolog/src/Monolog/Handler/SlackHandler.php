@@ -38,7 +38,7 @@ class SlackHandler extends SocketHandler
     /**
      * @param  string                    $token                  Slack API token
      * @param  string                    $channel                Slack channel (encoded ID or name)
-     * @param  string|null               $username               Name of a bot
+     * @param  string|null               $username               Nome of a bot
      * @param  bool                      $useAttachment          Whether the message should be added to Slack as attachment (plain text otherwise)
      * @param  string|null               $iconEmoji              The emoji name to use (or null)
      * @param  bool                      $useShortAttachment     Whether the context/extra messages added to Slack as attachments are in a short style
@@ -63,7 +63,8 @@ class SlackHandler extends SocketHandler
         ?float $connectionTimeout = null,
         ?int $chunkSize = null
     ) {
-        if (!\extension_loaded('openssl')) {
+        if (!\extension_loaded('openssl'))
+        {
             throw new MissingExtensionException('The OpenSSL PHP extension is required to use the SlackHandler');
         }
 
@@ -129,7 +130,8 @@ class SlackHandler extends SocketHandler
         $dataArray = $this->slackRecord->getSlackData($record);
         $dataArray['token'] = $this->token;
 
-        if (isset($dataArray['attachments']) && \is_array($dataArray['attachments']) && \count($dataArray['attachments']) > 0) {
+        if (isset($dataArray['attachments']) && \is_array($dataArray['attachments']) && \count($dataArray['attachments']) > 0)
+        {
             $dataArray['attachments'] = Utils::jsonEncode($dataArray['attachments']);
         }
 
@@ -168,7 +170,8 @@ class SlackHandler extends SocketHandler
     protected function finalizeWrite(): void
     {
         $res = $this->getResource();
-        if (\is_resource($res)) {
+        if (\is_resource($res))
+        {
             @fread($res, 2048);
         }
         $this->closeSocket();

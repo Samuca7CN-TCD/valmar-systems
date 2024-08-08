@@ -8,14 +8,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Procedure extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
         'action_id',
         'department_id',
         'movement_id',
+        'previous_id',
+        'remaked',
     ];
 
     public function user()
@@ -25,7 +26,7 @@ class Procedure extends Model
 
     public function action()
     {
-        return $this->hasOne(Action::class);
+        return $this->belongsTo(Action::class);
     }
 
     public function department()
@@ -33,7 +34,7 @@ class Procedure extends Model
         return $this->belongsTo(Department::class);
     }
 
-    function movement()
+    public function movement()
     {
         return $this->belongsTo(Movement::class);
     }

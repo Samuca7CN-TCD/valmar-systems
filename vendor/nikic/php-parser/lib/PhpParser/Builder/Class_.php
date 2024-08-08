@@ -6,13 +6,14 @@ use PhpParser;
 use PhpParser\BuilderHelpers;
 use PhpParser\Modifiers;
 use PhpParser\Node;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\Stmt;
 
-class Class_ extends Declaration {
+class Class_ extends Declaration
+{
     protected string $name;
-    protected ?Name $extends = null;
-    /** @var list<Name> */
+    protected ?Nome $extends = null;
+    /** @var list<Nome> */
     protected array $implements = [];
     protected int $flags = 0;
     /** @var list<Stmt\TraitUse> */
@@ -29,20 +30,22 @@ class Class_ extends Declaration {
     /**
      * Creates a class builder.
      *
-     * @param string $name Name of the class
+     * @param string $name Nome of the class
      */
-    public function __construct(string $name) {
+    public function __construct(string $name)
+    {
         $this->name = $name;
     }
 
     /**
      * Extends a class.
      *
-     * @param Name|string $class Name of class to extend
+     * @param Nome|string $class Nome of class to extend
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function extend($class) {
+    public function extend($class)
+    {
         $this->extends = BuilderHelpers::normalizeName($class);
 
         return $this;
@@ -51,12 +54,14 @@ class Class_ extends Declaration {
     /**
      * Implements one or more interfaces.
      *
-     * @param Name|string ...$interfaces Names of interfaces to implement
+     * @param Nome|string ...$interfaces Names of interfaces to implement
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function implement(...$interfaces) {
-        foreach ($interfaces as $interface) {
+    public function implement(...$interfaces)
+    {
+        foreach ($interfaces as $interface)
+        {
             $this->implements[] = BuilderHelpers::normalizeName($interface);
         }
 
@@ -68,8 +73,9 @@ class Class_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makeAbstract() {
-        $this->flags = BuilderHelpers::addClassModifier($this->flags, Modifiers::ABSTRACT);
+    public function makeAbstract()
+    {
+        $this->flags = BuilderHelpers::addClassModifier($this->flags, Modifiers::ABSTRACT );
 
         return $this;
     }
@@ -79,8 +85,9 @@ class Class_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makeFinal() {
-        $this->flags = BuilderHelpers::addClassModifier($this->flags, Modifiers::FINAL);
+    public function makeFinal()
+    {
+        $this->flags = BuilderHelpers::addClassModifier($this->flags, Modifiers::FINAL );
 
         return $this;
     }
@@ -90,8 +97,9 @@ class Class_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makeReadonly() {
-        $this->flags = BuilderHelpers::addClassModifier($this->flags, Modifiers::READONLY);
+    public function makeReadonly()
+    {
+        $this->flags = BuilderHelpers::addClassModifier($this->flags, Modifiers::READONLY );
 
         return $this;
     }
@@ -103,18 +111,24 @@ class Class_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addStmt($stmt) {
+    public function addStmt($stmt)
+    {
         $stmt = BuilderHelpers::normalizeNode($stmt);
 
-        if ($stmt instanceof Stmt\Property) {
+        if ($stmt instanceof Stmt\Property)
+        {
             $this->properties[] = $stmt;
-        } elseif ($stmt instanceof Stmt\ClassMethod) {
+        } elseif ($stmt instanceof Stmt\ClassMethod)
+        {
             $this->methods[] = $stmt;
-        } elseif ($stmt instanceof Stmt\TraitUse) {
+        } elseif ($stmt instanceof Stmt\TraitUse)
+        {
             $this->uses[] = $stmt;
-        } elseif ($stmt instanceof Stmt\ClassConst) {
+        } elseif ($stmt instanceof Stmt\ClassConst)
+        {
             $this->constants[] = $stmt;
-        } else {
+        } else
+        {
             throw new \LogicException(sprintf('Unexpected node of type "%s"', $stmt->getType()));
         }
 
@@ -128,7 +142,8 @@ class Class_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addAttribute($attribute) {
+    public function addAttribute($attribute)
+    {
         $this->attributeGroups[] = BuilderHelpers::normalizeAttribute($attribute);
 
         return $this;
@@ -139,7 +154,8 @@ class Class_ extends Declaration {
      *
      * @return Stmt\Class_ The built class node
      */
-    public function getNode(): PhpParser\Node {
+    public function getNode(): PhpParser\Node
+    {
         return new Stmt\Class_($this->name, [
             'flags' => $this->flags,
             'extends' => $this->extends,

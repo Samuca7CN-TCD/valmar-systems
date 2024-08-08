@@ -8,8 +8,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Payslip extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'employee_id',
+        'description',
+        'value',
+        'detail',
+        'month',
+        'year',
+    ];
 
     public function employee()
     {

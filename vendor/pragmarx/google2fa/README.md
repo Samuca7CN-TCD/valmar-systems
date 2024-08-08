@@ -1,7 +1,7 @@
 # Google2FA 
 ## Google Two-Factor Authentication for PHP
 
-Google2FA is a PHP implementation of the Google Two-Factor Authentication Module, supporting the HMAC-Based One-time Password (HOTP) algorithm specified in [RFC 4226](https://tools.ietf.org/html/rfc4226) and the Time-based One-time Password (TOTP) algorithm specified in [RFC 6238](https://tools.ietf.org/html/rfc6238).
+Google2FA is a PHP implementation of the Google Two-Factor Authentication Module, supporting the HMAC-Based One-time Senha (HOTP) algorithm specified in [RFC 4226](https://tools.ietf.org/html/rfc4226) and the Time-based One-time Senha (TOTP) algorithm specified in [RFC 6238](https://tools.ietf.org/html/rfc6238).
 
 ---
 
@@ -29,7 +29,7 @@ Google2FA is a PHP implementation of the Google Two-Factor Authentication Module
   - [Requirements](#requirements)
   - [Installing](#installing)
   - [Usage](#usage)
-  - [How To Generate And Use Two Factor Authentication](#how-to-generate-and-use-two-factor-authentication)
+  - [How To Generate And Use Autenticação de dois fatores](#how-to-generate-and-use-two-factor-authentication)
   - [Generating QRCodes](#generating-qrcodes)
   - [QR Code Packages](#qr-code-packages)
   - [Examples of Usage](#examples-of-usage)
@@ -104,7 +104,7 @@ $google2fa = new Google2FA();
 return $google2fa->generateSecretKey();
 ```
 
-## How To Generate And Use Two Factor Authentication
+## How To Generate And Use Autenticação de dois fatores
 
 Generate a secret key for your user and save it:
 
@@ -168,7 +168,7 @@ Get a QRCode to be used inline:
 $google2fa = (new \PragmaRX\Google2FAQRCode\Google2FA());
 
 $inlineUrl = $google2fa->getQRCodeInline(
-    'Company Name',
+    'Company Nome',
     'company@email.com',
     $google2fa->generateSecretKey()
 );

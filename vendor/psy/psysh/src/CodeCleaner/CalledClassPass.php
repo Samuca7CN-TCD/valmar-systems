@@ -14,7 +14,7 @@ namespace Psy\CodeCleaner;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\Trait_;
 use PhpParser\Node\VariadicPlaceholder;
@@ -47,24 +47,29 @@ class CalledClassPass extends CodeCleanerPass
      */
     public function enterNode(Node $node)
     {
-        if ($node instanceof Class_ || $node instanceof Trait_) {
+        if ($node instanceof Class_ || $node instanceof Trait_)
+        {
             $this->inClass = true;
-        } elseif ($node instanceof FuncCall && !$this->inClass) {
+        } elseif ($node instanceof FuncCall && !$this->inClass)
+        {
             // We'll give any args at all (besides null) a pass.
             // Technically we should be checking whether the args are objects, but this will do for now.
             //
             // @todo switch this to actually validate args when we get context-aware code cleaner passes.
-            if (!empty($node->args) && !$this->isNull($node->args[0])) {
+            if (!empty($node->args) && !$this->isNull($node->args[0]))
+            {
                 return;
             }
 
             // We'll ignore name expressions as well (things like `$foo()`)
-            if (!($node->name instanceof Name)) {
+            if (!($node->name instanceof Nome))
+            {
                 return;
             }
 
             $name = \strtolower($node->name);
-            if (\in_array($name, ['get_class', 'get_called_class'])) {
+            if (\in_array($name, ['get_class', 'get_called_class']))
+            {
                 $msg = \sprintf('%s() called without object from outside a class', $name);
                 throw new ErrorException($msg, 0, \E_USER_WARNING, null, $node->getStartLine());
             }
@@ -78,14 +83,16 @@ class CalledClassPass extends CodeCleanerPass
      */
     public function leaveNode(Node $node)
     {
-        if ($node instanceof Class_) {
+        if ($node instanceof Class_)
+        {
             $this->inClass = false;
         }
     }
 
     private function isNull(Node $node): bool
     {
-        if ($node instanceof VariadicPlaceholder) {
+        if ($node instanceof VariadicPlaceholder)
+        {
             return false;
         }
 

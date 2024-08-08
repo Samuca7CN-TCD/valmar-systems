@@ -7,7 +7,8 @@ import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import { BanknotesIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { toMoney } from '@/general.js'
-
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
 // =============================================
 // Informações exteriores
 const props = defineProps({
@@ -19,7 +20,7 @@ const props = defineProps({
     payments_list: Object,
 })
 
-
+const $toast = useToast();
 // =============================================
 // Informações do OBJETO
 const payment_data = useForm({
@@ -135,7 +136,7 @@ const deletePayment = (payment_id, payment_name) => {
     if (confirm(`Você tem certeza que deseja excluir o pagamento "${payment_name}"? Esta ação não poderá ser desfeita!`)) {
         payment_data.delete(route('payments.destroy', payment_id), {
             preserveScroll: true,
-            onSuccess: () => alert('Pagamento deletado com sucesso!')
+            onSuccess: () => $toast.success('Pagamento deletado com sucesso!')
         })
     }
 }
@@ -145,7 +146,7 @@ const submit = () => {
         case 'create': return createPayment()
         case 'update': return updatePayment()
         case 'pay': return payPayment()
-        default: alert('Método desconhecido. Informar o Técnico.')
+        default: $toast.error('Método desconhecido. Informar o Técnico.')
     }
 }
 </script>
@@ -156,7 +157,8 @@ const submit = () => {
     <AppLayout :page="page" :page_options="page_options">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }} | {{ toMoney(total_payments_amount) }}
+                {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{ toMoney(total_payments_amount)
+                    }}</span>
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Payment" class="print:hidden" />
         </template>
@@ -181,8 +183,8 @@ const submit = () => {
                             <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
                                 <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                                     <div class="overflow-hidden">
-                                        <table class="min-w-full text-left text-sm font-light">
-                                            <thead class="border-b font-medium dark:border-neutral-500">
+                                        <table class="w-full text-left text-sm font-light">
+                                            <thead class="border-b font-medium ">
                                                 <tr>
                                                     <th scope="col" class="px-6 py-4 text-center">#</th>
                                                     <th scope="col" class="px-6 py-4 text-center">Dívida</th>
@@ -204,7 +206,7 @@ const submit = () => {
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
         payment.id }}
                                                     </td>
-                                                    <td class="whitespace-normal px-6 py-4 text-center trim">{{
+                                                    <td class="break-words px-6 py-4 text-center">{{
         payment.motive }}
                                                         <span v-if="payment.observations" :title="payment.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
@@ -228,7 +230,7 @@ const submit = () => {
                                                     <td v-if="payment.type !== 2"
                                                         class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-red-700 active:text-red-900 select-none print:hidden"
                                                         :title="'EXCLUIR: ' + payment.motive + '(' + payment.entity_name + ')'"
-                                                        @click="deletePayment(payment.id, payment.name)">
+                                                        @click="deletePayment(payment.id, payment.motive)">
                                                         <XMarkIcon class="w-5 h-5 m-auto" />
                                                     </td>
                                                     <td v-else

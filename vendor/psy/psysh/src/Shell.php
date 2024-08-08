@@ -108,10 +108,11 @@ class Shell extends Application
     public static function isIncluded(array $trace): bool
     {
         $isIncluded = isset($trace[0]['function']) &&
-          \in_array($trace[0]['function'], ['require', 'include', 'require_once', 'include_once']);
+            \in_array($trace[0]['function'], ['require', 'include', 'require_once', 'include_once']);
 
         // Detect Composer PHP bin proxies.
-        if ($isIncluded && \array_key_exists('_composer_autoload_path', $GLOBALS) && \preg_match('{[\\\\/]psysh$}', $trace[0]['file'])) {
+        if ($isIncluded && \array_key_exists('_composer_autoload_path', $GLOBALS) && \preg_match('{[\\\\/]psysh$}', $trace[0]['file']))
+        {
             // If we're in a bin proxy, we'll *always* see one include, but we
             // care if we see a second immediately after that.
             return isset($trace[1]['function']) &&
@@ -158,16 +159,20 @@ class Shell extends Application
      */
     public function add(BaseCommand $command): BaseCommand
     {
-        if ($ret = parent::add($command)) {
-            if ($ret instanceof ContextAware) {
+        if ($ret = parent::add($command))
+        {
+            if ($ret instanceof ContextAware)
+            {
                 $ret->setContext($this->context);
             }
 
-            if ($ret instanceof PresenterAware) {
+            if ($ret instanceof PresenterAware)
+            {
                 $ret->setPresenter($this->config->getPresenter());
             }
 
-            if (isset($this->commandsMatcher)) {
+            if (isset($this->commandsMatcher))
+            {
                 $this->commandsMatcher->setCommands($this->all());
             }
         }
@@ -257,11 +262,13 @@ class Shell extends Application
     {
         $listeners = [];
 
-        if (ProcessForker::isSupported() && $this->config->usePcntl()) {
+        if (ProcessForker::isSupported() && $this->config->usePcntl())
+        {
             $listeners[] = new ProcessForker();
         }
 
-        if (RunkitReloader::isSupported()) {
+        if (RunkitReloader::isSupported())
+        {
             $listeners[] = new RunkitReloader();
         }
 
@@ -277,7 +284,8 @@ class Shell extends Application
     {
         $this->matchers = \array_merge($this->matchers, $matchers);
 
-        if (isset($this->autoCompleter)) {
+        if (isset($this->autoCompleter))
+        {
             $this->addMatchersToAutoCompleter($matchers);
         }
     }
@@ -318,16 +326,19 @@ class Shell extends Application
         // We'll just ignore the input passed in, and set up our own!
         $input = new ArrayInput([]);
 
-        if ($output === null) {
+        if ($output === null)
+        {
             $output = $this->config->getOutput();
         }
 
         $this->setAutoExit(false);
         $this->setCatchExceptions(false);
 
-        try {
+        try
+        {
             return parent::run($input, $output);
-        } catch (\Throwable $e) {
+        } catch (\Throwable $e)
+        {
             $this->writeException($e);
         }
 
@@ -349,10 +360,12 @@ class Shell extends Application
         $this->setOutput($output);
         $this->resetCodeBuffer();
 
-        if ($input->isInteractive()) {
+        if ($input->isInteractive())
+        {
             // @todo should it be possible to have raw output in an interactive run?
             return $this->doInteractiveRun();
-        } else {
+        } else
+        {
             return $this->doNonInteractiveRun($this->config->rawOutput());
         }
     }
@@ -376,15 +389,18 @@ class Shell extends Application
         $this->writeVersionInfo();
         $this->writeStartupMessage();
 
-        try {
+        try
+        {
             $this->beforeRun();
             $this->loadIncludes();
             $loop = new ExecutionLoopClosure($this);
             $loop->execute();
             $this->afterRun();
-        } catch (ThrowUpException $e) {
+        } catch (ThrowUpException $e)
+        {
             throw $e->getPrevious();
-        } catch (BreakException $e) {
+        } catch (BreakException $e)
+        {
             // The ProcessForker throws a BreakException to finish the main thread.
         }
 
@@ -406,7 +422,8 @@ class Shell extends Application
         $this->nonInteractive = true;
 
         // If raw output is enabled (or output is piped) we don't want startup messages.
-        if (!$rawOutput && !$this->config->outputIsPiped()) {
+        if (!$rawOutput && !$this->config->outputIsPiped())
+        {
             $this->output->writeln($this->getHeader());
             $this->writeVersionInfo();
             $this->writeStartupMessage();
@@ -418,11 +435,13 @@ class Shell extends Application
         // For non-interactive execution, read only from the input buffer or from piped input.
         // Otherwise it'll try to readline and hang, waiting for user input with no indication of
         // what's holding things up.
-        if (!empty($this->inputBuffer) || $this->config->inputIsPiped()) {
+        if (!empty($this->inputBuffer) || $this->config->inputIsPiped())
+        {
             $this->getInput(false);
         }
 
-        if ($this->hasCode()) {
+        if ($this->hasCode())
+        {
             $ret = $this->execute($this->flushCode());
             $this->writeReturnValue($ret, $rawOutput);
         }
@@ -441,7 +460,8 @@ class Shell extends Application
         // @todo overrides via environment variables (or should these happen in config? ... probably config)
         $input->setInteractive($this->config->getInputInteractive());
 
-        if ($this->config->getOutputDecorated() !== null) {
+        if ($this->config->getOutputDecorated() !== null)
+        {
             $output->setDecorated($this->config->getOutputDecorated());
         }
 
@@ -456,10 +476,13 @@ class Shell extends Application
         // Load user-defined includes
         $load = function (self $__psysh__) {
             \set_error_handler([$__psysh__, 'handleError']);
-            foreach ($__psysh__->getIncludes() as $__psysh_include__) {
-                try {
+            foreach ($__psysh__->getIncludes() as $__psysh_include__)
+            {
+                try
+                {
                     include_once $__psysh_include__;
-                } catch (\Exception $_e) {
+                } catch (\Exception $_e)
+                {
                     $__psysh__->writeException($_e);
                 }
             }
@@ -490,7 +513,8 @@ class Shell extends Application
     {
         $this->codeBufferOpen = false;
 
-        do {
+        do
+        {
             // reset output verbosity (in case it was altered by a subcommand)
             $this->output->setVerbosity($this->originalVerbosity);
 
@@ -503,29 +527,35 @@ class Shell extends Application
              *   2) At top-level session, behave like the exit command
              *   3) When non-interactive, return, because that's the end of stdin
              */
-            if ($input === false) {
-                if (!$interactive) {
+            if ($input === false)
+            {
+                if (!$interactive)
+                {
                     return;
                 }
 
                 $this->output->writeln('');
 
-                if ($this->hasCode()) {
+                if ($this->hasCode())
+                {
                     $this->resetCodeBuffer();
-                } else {
+                } else
+                {
                     throw new BreakException('Ctrl+D');
                 }
             }
 
             // handle empty input
-            if (\trim($input) === '' && !$this->codeBufferOpen) {
+            if (\trim($input) === '' && !$this->codeBufferOpen)
+            {
                 continue;
             }
 
             $input = $this->onInput($input);
 
             // If the input isn't in an open string or comment, check for commands to run.
-            if ($this->hasCommand($input) && !$this->inputInOpenStringOrComment($input)) {
+            if ($this->hasCommand($input) && !$this->inputInOpenStringOrComment($input))
+            {
                 $this->addHistory($input);
                 $this->runCommand($input);
 
@@ -545,13 +575,14 @@ class Shell extends Application
      */
     private function inputInOpenStringOrComment(string $input): bool
     {
-        if (!$this->hasCode()) {
+        if (!$this->hasCode())
+        {
             return false;
         }
 
         $code = $this->codeBuffer;
         $code[] = $input;
-        $tokens = @\token_get_all('<?php '.\implode("\n", $code));
+        $tokens = @\token_get_all('<?php ' . \implode("\n", $code));
         $last = \array_pop($tokens);
 
         return $last === '"' || $last === '`' ||
@@ -563,7 +594,8 @@ class Shell extends Application
      */
     protected function beforeRun()
     {
-        foreach ($this->loopListeners as $listener) {
+        foreach ($this->loopListeners as $listener)
+        {
             $listener->beforeRun($this);
         }
     }
@@ -573,7 +605,8 @@ class Shell extends Application
      */
     public function beforeLoop()
     {
-        foreach ($this->loopListeners as $listener) {
+        foreach ($this->loopListeners as $listener)
+        {
             $listener->beforeLoop($this);
         }
     }
@@ -585,8 +618,10 @@ class Shell extends Application
      */
     public function onInput(string $input): string
     {
-        foreach ($this->loopListeners as $listeners) {
-            if (($return = $listeners->onInput($this, $input)) !== null) {
+        foreach ($this->loopListeners as $listeners)
+        {
+            if (($return = $listeners->onInput($this, $input)) !== null)
+            {
                 $input = $return;
             }
         }
@@ -603,14 +638,17 @@ class Shell extends Application
     {
         $this->errorReporting = \error_reporting();
 
-        foreach ($this->loopListeners as $listener) {
-            if (($return = $listener->onExecute($this, $code)) !== null) {
+        foreach ($this->loopListeners as $listener)
+        {
+            if (($return = $listener->onExecute($this, $code)) !== null)
+            {
                 $code = $return;
             }
         }
 
         $output = $this->output;
-        if ($output instanceof ConsoleOutput) {
+        if ($output instanceof ConsoleOutput)
+        {
             $output = $output->getErrorOutput();
         }
 
@@ -624,7 +662,8 @@ class Shell extends Application
      */
     public function afterLoop()
     {
-        foreach ($this->loopListeners as $listener) {
+        foreach ($this->loopListeners as $listener)
+        {
             $listener->afterLoop($this);
         }
     }
@@ -634,7 +673,8 @@ class Shell extends Application
      */
     protected function afterRun()
     {
-        foreach ($this->loopListeners as $listener) {
+        foreach ($this->loopListeners as $listener)
+        {
             $listener->afterRun($this);
         }
     }
@@ -662,7 +702,8 @@ class Shell extends Application
     {
         $vars = $this->context->getAll();
 
-        if (!$includeBoundObject) {
+        if (!$includeBoundObject)
+        {
             unset($vars['this']);
         }
 
@@ -682,7 +723,8 @@ class Shell extends Application
     {
         $vars = $this->context->getSpecialVariables();
 
-        if (!$includeBoundObject) {
+        if (!$includeBoundObject)
+        {
             unset($vars['this']);
         }
 
@@ -704,8 +746,10 @@ class Shell extends Application
     {
         $newVars = [];
 
-        foreach ($this->getScopeVariables(false) as $key => $value) {
-            if (!\array_key_exists($key, $currentVars) || $currentVars[$key] !== $value) {
+        foreach ($this->getScopeVariables(false) as $key => $value)
+        {
+            if (!\array_key_exists($key, $currentVars) || $currentVars[$key] !== $value)
+            {
                 $newVars[$key] = $value;
             }
         }
@@ -835,18 +879,22 @@ class Shell extends Application
      */
     public function addCode(string $code, bool $silent = false)
     {
-        try {
+        try
+        {
             // Code lines ending in \ keep the buffer open
-            if (\substr(\rtrim($code), -1) === '\\') {
+            if (\substr(\rtrim($code), -1) === '\\')
+            {
                 $this->codeBufferOpen = true;
                 $code = \substr(\rtrim($code), 0, -1);
-            } else {
+            } else
+            {
                 $this->codeBufferOpen = false;
             }
 
             $this->codeBuffer[] = $silent ? new SilentInput($code) : $code;
             $this->code = $this->cleaner->clean($this->codeBuffer, $this->config->requireSemicolons());
-        } catch (\Throwable $e) {
+        } catch (\Throwable $e)
+        {
             // Add failed code blocks to the readline history.
             $this->addCodeBufferToHistory();
 
@@ -868,20 +916,24 @@ class Shell extends Application
      */
     private function setCode(string $code, bool $silent = false)
     {
-        if ($this->hasCode()) {
+        if ($this->hasCode())
+        {
             $this->codeStack[] = [$this->codeBuffer, $this->codeBufferOpen, $this->code];
         }
 
         $this->resetCodeBuffer();
-        try {
+        try
+        {
             $this->addCode($code, $silent);
-        } catch (\Throwable $e) {
+        } catch (\Throwable $e)
+        {
             $this->popCodeStack();
 
             throw $e;
         }
 
-        if (!$this->hasValidCode()) {
+        if (!$this->hasValidCode())
+        {
             $this->popCodeStack();
 
             throw new \InvalidArgumentException('Unexpected end of input');
@@ -913,15 +965,18 @@ class Shell extends Application
     {
         $command = $this->getCommand($input);
 
-        if (empty($command)) {
-            throw new \InvalidArgumentException('Command not found: '.$input);
+        if (empty($command))
+        {
+            throw new \InvalidArgumentException('Command not found: ' . $input);
         }
 
         $input = new ShellInput(\str_replace('\\', '\\\\', \rtrim($input, " \t\n\r\0\x0B;")));
 
-        if ($input->hasParameterOption(['--help', '-h'])) {
+        if ($input->hasParameterOption(['--help', '-h']))
+        {
             $helpCommand = $this->get('help');
-            if (!$helpCommand instanceof Command\HelpCommand) {
+            if (!$helpCommand instanceof Command\HelpCommand)
+            {
                 throw new RuntimeException('Invalid help command instance');
             }
             $helpCommand->setCommand($command);
@@ -954,7 +1009,8 @@ class Shell extends Application
      */
     public function addInput($input, bool $silent = false)
     {
-        foreach ((array) $input as $line) {
+        foreach ((array) $input as $line)
+        {
             $this->inputBuffer[] = $silent ? new SilentInput($line) : $line;
         }
     }
@@ -969,7 +1025,8 @@ class Shell extends Application
      */
     public function flushCode()
     {
-        if ($this->hasValidCode()) {
+        if ($this->hasValidCode())
+        {
             $this->addCodeBufferToHistory();
             $code = $this->code;
             $this->popCodeStack();
@@ -985,7 +1042,8 @@ class Shell extends Application
     {
         $this->resetCodeBuffer();
 
-        if (empty($this->codeStack)) {
+        if (empty($this->codeStack))
+        {
             return;
         }
 
@@ -1010,12 +1068,14 @@ class Shell extends Application
      */
     private function addHistory($line)
     {
-        if ($line instanceof SilentInput) {
+        if ($line instanceof SilentInput)
+        {
             return;
         }
 
         // Skip empty lines and lines starting with a space
-        if (\trim($line) !== '' && \substr($line, 0, 1) !== ' ') {
+        if (\trim($line) !== '' && \substr($line, 0, 1) !== ' ')
+        {
             $this->readline->addHistory($line);
         }
     }
@@ -1041,7 +1101,8 @@ class Shell extends Application
      */
     public function getNamespace()
     {
-        if ($namespace = $this->cleaner->getNamespace()) {
+        if ($namespace = $this->cleaner->getNamespace())
+        {
             return \implode('\\', $namespace);
         }
     }
@@ -1056,8 +1117,10 @@ class Shell extends Application
      */
     public function writeStdout(string $out, int $phase = \PHP_OUTPUT_HANDLER_END)
     {
-        if ($phase & \PHP_OUTPUT_HANDLER_START) {
-            if ($this->output instanceof ShellOutput) {
+        if ($phase & \PHP_OUTPUT_HANDLER_START)
+        {
+            if ($this->output instanceof ShellOutput)
+            {
                 $this->output->startPaging();
             }
         }
@@ -1065,31 +1128,38 @@ class Shell extends Application
         $isCleaning = $phase & \PHP_OUTPUT_HANDLER_CLEAN;
 
         // Incremental flush
-        if ($out !== '' && !$isCleaning) {
+        if ($out !== '' && !$isCleaning)
+        {
             $this->output->write($out, false, OutputInterface::OUTPUT_RAW);
             $this->outputWantsNewline = (\substr($out, -1) !== "\n");
             $this->stdoutBuffer .= $out;
         }
 
         // Output buffering is done!
-        if ($phase & \PHP_OUTPUT_HANDLER_END) {
+        if ($phase & \PHP_OUTPUT_HANDLER_END)
+        {
             // Write an extra newline if stdout didn't end with one
-            if ($this->outputWantsNewline) {
-                if (!$this->config->rawOutput() && !$this->config->outputIsPiped()) {
+            if ($this->outputWantsNewline)
+            {
+                if (!$this->config->rawOutput() && !$this->config->outputIsPiped())
+                {
                     $this->output->writeln(\sprintf('<whisper>%s</whisper>', $this->config->useUnicode() ? '⏎' : '\\n'));
-                } else {
+                } else
+                {
                     $this->output->writeln('');
                 }
                 $this->outputWantsNewline = false;
             }
 
-            // Save the stdout buffer as $__out
-            if ($this->stdoutBuffer !== '') {
+            // Salvar the stdout buffer as $__out
+            if ($this->stdoutBuffer !== '')
+            {
                 $this->context->setLastStdout($this->stdoutBuffer);
                 $this->stdoutBuffer = '';
             }
 
-            if ($this->output instanceof ShellOutput) {
+            if ($this->output instanceof ShellOutput)
+            {
                 $this->output->stopPaging();
             }
         }
@@ -1110,26 +1180,31 @@ class Shell extends Application
     {
         $this->lastExecSuccess = true;
 
-        if ($ret instanceof NoReturnValue) {
+        if ($ret instanceof NoReturnValue)
+        {
             return;
         }
 
         $this->context->setReturnValue($ret);
 
-        if ($rawOutput) {
+        if ($rawOutput)
+        {
             $formatted = \var_export($ret, true);
-        } else {
+        } else
+        {
             $prompt = $this->config->theme()->returnValue();
             $indent = \str_repeat(' ', \strlen($prompt));
             $formatted = $this->presentValue($ret);
             $formattedRetValue = \sprintf('<whisper>%s</whisper>', $prompt);
 
-            $formatted = $formattedRetValue.\str_replace(\PHP_EOL, \PHP_EOL.$indent, $formatted);
+            $formatted = $formattedRetValue . \str_replace(\PHP_EOL, \PHP_EOL . $indent, $formatted);
         }
 
-        if ($this->output instanceof ShellOutput) {
-            $this->output->page($formatted.\PHP_EOL);
-        } else {
+        if ($this->output instanceof ShellOutput)
+        {
+            $this->output->page($formatted . \PHP_EOL);
+        } else
+        {
             $this->output->writeln($formatted);
         }
     }
@@ -1147,37 +1222,44 @@ class Shell extends Application
     public function writeException(\Throwable $e)
     {
         // No need to write the break exception during a non-interactive run.
-        if ($e instanceof BreakException && $this->nonInteractive) {
+        if ($e instanceof BreakException && $this->nonInteractive)
+        {
             $this->resetCodeBuffer();
 
             return;
         }
 
         // Break exceptions don't count :)
-        if (!$e instanceof BreakException) {
+        if (!$e instanceof BreakException)
+        {
             $this->lastExecSuccess = false;
             $this->context->setLastException($e);
         }
 
         $output = $this->output;
-        if ($output instanceof ConsoleOutput) {
+        if ($output instanceof ConsoleOutput)
+        {
             $output = $output->getErrorOutput();
         }
 
-        if (!$this->config->theme()->compact()) {
+        if (!$this->config->theme()->compact())
+        {
             $output->writeln('');
         }
 
         $output->writeln($this->formatException($e));
 
-        if (!$this->config->theme()->compact()) {
+        if (!$this->config->theme()->compact())
+        {
             $output->writeln('');
         }
 
         // Include an exception trace (as long as this isn't a BreakException).
-        if (!$e instanceof BreakException && $output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
+        if (!$e instanceof BreakException && $output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE)
+        {
             $trace = TraceFormatter::formatTrace($e);
-            if (\count($trace) !== 0) {
+            if (\count($trace) !== 0)
+            {
                 $output->writeln('--');
                 $output->write($trace, true);
                 $output->writeln('');
@@ -1208,15 +1290,18 @@ class Shell extends Application
     {
         $indent = $this->config->theme()->compact() ? '' : '  ';
 
-        if ($e instanceof BreakException) {
+        if ($e instanceof BreakException)
+        {
             return \sprintf('%s<info> INFO </info> %s.', $indent, \rtrim($e->getRawMessage(), '.'));
-        } elseif ($e instanceof PsyException) {
+        } elseif ($e instanceof PsyException)
+        {
             $message = $e->getLine() > 1
                 ? \sprintf('%s in %s on line %d', $e->getRawMessage(), $e->getFile(), $e->getLine())
                 : \sprintf('%s in %s', $e->getRawMessage(), $e->getFile());
 
             $messageLabel = \strtoupper($this->getMessageLabel($e));
-        } else {
+        } else
+        {
             $message = $e->getMessage();
             $messageLabel = $this->getMessageLabel($e);
         }
@@ -1231,12 +1316,13 @@ class Shell extends Application
         $message = \trim($message);
 
         // Ensures the given string ends with punctuation...
-        if (!empty($message) && !\in_array(\substr($message, -1), ['.', '?', '!', ':'])) {
+        if (!empty($message) && !\in_array(\substr($message, -1), ['.', '?', '!', ':']))
+        {
             $message = "$message.";
         }
 
         // Ensures the given message only contains relative paths...
-        $message = \str_replace(\getcwd().\DIRECTORY_SEPARATOR, '', $message);
+        $message = \str_replace(\getcwd() . \DIRECTORY_SEPARATOR, '', $message);
 
         $severity = ($e instanceof \ErrorException) ? $this->getSeverity($e) : 'error';
 
@@ -1251,8 +1337,10 @@ class Shell extends Application
     protected function getSeverity(\ErrorException $e): string
     {
         $severity = $e->getSeverity();
-        if ($severity & \error_reporting()) {
-            switch ($severity) {
+        if ($severity & \error_reporting())
+        {
+            switch ($severity)
+            {
                 case \E_WARNING:
                 case \E_NOTICE:
                 case \E_CORE_WARNING:
@@ -1267,7 +1355,8 @@ class Shell extends Application
                 default:
                     return 'error';
             }
-        } else {
+        } else
+        {
             // Since this is below the user's reporting threshold, it's always going to be a warning.
             return 'warning';
         }
@@ -1280,11 +1369,14 @@ class Shell extends Application
      */
     protected function getMessageLabel(\Throwable $e): string
     {
-        if ($e instanceof \ErrorException) {
+        if ($e instanceof \ErrorException)
+        {
             $severity = $e->getSeverity();
 
-            if ($severity & \error_reporting()) {
-                switch ($severity) {
+            if ($severity & \error_reporting())
+            {
+                switch ($severity)
+                {
                     case \E_WARNING:
                         return 'Warning';
                     case \E_NOTICE:
@@ -1307,17 +1399,20 @@ class Shell extends Application
             }
         }
 
-        if ($e instanceof PsyException || $e instanceof SymfonyConsoleException) {
+        if ($e instanceof PsyException || $e instanceof SymfonyConsoleException)
+        {
             $exceptionShortName = (new \ReflectionClass($e))->getShortName();
             $typeParts = \preg_split('/(?=[A-Z])/', $exceptionShortName);
 
-            switch ($exceptionShortName) {
+            switch ($exceptionShortName)
+            {
                 case 'RuntimeException':
                 case 'LogicException':
                     // These ones look weird without 'Exception'
                     break;
                 default:
-                    if (\end($typeParts) === 'Exception') {
+                    if (\end($typeParts) === 'Exception')
+                    {
                         \array_pop($typeParts);
                     }
                     break;
@@ -1342,13 +1437,16 @@ class Shell extends Application
         $this->setCode($code, true);
         $closure = new ExecutionClosure($this);
 
-        if ($throwExceptions) {
+        if ($throwExceptions)
+        {
             return $closure->execute();
         }
 
-        try {
+        try
+        {
             return $closure->execute();
-        } catch (\Throwable $_e) {
+        } catch (\Throwable $_e)
+        {
             $this->writeException($_e);
         }
     }
@@ -1384,7 +1482,8 @@ class Shell extends Application
         //
         // n.b. Technically we can't handle all of these in userland code, but
         // we'll list 'em all for good measure
-        if ($errno & (\E_ERROR | \E_PARSE | \E_CORE_ERROR | \E_COMPILE_ERROR | \E_USER_ERROR | \E_RECOVERABLE_ERROR)) {
+        if ($errno & (\E_ERROR | \E_PARSE | \E_CORE_ERROR | \E_COMPILE_ERROR | \E_USER_ERROR | \E_RECOVERABLE_ERROR))
+        {
             ErrorException::throwException($errno, $errstr, $errfile, $errline);
         }
 
@@ -1393,7 +1492,8 @@ class Shell extends Application
         $errorsSuppressed = $this->errorReporting !== null && $this->errorReporting !== \error_reporting();
 
         // Otherwise log it and continue.
-        if ($errno & \error_reporting() || (!$errorsSuppressed && ($errno & $this->config->errorLoggingLevel()))) {
+        if ($errno & \error_reporting() || (!$errorsSuppressed && ($errno & $this->config->errorLoggingLevel())))
+        {
             $this->writeException(new ErrorException($errstr, 0, $errno, $errfile, $errline));
         }
     }
@@ -1422,7 +1522,8 @@ class Shell extends Application
     protected function getCommand(string $input)
     {
         $input = new StringInput($input);
-        if ($name = $input->getFirstArgument()) {
+        if ($name = $input->getFirstArgument())
+        {
             return $this->get($name);
         }
     }
@@ -1436,7 +1537,8 @@ class Shell extends Application
      */
     protected function hasCommand(string $input): bool
     {
-        if (\preg_match('/([^\s]+?)(?:\s|$)/A', \ltrim($input), $match)) {
+        if (\preg_match('/([^\s]+?)(?:\s|$)/A', \ltrim($input), $match))
+        {
             return $this->has($match[1]);
         }
 
@@ -1450,13 +1552,15 @@ class Shell extends Application
      */
     protected function getPrompt()
     {
-        if ($this->output->isQuiet()) {
+        if ($this->output->isQuiet())
+        {
             return null;
         }
 
         $theme = $this->config->theme();
 
-        if ($this->hasCode()) {
+        if ($this->hasCode())
+        {
             return $theme->bufferPrompt();
         }
 
@@ -1480,9 +1584,11 @@ class Shell extends Application
     {
         $prompt = $this->config->theme()->replayPrompt();
 
-        if (!empty($this->inputBuffer)) {
+        if (!empty($this->inputBuffer))
+        {
             $line = \array_shift($this->inputBuffer);
-            if (!$line instanceof SilentInput) {
+            if (!$line instanceof SilentInput)
+            {
                 $this->output->writeln(\sprintf('<whisper>%s</whisper><aside>%s</aside>', $prompt, OutputFormatter::escape($line)));
             }
 
@@ -1491,13 +1597,15 @@ class Shell extends Application
 
         $bracketedPaste = $interactive && $this->config->useBracketedPaste();
 
-        if ($bracketedPaste) {
-            \printf("\e[?2004h"); // Enable bracketed paste
+        if ($bracketedPaste)
+        {
+            \printf("\e[?2004h"); // Habilitar bracketed paste
         }
 
         $line = $this->readline->readline($this->getPrompt());
 
-        if ($bracketedPaste) {
+        if ($bracketedPaste)
+        {
             \printf("\e[?2004l"); // ... and disable it again
         }
 
@@ -1554,7 +1662,8 @@ class Shell extends Application
      */
     protected function initializeTabCompletion()
     {
-        if (!$this->config->useTabCompletion()) {
+        if (!$this->config->useTabCompletion())
+        {
             return;
         }
 
@@ -1575,8 +1684,10 @@ class Shell extends Application
      */
     private function addMatchersToAutoCompleter(array $matchers)
     {
-        foreach ($matchers as $matcher) {
-            if ($matcher instanceof ContextAware) {
+        foreach ($matchers as $matcher)
+        {
+            if ($matcher instanceof ContextAware)
+            {
                 $matcher->setContext($this->context);
             }
             $this->autoCompleter->addMatcher($matcher);
@@ -1590,16 +1701,20 @@ class Shell extends Application
      */
     protected function writeVersionInfo()
     {
-        if (\PHP_SAPI !== 'cli') {
+        if (\PHP_SAPI !== 'cli')
+        {
             return;
         }
 
-        try {
+        try
+        {
             $client = $this->config->getChecker();
-            if (!$client->isLatest()) {
+            if (!$client->isLatest())
+            {
                 $this->output->writeln(\sprintf('<whisper>New version is available at psysh.org/psysh (current: %s, latest: %s)</whisper>', self::VERSION, $client->getLatest()));
             }
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException $e)
+        {
             $this->output->writeln($e->getMessage());
         }
     }
@@ -1610,7 +1725,8 @@ class Shell extends Application
     protected function writeStartupMessage()
     {
         $message = $this->config->getStartupMessage();
-        if ($message !== null && $message !== '') {
+        if ($message !== null && $message !== '')
+        {
             $this->output->writeln($message);
         }
     }

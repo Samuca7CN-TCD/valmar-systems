@@ -51,6 +51,29 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function previous()
+    {
+        $page = Department::find(7);
+
+        $services = Movement::where('type', 0)->with(['accounting', 'procedures.records'])
+            ->whereHas('accounting', function ($query) {
+                $query->where('partial_value', 0);
+            })
+            ->get()
+            ->map(function ($movement) {
+                $records = $movement->procedures->flatMap(function ($procedure) {
+                    return $procedure->records;
+                });
+                $movement->records = $records;
+                return $movement;
+            });
+
+        return Inertia::render('Payments/Previous', [
+            'page' => $page,
+            'payments_list' => $services,
+        ]);
+    }
+
 
     /**
      * Show the form for creating a new resource.

@@ -16,9 +16,8 @@ return new class extends Migration {
             $table->string('description');
             $table->double('value');
             $table->boolean('detail');
-            $table->text('observations')->nullable();
-            $table->tinyInteger('month');
-            $table->tinyInteger('year');
+            $table->integer('month');
+            $table->integer('year');
             $table->softDeletes();
             $table->timestamps();
             $table->foreign('employee_id')->references('id')->on('employees');

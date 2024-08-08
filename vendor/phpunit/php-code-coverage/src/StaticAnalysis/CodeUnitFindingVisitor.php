@@ -17,7 +17,7 @@ use PhpParser\Node;
 use PhpParser\Node\ComplexType;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\IntersectionType;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -86,26 +86,32 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
 
     public function enterNode(Node $node): void
     {
-        if ($node instanceof Class_) {
-            if ($node->isAnonymous()) {
+        if ($node instanceof Class_)
+        {
+            if ($node->isAnonymous())
+            {
                 return;
             }
 
             $this->processClass($node);
         }
 
-        if ($node instanceof Trait_) {
+        if ($node instanceof Trait_)
+        {
             $this->processTrait($node);
         }
 
-        if (!$node instanceof ClassMethod && !$node instanceof Function_) {
+        if (!$node instanceof ClassMethod && !$node instanceof Function_)
+        {
             return;
         }
 
-        if ($node instanceof ClassMethod) {
+        if ($node instanceof ClassMethod)
+        {
             $parentNode = $node->getAttribute('parent');
 
-            if ($parentNode instanceof Class_ && $parentNode->isAnonymous()) {
+            if ($parentNode instanceof Class_ && $parentNode->isAnonymous())
+            {
                 return;
             }
 
@@ -145,7 +151,8 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
     {
         $nodes = $node->getStmts();
 
-        if ($nodes === null) {
+        if ($nodes === null)
+        {
             return 0;
         }
 
@@ -163,15 +170,17 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
 
     private function signature(ClassMethod|Function_ $node): string
     {
-        $signature  = ($node->returnsByRef() ? '&' : '') . $node->name->toString() . '(';
+        $signature = ($node->returnsByRef() ? '&' : '') . $node->name->toString() . '(';
         $parameters = [];
 
-        foreach ($node->getParams() as $parameter) {
+        foreach ($node->getParams() as $parameter)
+        {
             assert(isset($parameter->var->name));
 
             $parameterAsString = '';
 
-            if ($parameter->type !== null) {
+            if ($parameter->type !== null)
+            {
                 $parameterAsString = $this->type($parameter->type) . ' ';
             }
 
@@ -186,24 +195,28 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
 
         $returnType = $node->getReturnType();
 
-        if ($returnType !== null) {
+        if ($returnType !== null)
+        {
             $signature .= ': ' . $this->type($returnType);
         }
 
         return $signature;
     }
 
-    private function type(ComplexType|Identifier|Name $type): string
+    private function type(ComplexType|Identifier|Nome $type): string
     {
-        if ($type instanceof NullableType) {
+        if ($type instanceof NullableType)
+        {
             return '?' . $type->type;
         }
 
-        if ($type instanceof UnionType) {
+        if ($type instanceof UnionType)
+        {
             return $this->unionTypeAsString($type);
         }
 
-        if ($type instanceof IntersectionType) {
+        if ($type instanceof IntersectionType)
+        {
             return $this->intersectionTypeAsString($type);
         }
 
@@ -212,11 +225,13 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
 
     private function visibility(ClassMethod $node): string
     {
-        if ($node->isPrivate()) {
+        if ($node->isPrivate())
+        {
             return 'private';
         }
 
-        if ($node->isProtected()) {
+        if ($node->isProtected())
+        {
             return 'protected';
         }
 
@@ -225,31 +240,31 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
 
     private function processClass(Class_ $node): void
     {
-        $name           = $node->name->toString();
+        $name = $node->name->toString();
         $namespacedName = $node->namespacedName->toString();
 
         $this->classes[$namespacedName] = [
-            'name'           => $name,
+            'name' => $name,
             'namespacedName' => $namespacedName,
-            'namespace'      => $this->namespace($namespacedName, $name),
-            'startLine'      => $node->getStartLine(),
-            'endLine'        => $node->getEndLine(),
-            'methods'        => [],
+            'namespace' => $this->namespace($namespacedName, $name),
+            'startLine' => $node->getStartLine(),
+            'endLine' => $node->getEndLine(),
+            'methods' => [],
         ];
     }
 
     private function processTrait(Trait_ $node): void
     {
-        $name           = $node->name->toString();
+        $name = $node->name->toString();
         $namespacedName = $node->namespacedName->toString();
 
         $this->traits[$namespacedName] = [
-            'name'           => $name,
+            'name' => $name,
             'namespacedName' => $namespacedName,
-            'namespace'      => $this->namespace($namespacedName, $name),
-            'startLine'      => $node->getStartLine(),
-            'endLine'        => $node->getEndLine(),
-            'methods'        => [],
+            'namespace' => $this->namespace($namespacedName, $name),
+            'startLine' => $node->getStartLine(),
+            'endLine' => $node->getEndLine(),
+            'methods' => [],
         ];
     }
 
@@ -257,42 +272,46 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
     {
         $parentNode = $node->getAttribute('parent');
 
-        if ($parentNode instanceof Interface_) {
+        if ($parentNode instanceof Interface_)
+        {
             return;
         }
 
         assert($parentNode instanceof Class_ || $parentNode instanceof Trait_ || $parentNode instanceof Enum_);
         assert(isset($parentNode->name));
         assert(isset($parentNode->namespacedName));
-        assert($parentNode->namespacedName instanceof Name);
+        assert($parentNode->namespacedName instanceof Nome);
 
-        $parentName           = $parentNode->name->toString();
+        $parentName = $parentNode->name->toString();
         $parentNamespacedName = $parentNode->namespacedName->toString();
 
-        if ($parentNode instanceof Class_) {
+        if ($parentNode instanceof Class_)
+        {
             $storage = &$this->classes;
-        } else {
+        } else
+        {
             $storage = &$this->traits;
         }
 
-        if (!isset($storage[$parentNamespacedName])) {
+        if (!isset($storage[$parentNamespacedName]))
+        {
             $storage[$parentNamespacedName] = [
-                'name'           => $parentName,
+                'name' => $parentName,
                 'namespacedName' => $parentNamespacedName,
-                'namespace'      => $this->namespace($parentNamespacedName, $parentName),
-                'startLine'      => $parentNode->getStartLine(),
-                'endLine'        => $parentNode->getEndLine(),
-                'methods'        => [],
+                'namespace' => $this->namespace($parentNamespacedName, $parentName),
+                'startLine' => $parentNode->getStartLine(),
+                'endLine' => $parentNode->getEndLine(),
+                'methods' => [],
             ];
         }
 
         $storage[$parentNamespacedName]['methods'][$node->name->toString()] = [
             'methodName' => $node->name->toString(),
-            'signature'  => $this->signature($node),
+            'signature' => $this->signature($node),
             'visibility' => $this->visibility($node),
-            'startLine'  => $node->getStartLine(),
-            'endLine'    => $node->getEndLine(),
-            'ccn'        => $this->cyclomaticComplexity($node),
+            'startLine' => $node->getStartLine(),
+            'endLine' => $node->getEndLine(),
+            'ccn' => $this->cyclomaticComplexity($node),
         ];
     }
 
@@ -300,19 +319,19 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
     {
         assert(isset($node->name));
         assert(isset($node->namespacedName));
-        assert($node->namespacedName instanceof Name);
+        assert($node->namespacedName instanceof Nome);
 
-        $name           = $node->name->toString();
+        $name = $node->name->toString();
         $namespacedName = $node->namespacedName->toString();
 
         $this->functions[$namespacedName] = [
-            'name'           => $name,
+            'name' => $name,
             'namespacedName' => $namespacedName,
-            'namespace'      => $this->namespace($namespacedName, $name),
-            'signature'      => $this->signature($node),
-            'startLine'      => $node->getStartLine(),
-            'endLine'        => $node->getEndLine(),
-            'ccn'            => $this->cyclomaticComplexity($node),
+            'namespace' => $this->namespace($namespacedName, $name),
+            'signature' => $this->signature($node),
+            'startLine' => $node->getStartLine(),
+            'endLine' => $node->getEndLine(),
+            'ccn' => $this->cyclomaticComplexity($node),
         ];
     }
 
@@ -325,8 +344,10 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
     {
         $types = [];
 
-        foreach ($node->types as $type) {
-            if ($type instanceof IntersectionType) {
+        foreach ($node->types as $type)
+        {
+            if ($type instanceof IntersectionType)
+            {
                 $types[] = '(' . $this->intersectionTypeAsString($type) . ')';
 
                 continue;
@@ -342,16 +363,18 @@ final class CodeUnitFindingVisitor extends NodeVisitorAbstract
     {
         $types = [];
 
-        foreach ($node->types as $type) {
+        foreach ($node->types as $type)
+        {
             $types[] = $this->typeAsString($type);
         }
 
         return implode('&', $types);
     }
 
-    private function typeAsString(Identifier|Name $node): string
+    private function typeAsString(Identifier|Nome $node): string
     {
-        if ($node instanceof Name) {
+        if ($node instanceof Nome)
+        {
             return $node->toCodeString();
         }
 

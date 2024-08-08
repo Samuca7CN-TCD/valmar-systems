@@ -70,7 +70,7 @@ class HistoryCommand extends Command
 
                 new InputOption('no-numbers', 'N', InputOption::VALUE_NONE, 'Omit line numbers.'),
 
-                new InputOption('save', '', InputOption::VALUE_REQUIRED, 'Save history to a file.'),
+                new InputOption('save', '', InputOption::VALUE_REQUIRED, 'Salvar history to a file.'),
                 new InputOption('replay', '', InputOption::VALUE_NONE, 'Replay.'),
                 new InputOption('clear', '', InputOption::VALUE_NONE, 'Clear the history.'),
             ])
@@ -106,42 +106,53 @@ HELP
         $highlighted = false;
 
         $this->filter->bind($input);
-        if ($this->filter->hasFilter()) {
+        if ($this->filter->hasFilter())
+        {
             $matches = [];
             $highlighted = [];
-            foreach ($history as $i => $line) {
-                if ($this->filter->match($line, $matches)) {
-                    if (isset($matches[0])) {
+            foreach ($history as $i => $line)
+            {
+                if ($this->filter->match($line, $matches))
+                {
+                    if (isset($matches[0]))
+                    {
                         $chunks = \explode($matches[0], $history[$i]);
                         $chunks = \array_map([__CLASS__, 'escape'], $chunks);
                         $glue = \sprintf('<urgent>%s</urgent>', self::escape($matches[0]));
 
                         $highlighted[$i] = \implode($glue, $chunks);
                     }
-                } else {
+                } else
+                {
                     unset($history[$i]);
                 }
             }
         }
 
-        if ($save = $input->getOption('save')) {
+        if ($save = $input->getOption('save'))
+        {
             $output->writeln(\sprintf('Saving history in %s...', $save));
-            \file_put_contents($save, \implode(\PHP_EOL, $history).\PHP_EOL);
+            \file_put_contents($save, \implode(\PHP_EOL, $history) . \PHP_EOL);
             $output->writeln('<info>History saved.</info>');
-        } elseif ($input->getOption('replay')) {
-            if (!($input->getOption('show') || $input->getOption('head') || $input->getOption('tail'))) {
+        } elseif ($input->getOption('replay'))
+        {
+            if (!($input->getOption('show') || $input->getOption('head') || $input->getOption('tail')))
+            {
                 throw new \InvalidArgumentException('You must limit history via --head, --tail or --show before replaying');
             }
 
             $count = \count($history);
             $output->writeln(\sprintf('Replaying %d line%s of history', $count, ($count !== 1) ? 's' : ''));
             $this->getApplication()->addInput($history);
-        } elseif ($input->getOption('clear')) {
+        } elseif ($input->getOption('clear'))
+        {
             $this->clearHistory();
             $output->writeln('<info>History cleared.</info>');
-        } else {
+        } else
+        {
             $type = $input->getOption('no-numbers') ? 0 : ShellOutput::NUMBER_LINES;
-            if (!$highlighted) {
+            if (!$highlighted)
+            {
                 $type = $type | OutputInterface::OUTPUT_RAW;
             }
 
@@ -160,19 +171,21 @@ HELP
      */
     private function extractRange(string $range): array
     {
-        if (\preg_match('/^\d+$/', $range)) {
+        if (\preg_match('/^\d+$/', $range))
+        {
             return [$range, $range + 1];
         }
 
         $matches = [];
-        if ($range !== '..' && \preg_match('/^(\d*)\.\.(\d*)$/', $range, $matches)) {
+        if ($range !== '..' && \preg_match('/^(\d*)\.\.(\d*)$/', $range, $matches))
+        {
             $start = $matches[1] ? (int) $matches[1] : 0;
             $end = $matches[2] ? (int) $matches[2] + 1 : \PHP_INT_MAX;
 
             return [$start, $end];
         }
 
-        throw new \InvalidArgumentException('Unexpected range: '.$range);
+        throw new \InvalidArgumentException('Unexpected range: ' . $range);
     }
 
     /**
@@ -191,24 +204,30 @@ HELP
         // don't show the current `history` invocation
         \array_pop($history);
 
-        if ($show) {
+        if ($show)
+        {
             list($start, $end) = $this->extractRange($show);
             $length = $end - $start;
-        } elseif ($head) {
-            if (!\preg_match('/^\d+$/', $head)) {
+        } elseif ($head)
+        {
+            if (!\preg_match('/^\d+$/', $head))
+            {
                 throw new \InvalidArgumentException('Please specify an integer argument for --head');
             }
 
             $start = 0;
             $length = (int) $head;
-        } elseif ($tail) {
-            if (!\preg_match('/^\d+$/', $tail)) {
+        } elseif ($tail)
+        {
+            if (!\preg_match('/^\d+$/', $tail))
+            {
                 throw new \InvalidArgumentException('Please specify an integer argument for --tail');
             }
 
             $start = \count($history) - $tail;
             $length = (int) $tail + 1;
-        } else {
+        } else
+        {
             return $history;
         }
 
@@ -224,14 +243,17 @@ HELP
     private function validateOnlyOne(InputInterface $input, array $options)
     {
         $count = 0;
-        foreach ($options as $opt) {
-            if ($input->getOption($opt)) {
+        foreach ($options as $opt)
+        {
+            if ($input->getOption($opt))
+            {
                 $count++;
             }
         }
 
-        if ($count > 1) {
-            throw new \InvalidArgumentException('Please specify only one of --'.\implode(', --', $options));
+        if ($count > 1)
+        {
+            throw new \InvalidArgumentException('Please specify only one of --' . \implode(', --', $options));
         }
     }
 

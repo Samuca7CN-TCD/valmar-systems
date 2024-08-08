@@ -130,7 +130,7 @@ class CategorySeeder extends Seeder
             ],
             [
                 'icon' => Storage::get('public/img/categories/perfis_u.png'),
-                'name' => 'Perfil U',
+                'name' => 'Profile U',
                 'name_plural' => 'Perfis U',
                 'abbreviation' => 'perf_u',
                 'abbreviation_plural' => 'perfs_u',

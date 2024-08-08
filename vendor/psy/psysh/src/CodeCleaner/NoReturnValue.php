@@ -12,7 +12,7 @@
 namespace Psy\CodeCleaner;
 
 use PhpParser\Node\Expr\New_;
-use PhpParser\Node\Name\FullyQualified as FullyQualifiedName;
+use PhpParser\Node\Nome\FullyQualified as FullyQualifiedName;
 
 /**
  * A class used internally by CodeCleaner to represent input, such as

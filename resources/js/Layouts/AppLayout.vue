@@ -7,12 +7,20 @@ import DropdownLink from '@/Components/DropdownLink.vue'
 import NavLink from '@/Components/NavLink.vue'
 import SubNavLink from '@/Components/SubNavLink.vue'
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue'
-import { RectangleGroupIcon, ChevronDownIcon, ChevronUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
+import { RectangleGroupIcon, ChevronDownIcon, ChevronUpIcon, ArrowDownIcon, UserGroupIcon, UserIcon, PresentationChartLineIcon, RectangleStackIcon, ArrowPathRoundedSquareIcon, BanknotesIcon, BriefcaseIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
     page: Object,
     page_options: {
         type: Array,
+        default: null,
+    },
+    payslip_month: {
+        type: Number,
+        default: null,
+    },
+    payslip_year: {
+        type: Number,
         default: null,
     }
 })
@@ -40,67 +48,81 @@ const logout = () => {
                 class="hidden md:block print:hidden md:w-1/4 lg:1/5 xl:1/6 min-h-screen relative bg-white text-black shadow-xl">
                 <div class="w-full flex-col-config">
                     <!-- Logo -->
-                    <div class="p-10 bg-slate-100">
-                        <img class="hidden xl:block" src="/storage/img/theme/logos/logo-name.png" />
-                        <img class="xl:hidden" src="/storage/img/theme/logos/complete_logo.svg" />
-                    </div>
+                    <a href="/" class="p-10 bg-slate-100">
+                        <img class="hidden xl:block w-fit" src="/storage/img/theme/logos/logo-name.png" />
+                        <img class="xl:hidden w-fit" src="/storage/img/theme/logos/complete_logo.svg" />
+                    </a>
                     <ul class="w-full">
+                        <!-- Item "Todos" -->
                         <SubNavLink v-if="page.type === 'warehouse'" :href="route(page.type + '.index')"
                             :active="route().current(page.type + '.index')" class="w-full hover:bg-gray-100 py-5"
                             :class="{ 'bg-gray-200': route().current(page.type + '.index') }">
-                            <li class="text-gray-600 flex flex-row justify-center items-center align-middle md:ml-10
-                            ">
+                            <li class="text-gray-600 flex flex-row justify-center items-center align-middle md:ml-10">
                                 <span class="inline-block mx-2">
-                                    <RectangleGroupIcon class="w-5 h-5" />
+                                    <RectangleGroupIcon class="w-4 h-4" />
                                 </span>
                                 <span class="hidden md:inline-block">Todos</span>
                             </li>
                         </SubNavLink>
-                        <SubNavLink v-for="option in page_options" :href="route(page.type + '.filter', option.id)"
+
+                        <!-- Iteração sobre page_options -->
+                        <SubNavLink v-if="page.type === 'warehouse'" v-for="option in page_options" :key="option.id"
+                            :href="route(`${page.type}.filter`, option.id)"
                             :active="route().current(page.type + '.filter', option.id)"
                             class="w-full hover:bg-gray-100 py-5"
                             :class="{ 'bg-gray-200': route().current(page.type + '.filter', option.id) }">
-                            <li class="text-gray-600 flex flex-row justify-center items-center align-middle md:ml-10
-                            ">
+                            <li class="text-gray-600 flex flex-row justify-center items-center align-middle md:ml-10">
                                 <span class="inline-block mx-2">
-                                    <RectangleGroupIcon class="w-5 h-5" />
+                                    <RectangleGroupIcon v-if="page.type === 'warehouse'" class="w-4 h-4" />
+                                    <UserIcon v-else class="w-4 h-4" />
+                                </span>
+                                <span class="hidden md:inline-block">{{ option.name }}</span>
+                            </li>
+                        </SubNavLink>
+
+                        <SubNavLink v-if="page.type === 'payslip'" v-for="option in page_options" :key="option.id"
+                            :href="route(`${page.type}.filter`, { employee: option.id, month: payslip_month, year: payslip_year })"
+                            :active="route().current(page.type + '.filter', option.id) || (route().current('payslip.index') && option.id === page_options[0].id)"
+                            class="w-full hover:bg-gray-100 py-5"
+                            :class="{ 'bg-gray-200': route().current(page.type + '.filter', option.id) || (route().current('payslip.index') && option.id === page_options[0].id) }">
+                            <li class="text-gray-600 flex flex-row justify-center items-center align-middle md:ml-10">
+                                <span class="inline-block mx-2">
+                                    <RectangleGroupIcon v-if="page.type === 'warehouse'" class="w-4 h-4" />
+                                    <UserIcon v-else class="w-4 h-4" />
                                 </span>
                                 <span class="hidden md:inline-block">{{ option.name }}</span>
                             </li>
                         </SubNavLink>
                     </ul>
+
                     <Dropdown />
                 </div>
             </div>
             <div class="min-h-screen print:w-full"
                 :class="{ 'w-full': !page_options, 'w-full md:w-3/4 lg:4/5 xl:w-5/6': page_options }">
 
-                <Head :title="page ? page.name : 'Nada'" />
+                <Head :title="page ? page.name : 'Valmar Inox'" />
 
                 <Banner class="print:hidden" />
 
-                <div class="min-h-screen bg-gray-100 print:bg-white">
+                <div class="min-h-screen h-full bg-gray-100 print:bg-white">
                     <nav class="bg-white border-b border-gray-100 print:hidden">
                         <!-- Primary Navigation Menu -->
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-2">
                             <div class="flex justify-between h-16">
                                 <div class="flex">
-
-                                    <div class="h-full flex items-center">
-                                        <img v-if="!page_options" src="/storage/img/theme/logos/logo-name.png"
-                                            class="h-[40px]" />
-                                    </div>
+                                    <a href="/" class="h-full flex items-center">
+                                        <img src="/storage/img/theme/logos/logo-name.png" class="h-7 my-auto"
+                                            :class="{ 'md:hidden': page_options }" />
+                                    </a>
 
                                     <!-- Navigation Links -->
-                                    <div class="hidden space-x-8 sm:-my-px sm:ml-10 lg:flex">
-                                        <NavLink :href="route('dashboard.index')"
+                                    <div class="hidden space-x-8 sm:-my-px sm:ml-10 xl:flex">
+                                        <NavLink v-if="$page.props.auth.user.hierarchy < 2"
+                                            :href="route('dashboard.index')"
                                             :active="route().current('home') || route().current('dashboard.*')">
                                             <span class="inline-block mx-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                    stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                                                </svg>
+                                                <PresentationChartLineIcon class="w-4 h-4" />
                                             </span>
                                             <span class="inline-block">Dashboard</span>
                                         </NavLink>
@@ -109,12 +131,7 @@ const logout = () => {
                                             :active="route().current('warehouse.*')">
                                             <template #trigger>
                                                 <span class="inline-block mx-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                        class="w-4 h-4">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                                                    </svg>
+                                                    <RectangleStackIcon class="w-4 h-4" />
                                                 </span>
                                                 Almoxarifado
                                                 <ChevronDownIcon class="ml-2 -mr-0.5 mt-0.5 h-4 w-4 text-gray-700" />
@@ -143,12 +160,7 @@ const logout = () => {
                                             :active="route().current('entries.*') || route().current('uses.*') || route().current('sells.*')">
                                             <template #trigger>
                                                 <span class="inline-block mx-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                        class="w-4 h-4">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                                                    </svg>
+                                                    <ArrowPathRoundedSquareIcon class="w-4 h-4" />
                                                 </span>
                                                 Movimentações
                                                 <ChevronDownIcon class="ml-2 -mr-0.5 mt-0.5 h-4 w-4 text-gray-700" />
@@ -165,25 +177,17 @@ const logout = () => {
                                                 </DropdownLink>
                                             </template>
                                         </NavLink>
-                                        <NavLink :href="route('payments.index')"
-                                            :active="route().current('payments.*')">
+                                        <NavLink v-if="$page.props.auth.user.hierarchy < 3"
+                                            :href="route('payments.index')" :active="route().current('payments.*')">
                                             <span class="inline-block mx-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                    stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                                                </svg>
+                                                <BanknotesIcon class="w-4 h-4" />
                                             </span>
                                             <span class="inline-block">Pagamentos</span>
                                         </NavLink>
-                                        <NavLink :href="route('services.index')"
-                                            :active="route().current('services.*')">
+                                        <NavLink v-if="$page.props.auth.user.hierarchy < 3"
+                                            :href="route('services.index')" :active="route().current('services.*')">
                                             <span class="inline-block mx-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                    stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                                                </svg>
+                                                <BriefcaseIcon class="w-4 h-4" />
                                             </span>
                                             <span class="inline-block">Serviços</span>
                                         </NavLink>
@@ -191,17 +195,15 @@ const logout = () => {
                                             :active="route().current('employees.*')">
                                             <template #trigger>
                                                 <span class="inline-block mx-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                        class="w-4 h-4">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                                                    </svg>
+                                                    <UserGroupIcon class="w-4 h-4" />
                                                 </span>
                                                 Funcionários
                                                 <ChevronDownIcon class="ml-2 -mr-0.5 mt-0.5 h-4 w-4 text-gray-700" />
                                             </template>
                                             <template #options>
+                                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                                    Página principal
+                                                </div>
                                                 <DropdownLink :href="route('employees.index')">Funcionários
                                                 </DropdownLink>
                                                 <div class="block px-4 py-2 text-xs text-gray-400">
@@ -209,15 +211,29 @@ const logout = () => {
                                                 </div>
                                                 <DropdownLink :href="route('payslip.index')">Holerite
                                                 </DropdownLink>
-                                                <DropdownLink :href="route('employee.overtime_calculation')">Cálculo de
+                                                <DropdownLink :href="route('employee.overtime_calculation')">Cálculo
+                                                    de
                                                     Horas Extras
+                                                </DropdownLink>
+                                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                                    Impressões
+                                                </div>
+                                                <DropdownLink :href="route('payslip.print', { mode: 'control' })">
+                                                    Controle de Pagamentos
+                                                </DropdownLink>
+                                                <DropdownLink :href="route('payslip.print', { mode: 'payslip' })">
+                                                    Recibos de Holerite
+                                                </DropdownLink>
+                                                <DropdownLink
+                                                    :href="route('payslip.print', { mode: 'transportation-voucher' })">
+                                                    Recibos de Vale Transporte
                                                 </DropdownLink>
                                             </template>
                                         </NavLink>
                                     </div>
                                 </div>
 
-                                <div class="hidden lg:flex sm:items-center sm:ml-6">
+                                <div class="hidden xl:flex sm:items-center sm:ml-6">
                                     <div class="ml-3 relative">
                                         <!-- Teams Dropdown -->
                                         <Dropdown v-if="$page.props.jetstream.hasTeamFeatures" align="right" width="60">
@@ -320,16 +336,16 @@ const logout = () => {
                                             <template #content>
                                                 <!-- Account Management -->
                                                 <div class="block px-4 py-2 text-xs text-gray-400">
-                                                    Manage Account
+                                                    Gerenciar Conta
                                                 </div>
 
                                                 <DropdownLink :href="route('profile.show')">
-                                                    Perfil
+                                                    Profile
                                                 </DropdownLink>
 
                                                 <DropdownLink v-if="$page.props.jetstream.hasApiFeatures"
                                                     :href="route('api-tokens.index')">
-                                                    API Tokens
+                                                    Tokens de API
                                                 </DropdownLink>
 
                                                 <DropdownLink v-if="$page.props.auth.user.hierarchy === 1"
@@ -351,7 +367,7 @@ const logout = () => {
                                 </div>
 
                                 <!-- Hamburger -->
-                                <div class="-mr-2 flex items-center lg:hidden">
+                                <div class="-mr-2 flex items-center xl:hidden">
                                     <button
                                         class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition"
                                         @click="showingNavigationDropdown = !showingNavigationDropdown">
@@ -372,16 +388,130 @@ const logout = () => {
 
                         <!-- Responsive Navigation Menu -->
                         <div :class="{ 'block': showingNavigationDropdown, 'hidden': !showingNavigationDropdown }"
-                            class="lg:hidden">
+                            class="xl:hidden">
                             <div class="pt-2 pb-3 space-y-1">
                                 <ResponsiveNavLink :href="route('dashboard.index')"
-                                    :active="route().current('dashboard')">
-                                    Dashboard
+                                    :active="route().current('home') || route().current('dashboard.*')">
+                                    <span class="inline-block mx-2">
+                                        <PresentationChartLineIcon class="w-4 h-4" />
+                                    </span>
+                                    <span class="inline-block">Dashboard</span>
                                 </ResponsiveNavLink>
-                                <ResponsiveNavLink :href="route('warehouse.index')"
-                                    :active="route().current('warehouse')">
-                                    Almoxarifado
+                                <ResponsiveNavLink :has_dropdown="true" :href="'#'"
+                                    :active="route().current('warehouse.*')">
+                                    <template #trigger>
+                                        <span class="inline-block mx-2">
+                                            <RectangleStackIcon class="w-4 h-4" />
+                                        </span>
+                                        Almoxarifado
+                                        <ChevronDownIcon class="ml-2 -mr-0.5 mt-0.5 h-4 w-4 text-gray-700" />
+                                    </template>
+                                    <template #options>
+                                        <div class="block px-4 py-2 text-xs text-gray-400">
+                                            Página principal
+                                        </div>
+                                        <DropdownLink :href="route('warehouse.index')">Almoxarifado
+                                        </DropdownLink>
+                                        <div class="block px-4 py-2 text-xs text-gray-400">
+                                            Páginas Auxiliares
+                                        </div>
+                                        <DropdownLink :href="route('warehouse.print_items', 0)">Lista de Items
+                                        </DropdownLink>
+                                        <DropdownLink :href="route('warehouse.print_items', 1)">Lista
+                                            para
+                                            Compra
+                                        </DropdownLink>
+                                        <DropdownLink :href="route('warehouse.use_table')">Tabela de Usos
+                                        </DropdownLink>
+                                    </template>
                                 </ResponsiveNavLink>
+
+                                <ResponsiveNavLink :has_dropdown="true" :href="'#'"
+                                    :active="route().current('entries.*') || route().current('uses.*') || route().current('sells.*')">
+                                    <template #trigger>
+                                        <span class="inline-block mx-2">
+                                            <ArrowPathRoundedSquareIcon class="w-4 h-4" />
+                                        </span>
+                                        Movimentações
+                                        <ChevronDownIcon class="ml-2 -mr-0.5 mt-0.5 h-4 w-4 text-gray-700" />
+                                    </template>
+                                    <template #options>
+                                        <div class="block px-4 py-2 text-xs text-gray-400">
+                                            Opções de movimentação
+                                        </div>
+                                        <DropdownLink :href="route('entries.index')">Entradas
+                                        </DropdownLink>
+                                        <DropdownLink :href="route('uses.index')">Usos
+                                        </DropdownLink>
+                                        <DropdownLink :href="route('sells.index')">Vendas
+                                        </DropdownLink>
+                                    </template>
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink :href="route('payments.index')"
+                                    :active="route().current('payments.*')">
+                                    <span class="inline-block mx-2">
+                                        <BanknotesIcon class="w-4 h-4" />
+                                    </span>
+                                    <span class="inline-block">Pagamentos</span>
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink :href="route('services.index')"
+                                    :active="route().current('services.*')">
+                                    <span class="inline-block mx-2">
+                                        <BriefcaseIcon class="w-4 h-4" />
+                                    </span>
+                                    <span class="inline-block">Serviços</span>
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink :has_dropdown="true" :href="'#'"
+                                    :active="route().current('employees.*')">
+                                    <template #trigger>
+                                        <span class="inline-block mx-2">
+                                            <UserGroupIcon class="w-4 h-4" />
+                                        </span>
+                                        Funcionários
+                                        <ChevronDownIcon class="ml-2 -mr-0.5 mt-0.5 h-4 w-4 text-gray-700" />
+                                    </template>
+                                    <template #options>
+                                        <div class="block px-4 py-2 text-xs text-gray-400">
+                                            Página principal
+                                        </div>
+                                        <DropdownLink :href="route('employees.index')">Funcionários
+                                        </DropdownLink>
+                                        <div class="block px-4 py-2 text-xs text-gray-400">
+                                            Pagamento de Funcionários
+                                        </div>
+                                        <DropdownLink :href="route('payslip.index')">Holerite
+                                        </DropdownLink>
+                                        <DropdownLink :href="route('employee.overtime_calculation')">Cálculo de
+                                            Horas Extras
+                                        </DropdownLink>
+                                        <div class="block px-4 py-2 text-xs text-gray-400">
+                                            Impressões
+                                        </div>
+                                        <DropdownLink :href="route('payslip.print', { mode: 'control' })">
+                                            Controle de Pagamentos
+                                        </DropdownLink>
+                                        <DropdownLink :href="route('payslip.print', { mode: 'payslip' })">
+                                            Recibos de Holerite
+                                        </DropdownLink>
+                                        <DropdownLink
+                                            :href="route('payslip.print', { mode: 'transportation-voucher' })">
+                                            Recibos de Vale Transporte
+                                        </DropdownLink>
+                                    </template>
+                                </ResponsiveNavLink>
+
+
+
+
+
+
+
+
+
+
+
+
+
                             </div>
 
                             <!-- Responsive Settings Options -->
@@ -411,13 +541,13 @@ const logout = () => {
 
                                     <ResponsiveNavLink v-if="$page.props.jetstream.hasApiFeatures"
                                         :href="route('api-tokens.index')" :active="route().current('api-tokens.index')">
-                                        API Tokens
+                                        Tokens de API
                                     </ResponsiveNavLink>
 
                                     <!-- Authentication -->
                                     <form method="POST" @submit.prevent="logout">
                                         <ResponsiveNavLink as="button">
-                                            Log Out
+                                            Sair
                                         </ResponsiveNavLink>
                                     </form>
 
@@ -426,26 +556,26 @@ const logout = () => {
                                         <div class="border-t border-gray-200" />
 
                                         <div class="block px-4 py-2 text-xs text-gray-400">
-                                            Manage Team
+                                            Gerenciar Time
                                         </div>
 
                                         <!-- Team Settings -->
                                         <ResponsiveNavLink
                                             :href="route('teams.show', $page.props.auth.user.current_team)"
                                             :active="route().current('teams.show')">
-                                            Team Settings
+                                            Configurações do Time
                                         </ResponsiveNavLink>
 
                                         <ResponsiveNavLink v-if="$page.props.jetstream.canCreateTeams"
                                             :href="route('teams.create')" :active="route().current('teams.create')">
-                                            Create New Team
+                                            Criar Novo Time
                                         </ResponsiveNavLink>
 
                                         <div class="border-t border-gray-200" />
 
                                         <!-- Team Switcher -->
                                         <div class="block px-4 py-2 text-xs text-gray-400">
-                                            Switch Teams
+                                            Alternar Times
                                         </div>
 
                                         <template v-for="team in $page.props.auth.user.all_teams" :key="team.id">
@@ -484,35 +614,50 @@ const logout = () => {
                         title="Clique para ver as opções da página" @click="options_collapse = !options_collapse">
                         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-row space-x-3 items-center">
                             <p>Opções da Página</p>
-                            <ChevronUpIcon v-if="options_collapse" class="w-5 h-5" />
-                            <ChevronDownIcon v-else class="w-5 h-5" />
+                            <ChevronUpIcon v-if="options_collapse" class="w-4 h-4" />
+                            <ChevronDownIcon v-else class="w-4 h-4" />
                         </div>
 
                         <ul v-if="options_collapse" class="w-full">
-                            <SubNavLink :href="route(page.type + '.index')"
+                            <SubNavLink v-if="page.type === 'warehouse'" :href="route(page.type + '.index')"
                                 :active="route().current(page.type + '.index')" class="w-full hover:bg-gray-100 py-5"
-                                :class="{ 'bg-gray-200': route().current(page.type + '.index') }">
-                                <li class="text-gray-600 flex items-center
-                            ">
+                                :class="{ 'bg-gray-200': route().current(`${page.type}.index`) }">
+                                <li class="text-gray-600 flex items-center">
                                     <span class="inline-block mx-2">
-                                        <RectangleGroupIcon class="w-5 h-5" />
+                                        <RectangleGroupIcon class="w-4 h-4" />
                                     </span>
                                     <span>Todos</span>
                                 </li>
                             </SubNavLink>
-                            <SubNavLink v-for="option in page_options" :href="route(page.type + '.filter', option.id)"
-                                :active="route().current(page.type + '.filter', option.id)"
+
+
+                            <SubNavLink v-if="page.type === 'warehouse'" v-for="option in page_options" :key="option.id"
+                                :href="route(`${page.type}.filter`, option.id)"
+                                :active="route().current(`${page.type}.filter`, option.id)"
                                 class="w-full hover:bg-gray-100 py-5"
-                                :class="{ 'bg-gray-200': route().current(page.type + '.filter', option.id) }">
-                                <li class="text-gray-600 flex items-center
-                            ">
+                                :class="{ 'bg-gray-200': (route().current(`${page.type}.filter`, option.id)) }">
+                                <li class="text-gray-600 flex items-center">
                                     <span class="inline-block mx-2">
-                                        <RectangleGroupIcon class="w-5 h-5" />
+                                        <RectangleGroupIcon class="w-4 h-4" />
+                                    </span>
+                                    <span>{{ option.name }}</span>
+                                </li>
+                            </SubNavLink>
+
+                            <SubNavLink v-if="page.type === 'payslip'" v-for="option in page_options" :key="option.id"
+                                :href="route(`${page.type}.filter`, { employee: option.id, month: payslip_month, year: payslip_year })"
+                                :active="route().current(`${page.type}.filter`, option.id) || (route().current('payslip.index') && option.id === page_options[0].id)"
+                                class="w-full hover:bg-gray-100 py-5"
+                                :class="{ 'bg-gray-200': (route().current(`${page.type}.filter`, option.id) || (route().current('payslip.index') && option.id === page_options[0].id)) }">
+                                <li class="text-gray-600 flex items-center">
+                                    <span class="inline-block mx-2">
+                                        <UserIcon class="w-4 h-4" />
                                     </span>
                                     <span>{{ option.name }}</span>
                                 </li>
                             </SubNavLink>
                         </ul>
+
                     </div>
 
                     <!-- Page Content -->

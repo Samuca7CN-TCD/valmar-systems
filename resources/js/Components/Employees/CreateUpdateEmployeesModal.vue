@@ -152,7 +152,7 @@ const submit = () => emit('submit');
                                         class="simple-input disabled:bg-gray-200" placeholder="Nome"
                                         v-model="employee.name" :disabled="see_disabled" required>
                                     <p v-if="employee.errors.name" class="text-red-500 text-sm">{{
-        employee.errors.name }}</p>
+                                        employee.errors.name }}</p>
                                 </div>
                             </div>
                             <div class="sm:col-span-3">
@@ -163,7 +163,7 @@ const submit = () => emit('submit');
                                         class="simple-input disabled:bg-gray-200" placeholder="Sobrenome"
                                         v-model="employee.surname" :disabled="see_disabled" required>
                                     <p v-if="employee.errors.surname" class="text-red-500 text-sm">{{
-        employee.errors.surname }}</p>
+                                        employee.errors.surname }}</p>
                                 </div>
                             </div>
                             <div class="sm:col-span-3">
@@ -178,7 +178,7 @@ const submit = () => emit('submit');
                                         placeholder="Salário" v-model="employee.salary" :disabled="see_disabled"
                                         required>
                                     <p v-if="employee.errors.salary" class="text-red-500 text-sm">{{
-        employee.errors.salary }}</p>
+                                        employee.errors.salary }}</p>
                                 </div>
                             </div>
                             <div class="sm:col-span-3">
@@ -194,7 +194,7 @@ const submit = () => emit('submit');
                                         placeholder="Valor de acrécimo (+) ou desconto (-) combinado por fora"
                                         v-model="employee.agreement" :disabled="see_disabled" required>
                                     <p v-if="employee.errors.agreement" class="text-red-500 text-sm">{{
-        employee.errors.agreement }}</p>
+    employee.errors.agreement }}</p>
                                 </div>
                             </div>
                             <div class="sm:col-span-6">
@@ -202,13 +202,13 @@ const submit = () => emit('submit');
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Números
                                     de contato</label>
                                 <div class="mt-2 relative">
-                                    <input type="text" minlength="11" maxlength="16" name="employee-contacts"
-                                        id="employee-contacts" autocomplete="on"
+                                    <input v-if="modal.mode !== 'see'" type="text" minlength="11" maxlength="16"
+                                        name="employee-contacts" id="employee-contacts" autocomplete="on"
                                         class="simple-input disabled:bg-gray-200 pr-9"
                                         placeholder="Adicione números de contato do funcionário"
                                         :value="formatted_contact" @input="inputContact" @keydown.enter="addContact"
                                         :disabled="disable_add_phone_number || see_disabled">
-                                    <div class="absolute inset-y-0 right-0 p-1.5">
+                                    <div v-if="modal.mode !== 'see'" class="absolute inset-y-0 right-0 p-1.5">
                                         <button type="button"
                                             class="w-full text-white text-center p-0.5 rounded-lg bg-green-500 hover:bg-green-600 active:bg-green-700"
                                             @click="addContact" :disabled="disable_add_phone_number">
@@ -219,7 +219,8 @@ const submit = () => emit('submit');
                                         <li v-for="(contact, index) in employee?.contacts" :key="index"
                                             class="float-left px-2 py-1 m-1 bg-green-500 text-white text-xs rounded-lg flex flex-row items-center justify-between gap-1">
                                             {{ formatPhoneNumber(contact) }}
-                                            <button class="text-white" @click.stop.prevent="removeContact(contact)">
+                                            <button v-if="modal.mode !== 'see'" class="text-white"
+                                                @click.stop.prevent="removeContact(contact)">
                                                 <XMarkIcon class="w-3 h-3 text-white" />
                                             </button>
                                         </li>
@@ -238,7 +239,7 @@ const submit = () => emit('submit');
                                         placeholder="Nome da função que o funcionário excerce"
                                         v-model="employee.function_name" :disabled="see_disabled" required>
                                     <p v-if="employee.errors.function_name" class="text-red-500 text-sm">{{
-        employee.errors.function_name }}</p>
+                                        employee.errors.function_name }}</p>
                                 </div>
                             </div>
                             <div class="sm:col-span-6">
@@ -258,7 +259,7 @@ const submit = () => emit('submit');
                                             adicionado todo mês ao Holerite</p>
                                         <p v-if="employee.errors.transportation_voucher" class="text-red-500 font-mono">
                                             {{
-        employee.errors.transportation_voucher }}</p>
+                                            employee.errors.transportation_voucher }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -287,7 +288,7 @@ const submit = () => emit('submit');
                                             :value="payment_method.id">{{ payment_method.name }}</option>
                                     </select>
                                     <p v-if="employee.errors.payment_method_id" class="text-red-500 text-sm">{{
-        employee.errors.payment_method_id }}</p>
+                                        employee.errors.payment_method_id }}</p>
                                 </div>
                             </div>
 
@@ -308,7 +309,7 @@ const submit = () => emit('submit');
                                                 :value="account_type.id">{{ account_type.name }}</option>
                                         </select>
                                         <p v-if="employee.errors.account_type" class="text-red-500 text-sm">{{
-        employee.errors.account_type }}</p>
+                                            employee.errors.account_type }}</p>
                                     </div>
                                 </div>
 
@@ -321,11 +322,11 @@ const submit = () => emit('submit');
                                             :disabled="see_disabled" required>
                                             <option key="0" :value="null" selected disabled>Selecione um banco</option>
                                             <option v-for="bank in banks_list" :key="bank.id" :value="bank.id">{{
-        bank.code }} - {{
-        bank.name }}</option>
+                                                bank.code }} - {{
+                                                bank.name }}</option>
                                         </select>
                                         <p v-if="employee.errors.bank_id" class="text-red-500 text-sm">{{
-        employee.errors.bank_id }}</p>
+                                            employee.errors.bank_id }}</p>
                                     </div>
                                 </div>
                                 <div>
@@ -338,7 +339,7 @@ const submit = () => emit('submit');
                                             :value="formatted_bank_ag" @input="inputAgency" :disabled="see_disabled"
                                             required>
                                         <p v-if="employee.errors.bank_ag" class="text-red-500 text-sm">{{
-        employee.errors.bank_ag }}</p>
+                                            employee.errors.bank_ag }}</p>
                                     </div>
                                 </div>
 
@@ -353,7 +354,7 @@ const submit = () => emit('submit');
                                             :value="formatted_account_number" @input="inputBankAccount"
                                             :disabled="see_disabled" required>
                                         <p v-if="employee.errors.account_number" class="text-red-500 text-sm">{{
-        employee.errors.account_number }}</p>
+                                            employee.errors.account_number }}</p>
                                     </div>
                                 </div>
 
@@ -367,7 +368,7 @@ const submit = () => emit('submit');
                                             :value="formatted_pix_cpf" @input="inputCpf" :disabled="see_disabled"
                                             required>
                                         <p v-if="employee.errors.pix_cpf" class="text-red-500 text-sm">{{
-        employee.errors.pix_cpf }}</p>
+                                            employee.errors.pix_cpf }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -381,7 +382,7 @@ const submit = () => emit('submit');
                                             placeholder="E-mail" v-model="employee.pix_email" :disabled="see_disabled"
                                             required>
                                         <p v-if="employee.errors.pix_email" class="text-red-500 text-sm">{{
-        employee.errors.pix_email }}</p>
+                                            employee.errors.pix_email }}</p>
                                     </div>
                                 </div>
                                 <div v-if="employee.payment_method_id === 4">
@@ -394,7 +395,7 @@ const submit = () => emit('submit');
                                             :value="formatted_pix_cpf" @input="inputCpf" :disabled="see_disabled"
                                             required>
                                         <p v-if="employee.errors.pix_cpf" class="text-red-500 text-sm">{{
-        employee.errors.pix_cpf }}</p>
+                                            employee.errors.pix_cpf }}</p>
                                     </div>
                                 </div>
                                 <div v-if="employee.payment_method_id === 5">
@@ -408,7 +409,7 @@ const submit = () => emit('submit');
                                             placeholder="Número de telefone" :value="formatted_pix_phone_number"
                                             @input="inputPixPhoneNumber" :disabled="see_disabled" required>
                                         <p v-if="employee.errors.pix_phone_number" class="text-red-500 text-sm">{{
-        employee.errors.pix_phone_number }}</p>
+                                            employee.errors.pix_phone_number }}</p>
                                     </div>
                                 </div>
                                 <div v-if="employee.payment_method_id === 7">
@@ -420,7 +421,7 @@ const submit = () => emit('submit');
                                             placeholder="Token" v-model="employee.pix_token" :disabled="see_disabled"
                                             required>
                                         <p v-if="employee.errors.pix_token" class="text-red-500 text-sm">{{
-        employee.errors.pix_token }}</p>
+                                            employee.errors.pix_token }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -452,7 +453,7 @@ const submit = () => emit('submit');
                                             }}</option>
                                     </select>
                                     <p v-if="employee.errors.overtime_payment_method_id" class="text-red-500 text-sm">{{
-        employee.errors.overtime_payment_method_id }}</p>
+                                        employee.errors.overtime_payment_method_id }}</p>
                                 </div>
                             </div>
 
@@ -466,7 +467,7 @@ const submit = () => emit('submit');
                                             class="simple-input disabled:bg-gray-200" placeholder="E-mail"
                                             v-model="employee.pix_email" :disabled="see_disabled" required>
                                         <p v-if="employee.errors.pix_email" class="text-red-500 text-sm">{{
-        employee.errors.pix_email }}</p>
+                                            employee.errors.pix_email }}</p>
                                     </div>
                                 </div>
                                 <div v-if="employee.overtime_payment_method_id === 4">
@@ -479,7 +480,7 @@ const submit = () => emit('submit');
                                             placeholder="CPF" :value="formatted_pix_cpf" @input="inputCpf"
                                             :disabled="see_disabled" required>
                                         <p v-if="employee.errors.pix_cpf" class="text-red-500 text-sm">{{
-        employee.errors.pix_cpf }}</p>
+                                            employee.errors.pix_cpf }}</p>
                                     </div>
                                 </div>
                                 <div v-if="employee.overtime_payment_method_id === 5">

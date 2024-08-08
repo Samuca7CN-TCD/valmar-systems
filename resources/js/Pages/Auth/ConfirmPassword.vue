@@ -26,6 +26,7 @@ const submit = () => {
 </script>
 
 <template>
+
     <Head title="Secure Area" />
 
     <AuthenticationCard>
@@ -33,23 +34,15 @@ const submit = () => {
             <AuthenticationCardLogo />
         </template>
 
-        <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        <div class="mb-4 text-sm text-gray-600">
             This is a secure area of the application. Please confirm your password before continuing.
         </div>
 
         <form @submit.prevent="submit">
             <div>
-                <InputLabel for="password" value="Password" />
-                <TextInput
-                    id="password"
-                    ref="passwordInput"
-                    v-model="form.password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    required
-                    autocomplete="current-password"
-                    autofocus
-                />
+                <InputLabel for="password" value="Senha" />
+                <TextInput id="password" ref="passwordInput" v-model="form.password" type="password"
+                    class="mt-1 block w-full" required autocomplete="current-password" autofocus />
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 

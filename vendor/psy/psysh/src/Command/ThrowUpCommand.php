@@ -15,7 +15,7 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\Throw_;
 use PhpParser\Node\Expr\Variable;
-use PhpParser\Node\Name\FullyQualified as FullyQualifiedName;
+use PhpParser\Node\Nome\FullyQualified as FullyQualifiedName;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;
 use PhpParser\PrettyPrinter\Standard as Printer;
@@ -101,13 +101,15 @@ HELP
      */
     private function prepareArgs(?string $code = null): array
     {
-        if (!$code) {
+        if (!$code)
+        {
             // Default to last exception if nothing else was supplied
             return [new Arg(new Variable('_e'))];
         }
 
         $nodes = $this->parser->parse($code);
-        if (\count($nodes) !== 1) {
+        if (\count($nodes) !== 1)
+        {
             throw new \InvalidArgumentException('No idea how to throw this');
         }
 
@@ -117,7 +119,8 @@ HELP
         $args = [new Arg($expr, false, false, $node->getAttributes())];
 
         // Allow throwing via a string, e.g. `throw-up "SUP"`
-        if ($expr instanceof String_) {
+        if ($expr instanceof String_)
+        {
             return [new New_(new FullyQualifiedName(\Exception::class), $args)];
         }
 

@@ -7,7 +7,8 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 use PhpParser\Node\Stmt;
 
-class Trait_ extends Declaration {
+class Trait_ extends Declaration
+{
     protected string $name;
     /** @var list<Stmt\TraitUse> */
     protected array $uses = [];
@@ -23,9 +24,10 @@ class Trait_ extends Declaration {
     /**
      * Creates an interface builder.
      *
-     * @param string $name Name of the interface
+     * @param string $name Nome of the interface
      */
-    public function __construct(string $name) {
+    public function __construct(string $name)
+    {
         $this->name = $name;
     }
 
@@ -36,18 +38,24 @@ class Trait_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addStmt($stmt) {
+    public function addStmt($stmt)
+    {
         $stmt = BuilderHelpers::normalizeNode($stmt);
 
-        if ($stmt instanceof Stmt\Property) {
+        if ($stmt instanceof Stmt\Property)
+        {
             $this->properties[] = $stmt;
-        } elseif ($stmt instanceof Stmt\ClassMethod) {
+        } elseif ($stmt instanceof Stmt\ClassMethod)
+        {
             $this->methods[] = $stmt;
-        } elseif ($stmt instanceof Stmt\TraitUse) {
+        } elseif ($stmt instanceof Stmt\TraitUse)
+        {
             $this->uses[] = $stmt;
-        } elseif ($stmt instanceof Stmt\ClassConst) {
+        } elseif ($stmt instanceof Stmt\ClassConst)
+        {
             $this->constants[] = $stmt;
-        } else {
+        } else
+        {
             throw new \LogicException(sprintf('Unexpected node of type "%s"', $stmt->getType()));
         }
 
@@ -61,7 +69,8 @@ class Trait_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addAttribute($attribute) {
+    public function addAttribute($attribute)
+    {
         $this->attributeGroups[] = BuilderHelpers::normalizeAttribute($attribute);
 
         return $this;
@@ -72,12 +81,15 @@ class Trait_ extends Declaration {
      *
      * @return Stmt\Trait_ The built interface node
      */
-    public function getNode(): PhpParser\Node {
+    public function getNode(): PhpParser\Node
+    {
         return new Stmt\Trait_(
-            $this->name, [
+            $this->name,
+            [
                 'stmts' => array_merge($this->uses, $this->constants, $this->properties, $this->methods),
                 'attrGroups' => $this->attributeGroups,
-            ], $this->attributes
+            ],
+            $this->attributes
         );
     }
 }

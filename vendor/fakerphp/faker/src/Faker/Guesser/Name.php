@@ -4,7 +4,7 @@ namespace Faker\Guesser;
 
 use Faker\Provider\Base;
 
-class Name
+class Nome
 {
     protected $generator;
 
@@ -24,19 +24,22 @@ class Name
         $name = Base::toLower($name);
         $generator = $this->generator;
 
-        if (preg_match('/^is[_A-Z]/', $name)) {
+        if (preg_match('/^is[_A-Z]/', $name))
+        {
             return static function () use ($generator) {
                 return $generator->boolean;
             };
         }
 
-        if (preg_match('/(_a|A)t$/', $name)) {
+        if (preg_match('/(_a|A)t$/', $name))
+        {
             return static function () use ($generator) {
                 return $generator->dateTime;
             };
         }
 
-        switch (str_replace('_', '', $name)) {
+        switch (str_replace('_', '', $name))
+        {
             case 'firstname':
                 return static function () use ($generator) {
                     return $generator->firstName;
@@ -95,7 +98,8 @@ class Name
                 };
 
             case 'county':
-                if ($this->generator->locale == 'en_US') {
+                if ($this->generator->locale == 'en_US')
+                {
                     return static function () use ($generator) {
                         return sprintf('%s County', $generator->city);
                     };
@@ -106,7 +110,8 @@ class Name
                 };
 
             case 'country':
-                switch ($size) {
+                switch ($size)
+                {
                     case 2:
                         return static function () use ($generator) {
                             return $generator->countryCode;
@@ -156,7 +161,8 @@ class Name
                 };
 
             case 'title':
-                if ($size !== null && $size <= 10) {
+                if ($size !== null && $size <= 10)
+                {
                     return static function () use ($generator) {
                         return $generator->title;
                     };

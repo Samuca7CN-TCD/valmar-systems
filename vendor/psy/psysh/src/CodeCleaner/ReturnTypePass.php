@@ -16,7 +16,7 @@ use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\IntersectionType;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\Return_;
@@ -43,37 +43,47 @@ class ReturnTypePass extends CodeCleanerPass
      */
     public function enterNode(Node $node)
     {
-        if ($this->isFunctionNode($node)) {
+        if ($this->isFunctionNode($node))
+        {
             $this->returnTypeStack[] = $node->returnType;
 
             return;
         }
 
-        if (!empty($this->returnTypeStack) && $node instanceof Return_) {
+        if (!empty($this->returnTypeStack) && $node instanceof Return_)
+        {
             $expectedType = \end($this->returnTypeStack);
-            if ($expectedType === null) {
+            if ($expectedType === null)
+            {
                 return;
             }
 
             $msg = null;
 
-            if ($this->typeName($expectedType) === 'void') {
+            if ($this->typeName($expectedType) === 'void')
+            {
                 // Void functions
-                if ($expectedType instanceof NullableType) {
+                if ($expectedType instanceof NullableType)
+                {
                     $msg = self::NULLABLE_VOID_MESSAGE;
-                } elseif ($node->expr instanceof ConstFetch && \strtolower($node->expr->name) === 'null') {
+                } elseif ($node->expr instanceof ConstFetch && \strtolower($node->expr->name) === 'null')
+                {
                     $msg = self::VOID_NULL_MESSAGE;
-                } elseif ($node->expr !== null) {
+                } elseif ($node->expr !== null)
+                {
                     $msg = self::VOID_MESSAGE;
                 }
-            } else {
+            } else
+            {
                 // Everything else
-                if ($node->expr === null) {
+                if ($node->expr === null)
+                {
                     $msg = $expectedType instanceof NullableType ? self::NULLABLE_MESSAGE : self::MESSAGE;
                 }
             }
 
-            if ($msg !== null) {
+            if ($msg !== null)
+            {
                 throw new FatalErrorException($msg, 0, \E_ERROR, null, $node->getStartLine());
             }
         }
@@ -86,7 +96,8 @@ class ReturnTypePass extends CodeCleanerPass
      */
     public function leaveNode(Node $node)
     {
-        if (!empty($this->returnTypeStack) && $this->isFunctionNode($node)) {
+        if (!empty($this->returnTypeStack) && $this->isFunctionNode($node))
+        {
             \array_pop($this->returnTypeStack);
         }
     }
@@ -98,19 +109,23 @@ class ReturnTypePass extends CodeCleanerPass
 
     private function typeName(Node $node): string
     {
-        if ($node instanceof UnionType) {
+        if ($node instanceof UnionType)
+        {
             return \implode('|', \array_map([$this, 'typeName'], $node->types));
         }
 
-        if ($node instanceof IntersectionType) {
+        if ($node instanceof IntersectionType)
+        {
             return \implode('&', \array_map([$this, 'typeName'], $node->types));
         }
 
-        if ($node instanceof NullableType) {
+        if ($node instanceof NullableType)
+        {
             return $this->typeName($node->type);
         }
 
-        if ($node instanceof Identifier || $node instanceof Name) {
+        if ($node instanceof Identifier || $node instanceof Nome)
+        {
             return $node->toLowerString();
         }
 

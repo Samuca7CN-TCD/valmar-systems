@@ -42,10 +42,20 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Maria',
                 'surname' => 'Aparecida Santos',
-                'email' => 'valmarmetalurgica@outlook.com.br',
+                'email' => 'valdinei0733@gmail.com',
                 'hierarchy' => 2,
                 'password' => Hash::make('s1t3n3m'),
                 'profile_photo_path' => '/storage/app/public/img/maria-aparecida-santos.jpeg',
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
+            [
+                'name' => 'Beatriz',
+                'surname' => 'Cruz de Souza',
+                'email' => 'valmarmetalurgica.itabuna@gmail.com',
+                'hierarchy' => 3,
+                'password' => Hash::make('s1t3n3m'),
+                'profile_photo_path' => '/storage/app/public/img/beatriz-cruz-de-souza.jpeg',
                 'created_at' => $now,
                 'updated_at' => $now
             ],

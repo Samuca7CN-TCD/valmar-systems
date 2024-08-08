@@ -14,21 +14,42 @@ export const measurementUnitResolver = (measurement_units_list, measurement_unit
     return "unidade de medida não identificada"
 }
 
+const months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
 export const formatDate = (date = null, format = null) => {
-    if (format === null) {
-        const currentDate = date ? new Date(date + ' 00:00:00') : new Date();
-        return currentDate.toISOString().substring(0, 10);
-    } else if (format === 'new_date') {
-        return date.toISOString().substring(0, 10);
+    if (!date) date = new Date();
+
+    const currentDate = new Date(date);
+
+    if (format === null || format === 'new_date') {
+        return currentDate.toISOString().substring(0, 10); // Format YYYY-MM-DD
+    } else if (format === 'reading') {
+        const day = currentDate.getDate();
+        const month = months[currentDate.getMonth()];
+        const year = currentDate.getFullYear();
+
+        return `${day} de ${month} de ${year}`; // Format "31 de Julho de 2024"
+    } else if (format === 'reading_date_time') {
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const year = currentDate.getFullYear();
+        const hours = String(currentDate.getHours()).padStart(2, '0');
+        const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+        const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+
+        return `${day}/${month}/${year} às ${hours}:${minutes}:${seconds}`; // Format "31/07/2024 às 14:30:00"
     } else {
-        const currentDate = date ? new Date(date + ' 00:00:00') : new Date();
         const year = currentDate.getFullYear();
         const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
         const day = currentDate.getDate().toString().padStart(2, '0');
 
-        return `${day}/${month}/${year}`;
+        return `${day}/${month}/${year}`; // Format DD/MM/YYYY
     }
 };
+
 
 export const formatPhoneNumber = (phone_number) => {
     // Remove todos os caracteres que não são números
@@ -144,4 +165,12 @@ export const calcDeadlineDays = (deadline) => {
     const dias = Math.round(diff / div)
 
     return dias < 0 ? 0 : dias
+}
+
+export const absolute = (value) => {
+    return value < 0 ? -value : value
+}
+
+export const printList = () => {
+    window.print()
 }

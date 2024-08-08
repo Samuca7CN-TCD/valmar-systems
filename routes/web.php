@@ -48,8 +48,13 @@ Route::middleware([
     Route::resource('/records', RecordController::class);
 
     Route::resource('/movements/sells', MovementSellController::class);
+    Route::post('/movements/filter/sells', [MovementSellController::class, 'filter'])->name('sells.filter');
+
     Route::resource('/movements/uses', MovementUseController::class);
+    Route::post('/movements/filter/uses', [MovementUseController::class, 'filter'])->name('uses.filter');
+
     Route::resource('/movements/entries', MovementEntryController::class);
+    Route::post('/movements/filter/entries', [MovementEntryController::class, 'filter'])->name('entries.filter');
 
     Route::resource('/payments', PaymentController::class);
     Route::put('/payments/pay/{payment}', [PaymentController::class, 'pay'])->where('payment', '[0-9]+')->name('payments.pay');
@@ -63,7 +68,26 @@ Route::middleware([
     Route::resource('/employees', EmployeeController::class);
     Route::delete('/employees/fire/{id}', [EmployeeController::class, 'fire'])->name('employees.fire');
     Route::get('/previous/employees', [EmployeeController::class, 'previous'])->name('employees.previous');
-    Route::get('overtime-calculation/employees', [EmployeeController::class, 'overtime_calculation'])->name('employee.overtime_calculation');
+    Route::get('overtime-calculation/employees/{id?}', [EmployeeController::class, 'overtime_calculation'])->where('id', '[0-9]*')->name('employee.overtime_calculation');
+    Route::get('overtime-calculation/list/employees/{date?}', [EmployeeController::class, 'overtime_calculation_list'])->name('employee.overtime_calculation_list');
+    Route::post('overtime-calculation/save/employees', [EmployeeController::class, 'overtime_calculation_save'])->name('employee.overtime_calculation_save');
+
     Route::resource('/payslip', PayslipController::class);
-    Route::get('/payslip/filter/{employee?}', [PayslipController::class, 'index'])->where('employee', '[0-9]+')->name('payslip.filter');
+    Route::get('/filter/payslip/{employee?}/{month?}/{year?}', [PayslipController::class, 'index'])
+        ->where('employee', '[0-9]*')
+        ->where('month', '[0-9]*')
+        ->where('year', '[0-9]*')
+        ->name('payslip.filter');
+    Route::get('/print/payslip/{mode?}/{employee?}/{month?}/{year?}', [PayslipController::class, 'print_payslips'])
+        ->where('mode', '[a-z\-A-Z]*')
+        ->where('employee', '[0-9]*')
+        ->where('month', '[0-9]*')
+        ->where('year', '[0-9]*')
+        ->name('payslip.print');
+    Route::put('/payslip/detail/{payslip}', [PayslipController::class, 'update_detail'])->where('payslip', '[0-9]*')->name('payslip.update_detail');
+    Route::put('/payslip/observations/{employee}/{month}/{year}', [PayslipController::class, 'update_observations'])
+        ->where('employee', '[0-9]*')
+        ->where('month', '[0-9]*')
+        ->where('year', '[0-9]*')
+        ->name('payslip.observations');
 });

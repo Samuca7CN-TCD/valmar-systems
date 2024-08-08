@@ -77,7 +77,7 @@ class ItemController extends Controller
         }
 
         // Carregar todos os itens e funcionários
-        $items = Item::where('list_in_uses', true)->get();
+        $items = Item::where('list_in_uses', true)->orderBy('name')->get();
         $employees = Employee::all();
 
         // Assumindo que você tem um relacionamento adequado 'procedure' e 'movement' em Record
@@ -102,7 +102,7 @@ class ItemController extends Controller
 
         foreach ($records as $record)
         {
-            $employeeId = $record->procedure->movement->employee_id;
+            $employeeId = $record->employee_id;
             $itemId = $record->item_id;
             $quantity = $record->movement_quantity;
 
@@ -141,71 +141,73 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
-        $validate = (object) $request->validate([
-            'profile_img_url' => ['nullable', 'string'],
-            'profile_img' => ['nullable', 'file', 'max:2097152',],
-            'name' => ['required', 'string', 'max:255', 'unique:items'],
-            'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'quantity' => ['required', 'numeric', 'min:0'],
-            'min_quantity' => ['nullable', 'numeric', 'lte:max_quantity', 'min:0'],
-            'max_quantity' => ['nullable', 'numeric', 'min:0'],
-            'measurement_unit_id' => ['required', 'integer', 'exists:measurement_units,id'],
-            'unit_equivalent' => ['required', 'numeric', 'min:0'],
-            'list_in_uses' => ['required', 'boolean'],
-        ]);
+        return DB::transaction(function () use ($request) {
+            $validate = (object) $request->validate([
+                'profile_img_url' => ['nullable', 'string'],
+                'profile_img' => ['nullable', 'file', 'max:2097152',],
+                'name' => ['required', 'string', 'max:255', 'unique:items'],
+                'category_id' => ['required', 'integer', 'exists:categories,id'],
+                'price' => ['required', 'numeric', 'min:0'],
+                'quantity' => ['required', 'numeric', 'min:0'],
+                'min_quantity' => ['nullable', 'numeric', 'lte:max_quantity', 'min:0'],
+                'max_quantity' => ['nullable', 'numeric', 'min:0'],
+                'measurement_unit_id' => ['required', 'integer', 'exists:measurement_units,id'],
+                'unit_equivalent' => ['required', 'numeric', 'min:0'],
+                'list_in_uses' => ['required', 'boolean'],
+            ]);
 
-        $profile_img = $validate->profile_img ?: null;
-        if ($profile_img)
-        {
-            $profile_img = $profile_img->store('public/img/items');
-        } else if ($validate->profile_img_url)
-        {
-            $profile_img = "copy_" . explode('/', $validate->profile_img_url)[4];
-            while (Storage::disk('public')->exists('img/items/' . $profile_img))
+            $profile_img = $validate->profile_img ?: null;
+            if ($profile_img)
             {
-                $profile_img = 'copy_' . $profile_img;
+                $profile_img = $profile_img->store('public/img/items');
+            } else if ($validate->profile_img_url)
+            {
+                $profile_img = "copy_" . explode('/', $validate->profile_img_url)[4];
+                while (Storage::disk('public')->exists('img/items/' . $profile_img))
+                {
+                    $profile_img = 'copy_' . $profile_img;
+                }
+                Storage::disk('public')->copy('img/items/' . explode('/', $validate->profile_img_url)[4], 'img/items/' . $profile_img);
+                $profile_img = "public/img/items/" . $profile_img;
             }
-            Storage::disk('public')->copy('img/items/' . explode('/', $validate->profile_img_url)[4], 'img/items/' . $profile_img);
-            $profile_img = "public/img/items/" . $profile_img;
-        }
-        $item = Item::create([
-            'profile_img' => $profile_img,
-            'name' => $validate->name,
-            'category_id' => $validate->category_id,
-            'price' => $validate->price,
-            'quantity' => $validate->quantity,
-            'min_quantity' => $validate->min_quantity,
-            'max_quantity' => $validate->max_quantity,
-            'measurement_unit_id' => $validate->measurement_unit_id,
-            'unit_equivalent' => $validate->unit_equivalent,
-            'list_in_uses' => $validate->list_in_uses
-        ]);
+            $item = Item::create([
+                'profile_img' => $profile_img,
+                'name' => $validate->name,
+                'category_id' => $validate->category_id,
+                'price' => $validate->price,
+                'quantity' => $validate->quantity,
+                'min_quantity' => $validate->min_quantity,
+                'max_quantity' => $validate->max_quantity,
+                'measurement_unit_id' => $validate->measurement_unit_id,
+                'unit_equivalent' => $validate->unit_equivalent,
+                'list_in_uses' => $validate->list_in_uses
+            ]);
 
-        $procedure = Procedure::create([
-            'user_id' => Auth::id(),
-            'action_id' => 1,
-            'department_id' => 2,
-            'movement_id' => null,
-        ]);
+            $procedure = Procedure::create([
+                'user_id' => Auth::id(),
+                'action_id' => 1,
+                'department_id' => 2,
+                'movement_id' => null,
+            ]);
 
-        $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
-        $measuremtent_unit = $measuremtent_unit->abbreviation;
+            $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
+            $measuremtent_unit = $measuremtent_unit->abbreviation;
 
-        $record = Record::create([
-            'procedure_id' => $procedure->id,
-            'item_id' => $item->id,
-            'name' => $item->name,
-            'quantity' => 0,
-            'measurement_unit' => $measuremtent_unit,
-            'price' => $item->price,
-            'movement_quantity' => $item->quantity,
-            'amount' => $item->price * $item->quantity,
-            'past' => true,
-            'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
-        ]);
-
-        return back();
+            $record = Record::create([
+                'procedure_id' => $procedure->id,
+                'item_id' => $item->id,
+                'name' => $item->name,
+                'quantity' => 0,
+                'measurement_unit' => $measuremtent_unit,
+                'price' => $item->price,
+                'movement_quantity' => $item->quantity,
+                'amount' => $item->price * $item->quantity,
+                'past' => true,
+                'content' => json_encode($item),
+                'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
+            ]);
+            return back();
+        });
     }
 
     /**
@@ -229,72 +231,74 @@ class ItemController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // dd($request);
-        $item = Item::findOrFail($id);
-        $request->validate([
-            'profile_img_url' => ['nullable', 'string'],
-            'profile_img' => ['nullable', 'file', 'max:2097152'],
-            'name' => ['required', 'string', 'max:255', 'unique:items,name,' . $id],
-            'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'quantity' => ['required', 'numeric', 'min:0'],
-            'min_quantity' => ['nullable', 'numeric', 'lte:max_quantity', 'min:0'],
-            'max_quantity' => ['nullable', 'numeric', 'gte:max_quantity', 'min:0'],
-            'measurement_unit_id' => ['required', 'integer', 'exists:measurement_units,id'],
-            'unit_equivalent' => ['required', 'numeric', 'min:0'],
-            'list_in_uses' => ['required', 'boolean'],
-        ]);
+        return DB::transaction(function () use ($request, $id) {
+            // dd($request);
+            $item = Item::findOrFail($id);
+            $request->validate([
+                'profile_img_url' => ['nullable', 'string'],
+                'profile_img' => ['nullable', 'file', 'max:2097152'],
+                'name' => ['required', 'string', 'max:255', 'unique:items,name,' . $id],
+                'category_id' => ['required', 'integer', 'exists:categories,id'],
+                'price' => ['required', 'numeric', 'min:0'],
+                'quantity' => ['required', 'numeric', 'min:0'],
+                'min_quantity' => ['nullable', 'numeric', 'lte:max_quantity', 'min:0'],
+                'max_quantity' => ['nullable', 'numeric', 'gte:max_quantity', 'min:0'],
+                'measurement_unit_id' => ['required', 'integer', 'exists:measurement_units,id'],
+                'unit_equivalent' => ['required', 'numeric', 'min:0'],
+                'list_in_uses' => ['required', 'boolean'],
+            ]);
 
-        $profile_img = $request->profile_img !== null ? $request->file('profile_img') : null;
-        if ($profile_img)
-        {
-            if ($item->profile_img)
-                unlink(storage_path('app/' . $item->profile_img));
-            $item->profile_img = $profile_img->store('public/img/items');
-        } else
-        {
-            if ($request->profile_img_url === null)
+            $profile_img = $request->profile_img !== null ? $request->file('profile_img') : null;
+            if ($profile_img)
             {
                 if ($item->profile_img)
                     unlink(storage_path('app/' . $item->profile_img));
-                $item->profile_img = null;
+                $item->profile_img = $profile_img->store('public/img/items');
+            } else
+            {
+                if ($request->profile_img_url === null)
+                {
+                    if ($item->profile_img)
+                        unlink(storage_path('app/' . $item->profile_img));
+                    $item->profile_img = null;
+                }
             }
-        }
 
-        $item->name = $request->name;
-        $item->category_id = $request->category_id;
-        $item->price = $request->price;
-        $item->quantity = $request->quantity;
-        $item->min_quantity = $request->min_quantity;
-        $item->max_quantity = $request->max_quantity;
-        $item->measurement_unit_id = $request->measurement_unit_id;
-        $item->unit_equivalent = $request->unit_equivalent;
-        $item->list_in_uses = $request->list_in_uses;
-        $item->save();
+            $item->name = $request->name;
+            $item->category_id = $request->category_id;
+            $item->price = $request->price;
+            $item->quantity = $request->quantity;
+            $item->min_quantity = $request->min_quantity;
+            $item->max_quantity = $request->max_quantity;
+            $item->measurement_unit_id = $request->measurement_unit_id;
+            $item->unit_equivalent = $request->unit_equivalent;
+            $item->list_in_uses = $request->list_in_uses;
+            $item->save();
 
-        $procedure = Procedure::create([
-            'user_id' => Auth::id(),
-            'action_id' => 2,
-            'department_id' => 2,
-            'movement_id' => null,
-        ]);
+            $procedure = Procedure::create([
+                'user_id' => Auth::id(),
+                'action_id' => 2,
+                'department_id' => 2,
+                'movement_id' => null,
+            ]);
 
-        $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
-        $measuremtent_unit = $measuremtent_unit->abbreviation;
+            $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
+            $measuremtent_unit = $measuremtent_unit->abbreviation;
 
-        $record = Record::create([
-            'procedure_id' => $procedure->id,
-            'item_id' => $item->id,
-            'item_name' => $item->name,
-            'item_quantity' => $item->quantity,
-            'item_measurement_unit' => $measuremtent_unit,
-            'price' => $item->price,
-            'amount' => $item->price * $item->quantity,
-            'past' => true,
-            'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
-        ]);
+            $record = Record::create([
+                'procedure_id' => $procedure->id,
+                'item_id' => $item->id,
+                'item_name' => $item->name,
+                'item_quantity' => $item->quantity,
+                'item_measurement_unit' => $measuremtent_unit,
+                'price' => $item->price,
+                'amount' => $item->price * $item->quantity,
+                'past' => true,
+                'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
+            ]);
 
-        return back();
+            return back();
+        });
     }
 
     /**
@@ -302,31 +306,33 @@ class ItemController extends Controller
      */
     public function destroy($id)
     {
-        $item = Item::findOrFail($id);
+        return DB::transaction(function () use ($id) {
+            $item = Item::findOrFail($id);
 
-        $procedure = Procedure::create([
-            'user_id' => Auth::id(),
-            'action_id' => 3,
-            'department_id' => 2,
-            'movement_id' => null,
-        ]);
+            $procedure = Procedure::create([
+                'user_id' => Auth::id(),
+                'action_id' => 3,
+                'department_id' => 2,
+                'movement_id' => null,
+            ]);
 
-        $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
-        $measuremtent_unit = $measuremtent_unit->abbreviation;
+            $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
+            $measuremtent_unit = $measuremtent_unit->abbreviation;
 
-        $record = Record::create([
-            'procedure_id' => $procedure->id,
-            'item_id' => $item->id,
-            'item_name' => $item->name,
-            'item_quantity' => $item->quantity,
-            'item_measurement_unit' => $measuremtent_unit,
-            'price' => $item->price,
-            'amount' => $item->price * $item->quantity,
-            'past' => true,
-            'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
-        ]);
+            $record = Record::create([
+                'procedure_id' => $procedure->id,
+                'item_id' => $item->id,
+                'item_name' => $item->name,
+                'item_quantity' => $item->quantity,
+                'item_measurement_unit' => $measuremtent_unit,
+                'price' => $item->price,
+                'amount' => $item->price * $item->quantity,
+                'past' => true,
+                'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
+            ]);
 
-        $item->delete();
-        return back();
+            $item->delete();
+            return back();
+        });
     }
 }

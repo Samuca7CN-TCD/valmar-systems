@@ -8,6 +8,5 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pendence extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 }

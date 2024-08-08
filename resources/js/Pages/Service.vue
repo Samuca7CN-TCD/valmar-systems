@@ -7,7 +7,8 @@ import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import { BanknotesIcon, CheckBadgeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
-
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
 // =============================================
 // Informações exteriores
 const props = defineProps({
@@ -19,7 +20,7 @@ const props = defineProps({
     services_list: Object,
 })
 
-
+const $toast = useToast();
 // =============================================
 // Informações do OBJETO
 const service_data = useForm({
@@ -161,7 +162,7 @@ const deleteService = (service_id, service_name) => {
     if (confirm(`Você tem certeza que deseja excluir o serviço "${service_name}"? Esta ação não poderá ser desfeita!`)) {
         service_data.delete(route('services.destroy', service_id), {
             preserveScroll: true,
-            onSuccess: () => alert('Serviço deletado com sucesso!')
+            onSuccess: () => $toast.success('Serviço deletado com sucesso!')
         })
     }
 }
@@ -171,7 +172,7 @@ const submit = () => {
         case 'create': return createService()
         case 'update': return updateService()
         case 'pay': return payService()
-        default: alert('Método desconhecido. Informar o Técnico.')
+        default: $toast.error('Método desconhecido. Informar o Técnico.')
     }
 }
 </script>
@@ -182,7 +183,8 @@ const submit = () => {
     <AppLayout :page="page" :page_options="page_options">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }} | {{ toMoney(total_services_amount) }}
+                {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{
+        toMoney(total_services_amount) }}</span>
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Service" class="print:hidden" />
         </template>
@@ -208,7 +210,7 @@ const submit = () => {
                                 <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                                     <div class="overflow-hidden">
                                         <table class="min-w-full text-left text-sm font-light">
-                                            <thead class="border-b font-medium dark:border-neutral-500">
+                                            <thead class="border-b font-medium ">
                                                 <tr>
                                                     <th scope="col" class="px-6 py-4 text-center">#</th>
                                                     <th scope="col" class="px-6 py-4 text-center">Prazo</th>

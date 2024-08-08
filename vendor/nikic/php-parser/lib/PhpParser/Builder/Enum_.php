@@ -6,13 +6,14 @@ use PhpParser;
 use PhpParser\BuilderHelpers;
 use PhpParser\Node;
 use PhpParser\Node\Identifier;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\Stmt;
 
-class Enum_ extends Declaration {
+class Enum_ extends Declaration
+{
     protected string $name;
     protected ?Identifier $scalarType = null;
-    /** @var list<Name> */
+    /** @var list<Nome> */
     protected array $implements = [];
     /** @var list<Stmt\TraitUse> */
     protected array $uses = [];
@@ -28,9 +29,10 @@ class Enum_ extends Declaration {
     /**
      * Creates an enum builder.
      *
-     * @param string $name Name of the enum
+     * @param string $name Nome of the enum
      */
-    public function __construct(string $name) {
+    public function __construct(string $name)
+    {
         $this->name = $name;
     }
 
@@ -41,7 +43,8 @@ class Enum_ extends Declaration {
      *
      * @return $this
      */
-    public function setScalarType($scalarType) {
+    public function setScalarType($scalarType)
+    {
         $this->scalarType = BuilderHelpers::normalizeType($scalarType);
 
         return $this;
@@ -50,12 +53,14 @@ class Enum_ extends Declaration {
     /**
      * Implements one or more interfaces.
      *
-     * @param Name|string ...$interfaces Names of interfaces to implement
+     * @param Nome|string ...$interfaces Names of interfaces to implement
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function implement(...$interfaces) {
-        foreach ($interfaces as $interface) {
+    public function implement(...$interfaces)
+    {
+        foreach ($interfaces as $interface)
+        {
             $this->implements[] = BuilderHelpers::normalizeName($interface);
         }
 
@@ -69,18 +74,24 @@ class Enum_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addStmt($stmt) {
+    public function addStmt($stmt)
+    {
         $stmt = BuilderHelpers::normalizeNode($stmt);
 
-        if ($stmt instanceof Stmt\EnumCase) {
+        if ($stmt instanceof Stmt\EnumCase)
+        {
             $this->enumCases[] = $stmt;
-        } elseif ($stmt instanceof Stmt\ClassMethod) {
+        } elseif ($stmt instanceof Stmt\ClassMethod)
+        {
             $this->methods[] = $stmt;
-        } elseif ($stmt instanceof Stmt\TraitUse) {
+        } elseif ($stmt instanceof Stmt\TraitUse)
+        {
             $this->uses[] = $stmt;
-        } elseif ($stmt instanceof Stmt\ClassConst) {
+        } elseif ($stmt instanceof Stmt\ClassConst)
+        {
             $this->constants[] = $stmt;
-        } else {
+        } else
+        {
             throw new \LogicException(sprintf('Unexpected node of type "%s"', $stmt->getType()));
         }
 
@@ -94,7 +105,8 @@ class Enum_ extends Declaration {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addAttribute($attribute) {
+    public function addAttribute($attribute)
+    {
         $this->attributeGroups[] = BuilderHelpers::normalizeAttribute($attribute);
 
         return $this;
@@ -105,7 +117,8 @@ class Enum_ extends Declaration {
      *
      * @return Stmt\Enum_ The built enum node
      */
-    public function getNode(): PhpParser\Node {
+    public function getNode(): PhpParser\Node
+    {
         return new Stmt\Enum_($this->name, [
             'scalarType' => $this->scalarType,
             'implements' => $this->implements,

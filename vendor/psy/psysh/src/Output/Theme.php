@@ -28,45 +28,45 @@ class Theme
     const CLASSIC_THEME = [
         'compact' => true,
 
-        'prompt'       => '>>> ',
+        'prompt' => '>>> ',
         'bufferPrompt' => '... ',
         'replayPrompt' => '--> ',
-        'returnValue'  => '=>  ',
+        'returnValue' => '=>  ',
     ];
 
     const DEFAULT_STYLES = [
-        'info'    => ['white', 'blue', ['bold']],
+        'info' => ['white', 'blue', ['bold']],
         'warning' => ['black', 'yellow'],
-        'error'   => ['white', 'red', ['bold']],
+        'error' => ['white', 'red', ['bold']],
         'whisper' => ['gray'],
 
-        'aside'  => ['blue'],
+        'aside' => ['blue'],
         'strong' => [null, null, ['bold']],
         'return' => ['cyan'],
         'urgent' => ['red'],
         'hidden' => ['black'],
 
         // Visibility
-        'public'    => [null, null, ['bold']],
+        'public' => [null, null, ['bold']],
         'protected' => ['yellow'],
-        'private'   => ['red'],
-        'global'    => ['cyan', null, ['bold']],
-        'const'     => ['cyan'],
-        'class'     => ['blue', null, ['underscore']],
-        'function'  => [null],
-        'default'   => [null],
+        'private' => ['red'],
+        'global' => ['cyan', null, ['bold']],
+        'const' => ['cyan'],
+        'class' => ['blue', null, ['underscore']],
+        'function' => [null],
+        'default' => [null],
 
         // Types
-        'number'       => ['magenta'],
-        'integer'      => ['magenta'],
-        'float'        => ['yellow'],
-        'string'       => ['green'],
-        'bool'         => ['cyan'],
-        'keyword'      => ['yellow'],
-        'comment'      => ['blue'],
+        'number' => ['magenta'],
+        'integer' => ['magenta'],
+        'float' => ['yellow'],
+        'string' => ['green'],
+        'bool' => ['cyan'],
+        'keyword' => ['yellow'],
+        'comment' => ['blue'],
         'code_comment' => ['gray'],
-        'object'       => ['blue'],
-        'resource'     => ['yellow'],
+        'object' => ['blue'],
+        'resource' => ['yellow'],
 
         // Code-specific formatting
         'inline_html' => ['cyan'],
@@ -90,8 +90,10 @@ class Theme
      */
     public function __construct($config = 'modern')
     {
-        if (\is_string($config)) {
-            switch ($config) {
+        if (\is_string($config))
+        {
+            switch ($config)
+            {
                 case 'modern':
                     $config = static::MODERN_THEME;
                     break;
@@ -111,12 +113,15 @@ class Theme
             }
         }
 
-        if (!\is_array($config)) {
+        if (!\is_array($config))
+        {
             throw new \InvalidArgumentException('Invalid theme config');
         }
 
-        foreach ($config as $name => $value) {
-            switch ($name) {
+        foreach ($config as $name => $value)
+        {
+            switch ($name)
+            {
                 case 'compact':
                     $this->setCompact($value);
                     break;
@@ -147,7 +152,7 @@ class Theme
     }
 
     /**
-     * Enable or disable compact output.
+     * Habilitar or disable compact output.
      */
     public function setCompact(bool $compact)
     {
@@ -248,7 +253,8 @@ class Theme
      */
     public function setStyles(array $styles)
     {
-        foreach (\array_keys(static::DEFAULT_STYLES) as $name) {
+        foreach (\array_keys(static::DEFAULT_STYLES) as $name)
+        {
             $this->styles[$name] = $styles[$name] ?? static::DEFAULT_STYLES[$name];
         }
     }
@@ -258,7 +264,8 @@ class Theme
      */
     public function applyStyles(OutputFormatterInterface $formatter, bool $useGrayFallback)
     {
-        foreach (\array_keys(static::DEFAULT_STYLES) as $name) {
+        foreach (\array_keys(static::DEFAULT_STYLES) as $name)
+        {
             $formatter->setStyle($name, new OutputFormatterStyle(...$this->getStyle($name, $useGrayFallback)));
         }
     }
@@ -268,7 +275,8 @@ class Theme
      */
     public function applyErrorStyles(OutputFormatterInterface $errorFormatter, bool $useGrayFallback)
     {
-        foreach (static::ERROR_STYLES as $name) {
+        foreach (static::ERROR_STYLES as $name)
+        {
             $errorFormatter->setStyle($name, new OutputFormatterStyle(...$this->getStyle($name, $useGrayFallback)));
         }
     }

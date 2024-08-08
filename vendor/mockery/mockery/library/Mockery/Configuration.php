@@ -150,7 +150,7 @@ class Configuration
     }
 
     /**
-     * Enable reflection caching
+     * Habilitar reflection caching
      *
      * It should be always enabled, except when using
      * PHPUnit's --static-backup option.
@@ -187,7 +187,8 @@ class Configuration
 
         $parentClass = $class;
 
-        do {
+        do
+        {
             $classes[] = $parentClass;
 
             $parentClass = get_parent_class($parentClass);
@@ -195,8 +196,10 @@ class Configuration
 
         $classesAndInterfaces = array_merge($classes, class_implements($class));
 
-        foreach ($classesAndInterfaces as $type) {
-            if (array_key_exists($type, $this->_defaultMatchers)) {
+        foreach ($classesAndInterfaces as $type)
+        {
+            if (array_key_exists($type, $this->_defaultMatchers))
+            {
                 return $this->_defaultMatchers[$type];
             }
         }
@@ -216,11 +219,13 @@ class Configuration
     {
         $class = strtolower($class);
         $method = strtolower($method);
-        if (! array_key_exists($class, $this->_internalClassParamMap)) {
+        if (!array_key_exists($class, $this->_internalClassParamMap))
+        {
             return null;
         }
 
-        if (! array_key_exists($method, $this->_internalClassParamMap[$class])) {
+        if (!array_key_exists($method, $this->_internalClassParamMap[$class]))
+        {
             return null;
         }
 
@@ -249,7 +254,8 @@ class Configuration
     {
         $parentClass = $class;
 
-        do {
+        do
+        {
             $classes[] = $parentClass;
 
             $parentClass = get_parent_class($parentClass);
@@ -257,8 +263,10 @@ class Configuration
 
         $classesAndInterfaces = array_merge($classes, class_implements($class));
 
-        foreach ($classesAndInterfaces as $type) {
-            if (array_key_exists($type, $this->_objectFormatters)) {
+        foreach ($classesAndInterfaces as $type)
+        {
+            if (array_key_exists($type, $this->_objectFormatters))
+            {
                 return $this->_objectFormatters[$type];
             }
         }
@@ -348,16 +356,20 @@ class Configuration
         $isHamcrest = is_a($matcherClass, Matcher::class, true)
             || is_a($matcherClass, Hamcrest_Matcher::class, true);
 
-        if ($isHamcrest) {
+        if ($isHamcrest)
+        {
             @trigger_error('Hamcrest package has been deprecated and will be removed in 2.0', E_USER_DEPRECATED);
         }
 
-        if (! $isHamcrest && ! is_a($matcherClass, MatcherInterface::class, true)) {
-            throw new InvalidArgumentException(sprintf(
-                "Matcher class must implement %s, '%s' given.",
-                MatcherInterface::class,
-                $matcherClass
-            ));
+        if (!$isHamcrest && !is_a($matcherClass, MatcherInterface::class, true))
+        {
+            throw new InvalidArgumentException(
+                sprintf(
+                    "Matcher class must implement %s, '%s' given.",
+                    MatcherInterface::class,
+                    $matcherClass
+                )
+            );
         }
 
         $this->_defaultMatchers[$class] = $matcherClass;
@@ -376,7 +388,8 @@ class Configuration
      */
     public function setInternalClassMethodParamMap($class, $method, array $map)
     {
-        if (PHP_MAJOR_VERSION > 7) {
+        if (PHP_MAJOR_VERSION > 7)
+        {
             throw new LogicException(
                 'Internal class parameter overriding is not available in PHP 8. Incompatible signatures have been reclassified as fatal errors.'
             );
@@ -384,7 +397,8 @@ class Configuration
 
         $class = strtolower($class);
 
-        if (! array_key_exists($class, $this->_internalClassParamMap)) {
+        if (!array_key_exists($class, $this->_internalClassParamMap))
+        {
             $this->_internalClassParamMap[$class] = [];
         }
 

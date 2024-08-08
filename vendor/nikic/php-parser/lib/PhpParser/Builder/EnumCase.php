@@ -10,7 +10,8 @@ use PhpParser\Node;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt;
 
-class EnumCase implements PhpParser\Builder {
+class EnumCase implements PhpParser\Builder
+{
     /** @var Identifier|string */
     protected $name;
     /** @var ?Node\Expr */
@@ -24,9 +25,10 @@ class EnumCase implements PhpParser\Builder {
     /**
      * Creates an enum case builder.
      *
-     * @param string|Identifier $name Name
+     * @param string|Identifier $name Nome
      */
-    public function __construct($name) {
+    public function __construct($name)
+    {
         $this->name = $name;
     }
 
@@ -37,7 +39,8 @@ class EnumCase implements PhpParser\Builder {
      *
      * @return $this
      */
-    public function setValue($value) {
+    public function setValue($value)
+    {
         $this->value = BuilderHelpers::normalizeValue($value);
 
         return $this;
@@ -50,7 +53,8 @@ class EnumCase implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function setDocComment($docComment) {
+    public function setDocComment($docComment)
+    {
         $this->attributes = [
             'comments' => [BuilderHelpers::normalizeDocComment($docComment)]
         ];
@@ -65,7 +69,8 @@ class EnumCase implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addAttribute($attribute) {
+    public function addAttribute($attribute)
+    {
         $this->attributeGroups[] = BuilderHelpers::normalizeAttribute($attribute);
 
         return $this;
@@ -76,7 +81,8 @@ class EnumCase implements PhpParser\Builder {
      *
      * @return Stmt\EnumCase The built constant node
      */
-    public function getNode(): PhpParser\Node {
+    public function getNode(): PhpParser\Node
+    {
         return new Stmt\EnumCase(
             $this->name,
             $this->value,

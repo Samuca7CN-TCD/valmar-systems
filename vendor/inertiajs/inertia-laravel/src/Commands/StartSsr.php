@@ -30,8 +30,9 @@ class StartSsr extends Command
      */
     public function handle(): int
     {
-        if (! config('inertia.ssr.enabled', true)) {
-            $this->error('Inertia SSR is not enabled. Enable it via the `inertia.ssr.enabled` config option.');
+        if (!config('inertia.ssr.enabled', true))
+        {
+            $this->error('Inertia SSR is not enabled. Habilitar it via the `inertia.ssr.enabled` config option.');
 
             return self::FAILURE;
         }
@@ -39,23 +40,26 @@ class StartSsr extends Command
         $bundle = (new BundleDetector())->detect();
         $configuredBundle = config('inertia.ssr.bundle');
 
-        if ($bundle === null) {
+        if ($bundle === null)
+        {
             $this->error(
                 $configuredBundle
-                    ? 'Inertia SSR bundle not found at the configured path: "'.$configuredBundle.'"'
-                    : 'Inertia SSR bundle not found. Set the correct Inertia SSR bundle path in your `inertia.ssr.bundle` config.'
+                ? 'Inertia SSR bundle not found at the configured path: "' . $configuredBundle . '"'
+                : 'Inertia SSR bundle not found. Set the correct Inertia SSR bundle path in your `inertia.ssr.bundle` config.'
             );
 
             return self::FAILURE;
-        } elseif ($configuredBundle && $bundle !== $configuredBundle) {
-            $this->warn('Inertia SSR bundle not found at the configured path: "'.$configuredBundle.'"');
-            $this->warn('Using a default bundle instead: "'.$bundle.'"');
+        } elseif ($configuredBundle && $bundle !== $configuredBundle)
+        {
+            $this->warn('Inertia SSR bundle not found at the configured path: "' . $configuredBundle . '"');
+            $this->warn('Using a default bundle instead: "' . $bundle . '"');
         }
 
         $runtime = $this->option('runtime');
 
-        if (! in_array($runtime, ['node', 'bun'])) {
-            $this->error('Unsupported runtime: "'.$runtime.'". Supported runtimes are `node` and `bun`.');
+        if (!in_array($runtime, ['node', 'bun']))
+        {
+            $this->error('Unsupported runtime: "' . $runtime . '". Supported runtimes are `node` and `bun`.');
 
             return self::INVALID;
         }
@@ -66,7 +70,8 @@ class StartSsr extends Command
         $process->setTimeout(null);
         $process->start();
 
-        if (extension_loaded('pcntl')) {
+        if (extension_loaded('pcntl'))
+        {
             $stop = function () use ($process) {
                 $process->stop();
             };
@@ -76,10 +81,13 @@ class StartSsr extends Command
             pcntl_signal(SIGTERM, $stop);
         }
 
-        foreach ($process as $type => $data) {
-            if ($process::OUT === $type) {
+        foreach ($process as $type => $data)
+        {
+            if ($process::OUT === $type)
+            {
                 $this->info(trim($data));
-            } else {
+            } else
+            {
                 $this->error(trim($data));
                 report(new SsrException($data));
             }

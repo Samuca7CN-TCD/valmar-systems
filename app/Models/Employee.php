@@ -8,8 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -55,5 +54,15 @@ class Employee extends Model
     public function payslips()
     {
         return $this->hasMany(Payslip::class);
+    }
+
+    public function records()
+    {
+        return $this->hasMany(Record::class);
+    }
+
+    public function observations()
+    {
+        return $this->hasMany(Observation::class);
     }
 }

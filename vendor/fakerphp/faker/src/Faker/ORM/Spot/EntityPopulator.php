@@ -3,7 +3,7 @@
 namespace Faker\ORM\Spot;
 
 use Faker\Generator;
-use Faker\Guesser\Name;
+use Faker\Guesser\Nome;
 use Spot\Locator;
 use Spot\Mapper;
 use Spot\Relation\BelongsTo;
@@ -102,22 +102,26 @@ class EntityPopulator
     public function guessColumnFormatters(Generator $generator)
     {
         $formatters = [];
-        $nameGuesser = new Name($generator);
+        $nameGuesser = new Nome($generator);
         $columnTypeGuesser = new ColumnTypeGuesser($generator);
         $fields = $this->mapper->fields();
 
-        foreach ($fields as $fieldName => $field) {
-            if ($field['primary'] === true) {
+        foreach ($fields as $fieldName => $field)
+        {
+            if ($field['primary'] === true)
+            {
                 continue;
             }
 
-            if ($formatter = $nameGuesser->guessFormat($fieldName)) {
+            if ($formatter = $nameGuesser->guessFormat($fieldName))
+            {
                 $formatters[$fieldName] = $formatter;
 
                 continue;
             }
 
-            if ($formatter = $columnTypeGuesser->guessFormat($field)) {
+            if ($formatter = $columnTypeGuesser->guessFormat($field))
+            {
                 $formatters[$fieldName] = $formatter;
 
                 continue;
@@ -127,9 +131,11 @@ class EntityPopulator
         $entity = $this->mapper->build([]);
         $relations = $entityName::relations($this->mapper, $entity);
 
-        foreach ($relations as $relation) {
+        foreach ($relations as $relation)
+        {
             // We don't need any other relation here.
-            if ($relation instanceof BelongsTo) {
+            if ($relation instanceof BelongsTo)
+            {
                 $fieldName = $relation->localKey();
                 $entityName = $relation->entityName();
                 $field = $fields[$fieldName];
@@ -138,17 +144,20 @@ class EntityPopulator
                 $locator = $this->locator;
 
                 $formatters[$fieldName] = function ($inserted) use ($required, $entityName, $locator, $generator) {
-                    if (!empty($inserted[$entityName])) {
+                    if (!empty($inserted[$entityName]))
+                    {
                         return $generator->randomElement($inserted[$entityName])->get('id');
                     }
 
-                    if ($required && $this->useExistingData) {
+                    if ($required && $this->useExistingData)
+                    {
                         // We did not add anything like this, but it's required,
                         // So let's find something existing in DB.
                         $mapper = $locator->mapper($entityName);
                         $records = $mapper->all()->limit(self::RELATED_FETCH_COUNT)->toArray();
 
-                        if (empty($records)) {
+                        if (empty($records))
+                        {
                             return null;
                         }
 
@@ -182,8 +191,10 @@ class EntityPopulator
 
     private function fillColumns($obj, $insertedEntities): void
     {
-        foreach ($this->columnFormatters as $field => $format) {
-            if (null !== $format) {
+        foreach ($this->columnFormatters as $field => $format)
+        {
+            if (null !== $format)
+            {
                 $value = is_callable($format) ? $format($insertedEntities, $obj) : $format;
                 $obj->set($field, $value);
             }
@@ -192,7 +203,8 @@ class EntityPopulator
 
     private function callMethods($obj, $insertedEntities): void
     {
-        foreach ($this->getModifiers() as $modifier) {
+        foreach ($this->getModifiers() as $modifier)
+        {
             $modifier($obj, $insertedEntities);
         }
     }

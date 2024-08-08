@@ -62,7 +62,7 @@ class ServiceController extends Controller
                 return $movement;
             });
 
-        return Inertia::render('ServicePrevious', [
+        return Inertia::render('Services/Previous', [
             'page' => $page,
             'services_list' => $services,
         ]);

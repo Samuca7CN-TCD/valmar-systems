@@ -232,7 +232,8 @@ class Factory
 
     public function __construct(array $settings = [], ?string $className = null)
     {
-        if ($className) {
+        if ($className)
+        {
             $this->className = $className;
         }
 
@@ -352,7 +353,8 @@ class Factory
     {
         $genericMacros = $this->getSettings()['genericMacros'] ?? [];
 
-        if (!isset($genericMacros[$priority])) {
+        if (!isset($genericMacros[$priority]))
+        {
             $genericMacros[$priority] = [];
             krsort($genericMacros, SORT_NUMERIC);
         }
@@ -427,7 +429,7 @@ class Factory
     }
 
     /**
-     * Enable the strict mode (or disable with passing false).
+     * Habilitar the strict mode (or disable with passing false).
      */
     public function useStrictMode(bool $strictModeEnabled = true): void
     {
@@ -598,25 +600,29 @@ class Factory
      */
     public function setTestNowAndTimezone(mixed $testNow = null, $timezone = null): void
     {
-        if ($testNow) {
+        if ($testNow)
+        {
             $this->testDefaultTimezone ??= date_default_timezone_get();
         }
 
         $useDateInstanceTimezone = $testNow instanceof DateTimeInterface;
 
-        if ($useDateInstanceTimezone) {
+        if ($useDateInstanceTimezone)
+        {
             $this->setDefaultTimezone($testNow->getTimezone()->getName(), $testNow);
         }
 
         $this->setTestNow($testNow);
         $this->useTimezoneFromTestNow = ($timezone === null && $testNow instanceof Closure);
 
-        if (!$useDateInstanceTimezone) {
+        if (!$useDateInstanceTimezone)
+        {
             $now = $this->getMockedTestNow(\func_num_args() === 1 ? null : $timezone);
             $this->setDefaultTimezone($now?->tzName ?? $this->testDefaultTimezone ?? 'UTC', $now);
         }
 
-        if (!$testNow) {
+        if (!$testNow)
+        {
             $this->testDefaultTimezone = null;
         }
     }
@@ -639,9 +645,11 @@ class Factory
     {
         $this->setTestNow($testNow);
 
-        try {
+        try
+        {
             $result = $callback();
-        } finally {
+        } finally
+        {
             $this->setTestNow();
         }
 
@@ -656,10 +664,12 @@ class Factory
      */
     public function getTestNow(): Closure|CarbonInterface|null
     {
-        if ($this->testNow === null) {
+        if ($this->testNow === null)
+        {
             $factory = FactoryImmutable::getDefaultInstance();
 
-            if ($factory !== $this) {
+            if ($factory !== $this)
+            {
                 return $factory->getTestNow();
             }
         }
@@ -671,26 +681,30 @@ class Factory
         Closure|CarbonInterface|null $testNow,
         DateTimeZone|string|int|null $timezone = null,
     ): ?CarbonInterface {
-        if ($testNow instanceof Closure) {
+        if ($testNow instanceof Closure)
+        {
             $callback = Callback::fromClosure($testNow);
             $realNow = new DateTimeImmutable('now');
             $testNow = $testNow($callback->prepareParameter($this->parse(
                 $realNow->format('Y-m-d H:i:s.u'),
                 $timezone ?? $realNow->getTimezone(),
-            )));
+            )
+            ));
 
-            if ($testNow !== null && !($testNow instanceof DateTimeInterface)) {
+            if ($testNow !== null && !($testNow instanceof DateTimeInterface))
+            {
                 $function = $callback->getReflectionFunction();
                 $type = \is_object($testNow) ? $testNow::class : \gettype($testNow);
 
                 throw new RuntimeException(
-                    'The test closure defined in '.$function->getFileName().
-                    ' at line '.$function->getStartLine().' returned '.$type.
-                    '; expected '.CarbonInterface::class.'|null',
+                    'The test closure defined in ' . $function->getFileName() .
+                    ' at line ' . $function->getStartLine() . ' returned ' . $type .
+                    '; expected ' . CarbonInterface::class . '|null',
                 );
             }
 
-            if (!($testNow instanceof CarbonInterface)) {
+            if (!($testNow instanceof CarbonInterface))
+            {
                 $timezone ??= $this->useTimezoneFromTestNow ? $testNow->getTimezone() : null;
                 $testNow = $this->__call('instance', [$testNow, $timezone]);
             }
@@ -723,24 +737,30 @@ class Factory
         $method = new ReflectionMethod($this->className, $name);
         $settings = $this->settings;
 
-        if ($settings && isset($settings['timezone'])) {
+        if ($settings && isset($settings['timezone']))
+        {
             $timezoneParameters = array_filter($method->getParameters(), function ($parameter) {
                 return \in_array($parameter->getName(), ['tz', 'timezone'], true);
             });
             $timezoneSetting = $settings['timezone'];
 
-            if (isset($arguments[0]) && \in_array($name, ['instance', 'make', 'create', 'parse'], true)) {
-                if ($arguments[0] instanceof DateTimeInterface) {
+            if (isset($arguments[0]) && \in_array($name, ['instance', 'make', 'create', 'parse'], true))
+            {
+                if ($arguments[0] instanceof DateTimeInterface)
+                {
                     $settings['innerTimezone'] = $settings['timezone'];
-                } elseif (\is_string($arguments[0]) && date_parse($arguments[0])['is_localtime']) {
+                } elseif (\is_string($arguments[0]) && date_parse($arguments[0])['is_localtime'])
+                {
                     unset($settings['timezone'], $settings['innerTimezone']);
                 }
             }
 
-            if (\count($timezoneParameters)) {
+            if (\count($timezoneParameters))
+            {
                 $index = key($timezoneParameters);
 
-                if (!isset($arguments[$index])) {
+                if (!isset($arguments[$index]))
+                {
                     array_splice($arguments, key($timezoneParameters), 0, [$timezoneSetting]);
                 }
 
@@ -751,13 +771,16 @@ class Factory
         $clock = FactoryImmutable::getCurrentClock();
         FactoryImmutable::setCurrentClock($this);
 
-        try {
+        try
+        {
             $result = $this->className::$name(...$arguments);
-        } finally {
+        } finally
+        {
             FactoryImmutable::setCurrentClock($clock);
         }
 
-        if (isset($this->translator)) {
+        if (isset($this->translator))
+        {
             $settings['translator'] = $this->translator;
         }
 
@@ -773,10 +796,12 @@ class Factory
     {
         $testNow = $this->handleTestNowClosure($this->getTestNow());
 
-        if ($testNow instanceof CarbonInterface) {
+        if ($testNow instanceof CarbonInterface)
+        {
             $testNow = $testNow->avoidMutation();
 
-            if ($timezone !== null) {
+            if ($timezone !== null)
+            {
                 return $testNow->setTimezone($timezone);
             }
         }
@@ -806,8 +831,8 @@ class Factory
         $regex = str_replace('\\\\', '\\', $format);
         // Replace not-escaped letters
         $regex = preg_replace_callback(
-            '/(?<!\\\\)((?:\\\\{2})*)(['.implode('', array_keys($replacements)).'])/',
-            static fn ($match) => $match[1].strtr($match[2], $replacements),
+            '/(?<!\\\\)((?:\\\\{2})*)([' . implode('', array_keys($replacements)) . '])/',
+            static fn($match) => $match[1] . strtr($match[2], $replacements),
             $regex,
         );
         // Replace escaped letters by the letter itself
@@ -815,7 +840,7 @@ class Factory
         // Escape not escaped slashes
         $regex = preg_replace('#(?<!\\\\)((?:\\\\{2})*)/#', '$1\\/', $regex);
 
-        return (bool) @preg_match('/^'.$regex.'$/', $date);
+        return (bool) @preg_match('/^' . $regex . '$/', $date);
     }
 
     private function setDefaultTimezone(string $timezone, ?DateTimeInterface $date = null): void
@@ -823,20 +848,23 @@ class Factory
         $previous = null;
         $success = false;
 
-        try {
+        try
+        {
             $success = date_default_timezone_set($timezone);
-        } catch (Throwable $exception) {
+        } catch (Throwable $exception)
+        {
             $previous = $exception;
         }
 
-        if (!$success) {
+        if (!$success)
+        {
             $suggestion = @CarbonTimeZone::create($timezone)->toRegionName($date);
 
             throw new InvalidArgumentException(
-                "Timezone ID '$timezone' is invalid".
-                ($suggestion && $suggestion !== $timezone ? ", did you mean '$suggestion'?" : '.')."\n".
-                "It must be one of the IDs from DateTimeZone::listIdentifiers(),\n".
-                'For the record, hours/minutes offset are relevant only for a particular moment, '.
+                "Timezone ID '$timezone' is invalid" .
+                ($suggestion && $suggestion !== $timezone ? ", did you mean '$suggestion'?" : '.') . "\n" .
+                "It must be one of the IDs from DateTimeZone::listIdentifiers(),\n" .
+                'For the record, hours/minutes offset are relevant only for a particular moment, ' .
                 'but not as a default timezone.',
                 0,
                 $previous

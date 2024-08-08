@@ -24,36 +24,53 @@ class MovementSellController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
 
         $page = Department::find(5);
         $items = Item::with('measurement_unit')->orderBy('name')->get();
 
+        // Recebe os parâmetros da consulta, ou define os valores padrão
+        $parameters = [
+            'entity_name' => $request->query('entity_name', ''),
+            'start_date' => $request->query('start_date', Carbon::today()->toDateString()),
+            'end_date' => $request->query('end_date', Carbon::today()->toDateString()),
+        ];
+
         $sells = Movement::where('type', 2)
-            ->with(['accounting', 'procedures.records'])
-            ->get()
-            ->map(function ($movement) {
-                $records = $movement->procedures->flatMap(function ($procedure) {
-                    return $procedure->records;
-                });
+            ->whereBetween('date', [$parameters['start_date'], $parameters['end_date']])
+            ->with(['accounting', 'procedures.records']);
 
-                // Filtra os registros com item_id diferente de null e mapeia para o item correspondente
-                $movement->items = $records->filter(function ($record) {
-                    return $record->item_id !== null;
-                });
-
-                return $movement;
+        if ($parameters['entity_name'])
+        {
+            $sells->whereHas('procedures.records', function ($query) use ($parameters) {
+                $query->where('entity_name', 'LIKE', "%{$parameters['entity_name']}%");
             });
+        }
 
-
-        // dd($sells);
+        $sells = $sells->get()->map(function ($movement) {
+            $records = $movement->procedures->flatMap->records;
+            $movement->items = $records->filter(fn($record) => $record->item_id !== null);
+            return $movement;
+        });
 
         return Inertia::render('Movements/Sells', [
             'page' => $page,
             'sells_list' => $sells,
             'items' => $items,
+            'parameters' => $parameters,
         ]);
+    }
+
+    public function filter(Request $request)
+    {
+        $parameters = [
+            'entity_name' => $request->input('entity_name', 0),
+            'start_date' => $request->input('start_date', Carbon::today()->toDateString()),
+            'end_date' => $request->input('end_date', Carbon::today()->toDateString()),
+        ];
+
+        return redirect()->route('sells.index', $parameters);
     }
 
     /**
@@ -194,22 +211,28 @@ class MovementSellController extends Controller
             ]);
 
             // Buscar todos os procedimentos associados ao movimento
-            //$procedures = Procedure::where('movement_id', $movement->id)->get();
+            $procedures = Procedure::where('movement_id', $movement->id)->get();
 
             // Para cada procedimento, excluir os registros associados
-            /*foreach ($procedures as $procedure) {
+            foreach ($procedures as $procedure)
+            {
                 $records = Record::where('procedure_id', $procedure->id)->get();
-                
-                foreach($records as $record){
-                    if($record->item_id !== null){
+
+                foreach ($records as $record)
+                {
+                    if ($record->item_id !== null)
+                    {
                         $item = Item::find($record->item_id);
-                        $item->quantity += $record->quantity;
-                        $item->save();
+                        if ($item)
+                        {
+                            $item->quantity += $record->movement_quantity;
+                            $item->save();
+                        }
                     }
-                    $record->delete();
+                    //$record->delete();
                 }
-                $procedure->delete();
-            }*/
+                //$procedure->delete();
+            }
 
             // Excluir a contabilidade e o movimento
             //$accounting->delete();

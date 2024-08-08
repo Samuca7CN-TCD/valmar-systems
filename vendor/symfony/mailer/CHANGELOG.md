@@ -53,7 +53,7 @@ CHANGELOG
 5.4
 ---
 
- * Enable the mailer to operate on any PSR-14-compatible event dispatcher
+ * Habilitar the mailer to operate on any PSR-14-compatible event dispatcher
 
 5.3
 ---

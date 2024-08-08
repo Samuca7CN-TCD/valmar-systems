@@ -95,8 +95,8 @@ class PHPConsoleHandler extends AbstractProcessingHandler
         'enabled' => true, // bool Is PHP Console server enabled
         'classesPartialsTraceIgnore' => ['Monolog\\'], // array Hide calls of classes started with...
         'debugTagsKeysInContext' => [0, 'tag'], // bool Is PHP Console server enabled
-        'useOwnErrorsHandler' => false, // bool Enable errors handling
-        'useOwnExceptionsHandler' => false, // bool Enable exceptions handling
+        'useOwnErrorsHandler' => false, // bool Habilitar errors handling
+        'useOwnExceptionsHandler' => false, // bool Habilitar exceptions handling
         'sourcesBasePath' => null, // string Base path of all project sources to strip in errors source paths
         'registerHelper' => true, // bool Register PhpConsole\Helper that allows short debug calls like PC::debug($var, 'ta.g.s')
         'serverEncoding' => null, // string|null Server internal encoding
@@ -104,7 +104,7 @@ class PHPConsoleHandler extends AbstractProcessingHandler
         'password' => null, // string|null Protect PHP Console connection by password
         'enableSslOnlyMode' => false, // bool Force connection by SSL for clients with PHP Console installed
         'ipMasks' => [], // array Set IP masks of clients that will be allowed to connect to PHP Console: array('192.168.*.*', '127.0.0.1')
-        'enableEvalListener' => false, // bool Enable eval request to be handled by eval dispatcher(if enabled, 'password' option is also required)
+        'enableEvalListener' => false, // bool Habilitar eval request to be handled by eval dispatcher(if enabled, 'password' option is also required)
         'dumperDetectCallbacks' => false, // bool Convert callback items in dumper vars to (callback SomeClass::someMethod) strings
         'dumperLevelLimit' => 5, // int Maximum dumped vars array or object nested dump level
         'dumperItemsCountLimit' => 100, // int Maximum dumped var same level array items or object properties number
@@ -124,7 +124,8 @@ class PHPConsoleHandler extends AbstractProcessingHandler
      */
     public function __construct(array $options = [], ?Connector $connector = null, int|string|Level $level = Level::Debug, bool $bubble = true)
     {
-        if (!class_exists('PhpConsole\Connector')) {
+        if (!class_exists('PhpConsole\Connector'))
+        {
             throw new \RuntimeException('PHP Console library not found. See https://github.com/barbushin/php-console#installation');
         }
         parent::__construct($level, $bubble);
@@ -142,7 +143,8 @@ class PHPConsoleHandler extends AbstractProcessingHandler
     private function initOptions(array $options): array
     {
         $wrongOptions = array_diff(array_keys($options), array_keys($this->options));
-        if (\count($wrongOptions) > 0) {
+        if (\count($wrongOptions) > 0)
+        {
             throw new \RuntimeException('Unknown options: ' . implode(', ', $wrongOptions));
         }
 
@@ -151,43 +153,55 @@ class PHPConsoleHandler extends AbstractProcessingHandler
 
     private function initConnector(?Connector $connector = null): Connector
     {
-        if (null === $connector) {
-            if ($this->options['dataStorage'] instanceof Storage) {
+        if (null === $connector)
+        {
+            if ($this->options['dataStorage'] instanceof Storage)
+            {
                 Connector::setPostponeStorage($this->options['dataStorage']);
             }
             $connector = Connector::getInstance();
         }
 
-        if ($this->options['registerHelper'] && !Helper::isRegistered()) {
+        if ($this->options['registerHelper'] && !Helper::isRegistered())
+        {
             Helper::register();
         }
 
-        if ($this->options['enabled'] && $connector->isActiveClient()) {
-            if ($this->options['useOwnErrorsHandler'] || $this->options['useOwnExceptionsHandler']) {
+        if ($this->options['enabled'] && $connector->isActiveClient())
+        {
+            if ($this->options['useOwnErrorsHandler'] || $this->options['useOwnExceptionsHandler'])
+            {
                 $handler = VendorPhpConsoleHandler::getInstance();
                 $handler->setHandleErrors($this->options['useOwnErrorsHandler']);
                 $handler->setHandleExceptions($this->options['useOwnExceptionsHandler']);
                 $handler->start();
             }
-            if (null !== $this->options['sourcesBasePath']) {
+            if (null !== $this->options['sourcesBasePath'])
+            {
                 $connector->setSourcesBasePath($this->options['sourcesBasePath']);
             }
-            if (null !== $this->options['serverEncoding']) {
+            if (null !== $this->options['serverEncoding'])
+            {
                 $connector->setServerEncoding($this->options['serverEncoding']);
             }
-            if (null !== $this->options['password']) {
+            if (null !== $this->options['password'])
+            {
                 $connector->setPassword($this->options['password']);
             }
-            if ($this->options['enableSslOnlyMode']) {
+            if ($this->options['enableSslOnlyMode'])
+            {
                 $connector->enableSslOnlyMode();
             }
-            if (\count($this->options['ipMasks']) > 0) {
+            if (\count($this->options['ipMasks']) > 0)
+            {
                 $connector->setAllowedIpMasks($this->options['ipMasks']);
             }
-            if (null !== $this->options['headersLimit'] && $this->options['headersLimit'] > 0) {
+            if (null !== $this->options['headersLimit'] && $this->options['headersLimit'] > 0)
+            {
                 $connector->setHeadersLimit($this->options['headersLimit']);
             }
-            if ($this->options['detectDumpTraceAndSource']) {
+            if ($this->options['detectDumpTraceAndSource'])
+            {
                 $connector->getDebugDispatcher()->detectTraceAndSource = true;
             }
             $dumper = $connector->getDumper();
@@ -196,7 +210,8 @@ class PHPConsoleHandler extends AbstractProcessingHandler
             $dumper->itemSizeLimit = $this->options['dumperItemSizeLimit'];
             $dumper->dumpSizeLimit = $this->options['dumperDumpSizeLimit'];
             $dumper->detectCallbacks = $this->options['dumperDetectCallbacks'];
-            if ($this->options['enableEvalListener']) {
+            if ($this->options['enableEvalListener'])
+            {
                 $connector->startEvalRequestsListener();
             }
         }
@@ -219,7 +234,8 @@ class PHPConsoleHandler extends AbstractProcessingHandler
 
     public function handle(LogRecord $record): bool
     {
-        if ($this->options['enabled'] && $this->connector->isActiveClient()) {
+        if ($this->options['enabled'] && $this->connector->isActiveClient())
+        {
             return parent::handle($record);
         }
 
@@ -231,11 +247,14 @@ class PHPConsoleHandler extends AbstractProcessingHandler
      */
     protected function write(LogRecord $record): void
     {
-        if ($record->level->isLowerThan(Level::Notice)) {
+        if ($record->level->isLowerThan(Level::Notice))
+        {
             $this->handleDebugRecord($record);
-        } elseif (isset($record->context['exception']) && $record->context['exception'] instanceof \Throwable) {
+        } elseif (isset($record->context['exception']) && $record->context['exception'] instanceof \Throwable)
+        {
             $this->handleExceptionRecord($record);
-        } else {
+        } else
+        {
             $this->handleErrorRecord($record);
         }
     }
@@ -244,7 +263,8 @@ class PHPConsoleHandler extends AbstractProcessingHandler
     {
         [$tags, $filteredContext] = $this->getRecordTags($record);
         $message = $record->message;
-        if (\count($filteredContext) > 0) {
+        if (\count($filteredContext) > 0)
+        {
             $message .= ' ' . Utils::jsonEncode($this->connector->getDumper()->dump(array_filter($filteredContext)), null, true);
         }
         $this->connector->getDebugDispatcher()->dispatchDebug($message, $tags, $this->options['classesPartialsTraceIgnore']);
@@ -275,14 +295,19 @@ class PHPConsoleHandler extends AbstractProcessingHandler
     {
         $tags = null;
         $filteredContext = [];
-        if ($record->context !== []) {
+        if ($record->context !== [])
+        {
             $filteredContext = $record->context;
-            foreach ($this->options['debugTagsKeysInContext'] as $key) {
-                if (isset($filteredContext[$key])) {
+            foreach ($this->options['debugTagsKeysInContext'] as $key)
+            {
+                if (isset($filteredContext[$key]))
+                {
                     $tags = $filteredContext[$key];
-                    if ($key === 0) {
+                    if ($key === 0)
+                    {
                         array_shift($filteredContext);
-                    } else {
+                    } else
+                    {
                         unset($filteredContext[$key]);
                     }
                     break;

@@ -46,7 +46,7 @@ Route::group(['middleware' => config('fortify.middleware', ['web'])], function (
         ->middleware([config('fortify.auth_middleware', 'auth') . ':' . config('fortify.guard')])
         ->name('logout');
 
-    // Password Reset...
+    // Senha Reset...
     if (Features::enabled(Features::resetPasswords()))
     {
         if ($enableViews)
@@ -102,7 +102,7 @@ Route::group(['middleware' => config('fortify.middleware', ['web'])], function (
             ->name('verification.send');
     }
 
-    // Profile Information...
+    // Informação do Profile...
     if (Features::enabled(Features::updateProfileInformation()))
     {
         Route::put(RoutePath::for('user-profile-information.update', '/user/profile-information'), [ProfileInformationController::class, 'update'])
@@ -118,7 +118,7 @@ Route::group(['middleware' => config('fortify.middleware', ['web'])], function (
             ->name('user-password.update');
     }
 
-    // Password Confirmation...
+    // Senha Confirmation...
     if ($enableViews)
     {
         Route::get(RoutePath::for('password.confirm', '/user/confirm-password'), [ConfirmablePasswordController::class, 'show'])
@@ -133,7 +133,7 @@ Route::group(['middleware' => config('fortify.middleware', ['web'])], function (
         ->middleware([config('fortify.auth_middleware', 'auth') . ':' . config('fortify.guard')])
         ->name('password.confirm');
 
-    // Two Factor Authentication...
+    // Autenticação de dois fatores...
     if (Features::enabled(Features::twoFactorAuthentication()))
     {
         if ($enableViews)

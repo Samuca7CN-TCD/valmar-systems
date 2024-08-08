@@ -120,8 +120,7 @@ const printList = () => {
                             <div class="inline-block min-w-full sm:px-6 lg:px-8">
                                 <div class="overflow-hidden">
                                     <table class="min-w-full text-center text-sm font-light print:break-inside-avoid">
-                                        <thead
-                                            class="border-b bg-neutral-800 font-medium text-white dark:border-neutral-500 dark:bg-neutral-900">
+                                        <thead class="border-b bg-neutral-800 font-medium text-white">
                                             <tr>
                                                 <th scope="col" class="px-6 py-2 print:hidden">Imprimir</th>
                                                 <th scope="col" class="px-6 py-2">Nome</th>
@@ -153,7 +152,7 @@ const printList = () => {
                                         </tbody>
                                         <tbody v-else>
                                             <tr
-                                                class="border-b transition duration-300 ease-in-out hover:bg-neutral-200 dark:border-neutral-500 dark:hover:bg-neutral-600">
+                                                class="border-b transition duration-300 ease-in-out hover:bg-neutral-200">
                                                 <td colspan="5" class="whitespace-nowrap px-6 py-2 font-medium">Não há
                                                     items nas
                                                     categorias selecionadas</td>

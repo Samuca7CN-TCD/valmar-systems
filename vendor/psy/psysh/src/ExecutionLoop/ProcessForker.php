@@ -52,8 +52,10 @@ class ProcessForker extends AbstractListener
      */
     public static function isPcntlSupported(): bool
     {
-        foreach (self::$pcntlFunctions as $func) {
-            if (!\function_exists($func)) {
+        foreach (self::$pcntlFunctions as $func)
+        {
+            if (!\function_exists($func))
+            {
                 return false;
             }
         }
@@ -74,8 +76,10 @@ class ProcessForker extends AbstractListener
      */
     public static function isPosixSupported(): bool
     {
-        foreach (self::$posixFunctions as $func) {
-            if (!\function_exists($func)) {
+        foreach (self::$posixFunctions as $func)
+        {
+            if (!\function_exists($func))
+            {
                 return false;
             }
         }
@@ -108,14 +112,17 @@ class ProcessForker extends AbstractListener
     {
         list($up, $down) = \stream_socket_pair(\STREAM_PF_UNIX, \STREAM_SOCK_STREAM, \STREAM_IPPROTO_IP);
 
-        if (!$up) {
+        if (!$up)
+        {
             throw new \RuntimeException('Unable to create socket pair');
         }
 
         $pid = \pcntl_fork();
-        if ($pid < 0) {
+        if ($pid < 0)
+        {
             throw new \RuntimeException('Unable to start execution loop');
-        } elseif ($pid > 0) {
+        } elseif ($pid > 0)
+        {
             // This is the main thread. We'll just wait for a while.
 
             // We won't be needing this one.
@@ -126,16 +133,20 @@ class ProcessForker extends AbstractListener
             $write = null;
             $except = null;
 
-            do {
+            do
+            {
                 $n = @\stream_select($read, $write, $except, null);
 
-                if ($n === 0) {
+                if ($n === 0)
+                {
                     throw new \RuntimeException('Process timed out waiting for execution loop');
                 }
 
-                if ($n === false) {
+                if ($n === false)
+                {
                     $err = \error_get_last();
-                    if (!isset($err['message']) || \stripos($err['message'], 'interrupted system call') === false) {
+                    if (!isset($err['message']) || \stripos($err['message'], 'interrupted system call') === false)
+                    {
                         $msg = $err['message'] ?
                             \sprintf('Error waiting for execution loop: %s', $err['message']) :
                             'Error waiting for execution loop';
@@ -147,7 +158,8 @@ class ProcessForker extends AbstractListener
             $content = \stream_get_contents($down);
             \fclose($down);
 
-            if ($content) {
+            if ($content)
+            {
                 $shell->setScopeVariables(@\unserialize($content));
             }
 
@@ -155,9 +167,11 @@ class ProcessForker extends AbstractListener
         }
 
         // This is the child process. It's going to do all the work.
-        if (!@\cli_set_process_title('psysh (loop)')) {
+        if (!@\cli_set_process_title('psysh (loop)'))
+        {
             // Fall back to `setproctitle` if that wasn't succesful.
-            if (\function_exists('setproctitle')) {
+            if (\function_exists('setproctitle'))
+            {
                 @\setproctitle('psysh (loop)');
             }
         }
@@ -165,7 +179,7 @@ class ProcessForker extends AbstractListener
         // We won't be needing this one.
         \fclose($down);
 
-        // Save this; we'll need to close it in `afterRun`
+        // Salvar this; we'll need to close it in `afterRun`
         $this->up = $up;
     }
 
@@ -187,7 +201,8 @@ class ProcessForker extends AbstractListener
     public function afterLoop(Shell $shell)
     {
         // if there's an old savegame hanging around, let's kill it.
-        if (isset($this->savegame)) {
+        if (isset($this->savegame))
+        {
             \posix_kill($this->savegame, \SIGKILL);
             \pcntl_signal_dispatch();
         }
@@ -202,7 +217,8 @@ class ProcessForker extends AbstractListener
     public function afterRun(Shell $shell)
     {
         // We're a child thread. Send the scope variables back up to the main thread.
-        if (isset($this->up)) {
+        if (isset($this->up))
+        {
             \fwrite($this->up, $this->serializeReturn($shell->getScopeVariables(false)));
             \fclose($this->up);
 
@@ -223,14 +239,17 @@ class ProcessForker extends AbstractListener
         $this->savegame = \posix_getpid();
 
         $pid = \pcntl_fork();
-        if ($pid < 0) {
+        if ($pid < 0)
+        {
             throw new \RuntimeException('Unable to create savegame fork');
-        } elseif ($pid > 0) {
+        } elseif ($pid > 0)
+        {
             // we're the savegame now... let's wait and see what happens
             \pcntl_waitpid($pid, $status);
 
             // worker exited cleanly, let's bail
-            if (!\pcntl_wexitstatus($status)) {
+            if (!\pcntl_wexitstatus($status))
+            {
                 \posix_kill(\posix_getpid(), \SIGKILL);
             }
 
@@ -253,29 +272,36 @@ class ProcessForker extends AbstractListener
     {
         $serializable = [];
 
-        foreach ($return as $key => $value) {
+        foreach ($return as $key => $value)
+        {
             // No need to return magic variables
-            if (Context::isSpecialVariableName($key)) {
+            if (Context::isSpecialVariableName($key))
+            {
                 continue;
             }
 
             // Resources and Closures don't error, but they don't serialize well either.
-            if (\is_resource($value) || $value instanceof \Closure) {
+            if (\is_resource($value) || $value instanceof \Closure)
+            {
                 continue;
             }
 
-            if (\version_compare(\PHP_VERSION, '8.1', '>=') && $value instanceof \UnitEnum) {
+            if (\version_compare(\PHP_VERSION, '8.1', '>=') && $value instanceof \UnitEnum)
+            {
                 // Enums defined in the REPL session can't be unserialized.
                 $ref = new \ReflectionObject($value);
-                if (\strpos($ref->getFileName(), ": eval()'d code") !== false) {
+                if (\strpos($ref->getFileName(), ": eval()'d code") !== false)
+                {
                     continue;
                 }
             }
 
-            try {
+            try
+            {
                 @\serialize($value);
                 $serializable[$key] = $value;
-            } catch (\Throwable $e) {
+            } catch (\Throwable $e)
+            {
                 // we'll just ignore this one...
             }
         }

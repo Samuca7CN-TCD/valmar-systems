@@ -4,7 +4,8 @@ namespace PhpParser\Node;
 
 use PhpParser\Node;
 
-interface FunctionLike extends Node {
+interface FunctionLike extends Node
+{
     /**
      * Whether to return by reference
      */
@@ -20,7 +21,7 @@ interface FunctionLike extends Node {
     /**
      * Get the declared return type or null
      *
-     * @return null|Identifier|Name|ComplexType
+     * @return null|Identifier|Nome|ComplexType
      */
     public function getReturnType();
 

@@ -25,7 +25,7 @@ use Symfony\Component\Mime\Exception\RfcComplianceException;
 final class Address
 {
     /**
-     * A regex that matches a structure like 'Name <email@address.com>'.
+     * A regex that matches a structure like 'Nome <email@address.com>'.
      * It matches anything between the first < and last > as email address.
      * This allows to use a single string to construct an Address, which can be convenient to use in
      * config, and allows to have more readable config.
@@ -41,7 +41,8 @@ final class Address
 
     public function __construct(string $address, string $name = '')
     {
-        if (!class_exists(EmailValidator::class)) {
+        if (!class_exists(EmailValidator::class))
+        {
             throw new LogicException(sprintf('The "%s" class cannot be used as it needs "%s". Try running "composer require egulias/email-validator".', __CLASS__, EmailValidator::class));
         }
 
@@ -50,7 +51,8 @@ final class Address
         $this->address = trim($address);
         $this->name = trim(str_replace(["\n", "\r"], '', $name));
 
-        if (!self::$validator->isValid($this->address, class_exists(MessageIDValidation::class) ? new MessageIDValidation() : new RFCValidation())) {
+        if (!self::$validator->isValid($this->address, class_exists(MessageIDValidation::class) ? new MessageIDValidation() : new RFCValidation()))
+        {
             throw new RfcComplianceException(sprintf('Email "%s" does not comply with addr-spec of RFC 2822.', $address));
         }
     }
@@ -74,12 +76,13 @@ final class Address
 
     public function toString(): string
     {
-        return ($n = $this->getEncodedName()) ? $n.' <'.$this->getEncodedAddress().'>' : $this->getEncodedAddress();
+        return ($n = $this->getEncodedName()) ? $n . ' <' . $this->getEncodedAddress() . '>' : $this->getEncodedAddress();
     }
 
     public function getEncodedName(): string
     {
-        if ('' === $this->getName()) {
+        if ('' === $this->getName())
+        {
             return '';
         }
 
@@ -88,15 +91,18 @@ final class Address
 
     public static function create(self|string $address): self
     {
-        if ($address instanceof self) {
+        if ($address instanceof self)
+        {
             return $address;
         }
 
-        if (!str_contains($address, '<')) {
+        if (!str_contains($address, '<'))
+        {
             return new self($address);
         }
 
-        if (!preg_match(self::FROM_STRING_PATTERN, $address, $matches)) {
+        if (!preg_match(self::FROM_STRING_PATTERN, $address, $matches))
+        {
             throw new InvalidArgumentException(sprintf('Could not parse "%s" to a "%s" instance.', $address, self::class));
         }
 
@@ -111,7 +117,8 @@ final class Address
     public static function createArray(array $addresses): array
     {
         $addrs = [];
-        foreach ($addresses as $address) {
+        foreach ($addresses as $address)
+        {
             $addrs[] = self::create($address);
         }
 

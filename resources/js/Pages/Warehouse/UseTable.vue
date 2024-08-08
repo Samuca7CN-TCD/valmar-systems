@@ -99,7 +99,7 @@ const printList = () => {
                                         </tbody>
                                         <tbody v-else>
                                             <tr
-                                                class="border-b transition duration-300 ease-in-out hover:bg-neutral-200 dark:border-neutral-500 dark:hover:bg-neutral-600">
+                                                class="border-b transition duration-300 ease-in-out hover:bg-neutral-200">
                                                 <td colspan="5" class="whitespace-nowrap px-6 py-2 font-medium">Não há
                                                     items nas
                                                     categorias selecionadas</td>

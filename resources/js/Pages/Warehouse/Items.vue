@@ -11,7 +11,9 @@ import { Head, useForm } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import { DocumentDuplicateIcon, EllipsisVerticalIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { toMoney, measurementUnitResolver } from '@/general.js'
-
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
+import { computed } from 'vue'
 // =============================================
 // Informações exteriores
 const props = defineProps({
@@ -24,7 +26,7 @@ const props = defineProps({
     categories_list: Object,
     measurement_units_list: Object,
 })
-
+const $toast = useToast();
 const filtered_items_list = ref(JSON.parse(JSON.stringify(props.items_list)));
 
 // =============================================
@@ -61,13 +63,13 @@ const openModal = (mode, category_id = null, item_id = null) => {
     if (mode == 'update') {
         const category = props.items_list.find(category => category.id === category_id)
         if (!category) {
-            alert("Item não encontrado. Informar o Técnico.")
+            $toast.error("Item não encontrado. Informar o Técnico.")
             return
         }
 
         const item = category.items.find(item => item.id === item_id)
         if (!item) {
-            alert("Item não encontrado. Informar o Técnico.")
+            $toast.error("Item não encontrado. Informar o Técnico.")
             return
         }
         item_data.id = item.id
@@ -122,7 +124,13 @@ const closeImage = () => {
 const createItem = () => {
     item_data.post(route('warehouse.store'), {
         preserveScroll: true,
-        onSuccess: () => closeModal()
+        onSuccess: () => {
+            $toast.success(`Item "${item_data.name}" cadastrado com sucesso!`)
+            closeModal()
+        },
+        onError: (error) => {
+            $toast.error("Erro no cadastro do item. Revise os dados inseridos.")
+        },
     })
 }
 
@@ -157,7 +165,10 @@ const updateItem = () => {
     item_data.post(route('warehouse.update', item_data.id), {
         _method: 'put',
         preserveScroll: true,
-        onSuccess: () => closeModal()
+        onSuccess: () => {
+            $toast.success(`Item "${item_data.name}" editado com sucesso!`)
+            closeModal()
+        },
     })
 }
 
@@ -165,7 +176,7 @@ const deleteItem = (item_id, item_name) => {
     if (confirm("Você tem certeza que deseja excluir o item \"" + item_name + "\" ? Esta ação não poderá ser desfeita!")) {
         item_data.delete(route('warehouse.destroy', item_id), {
             preserveScroll: true,
-            onSuccess: () => alert('Item deletado com sucesso!')
+            onSuccess: () => $toast.success('Item deletado com sucesso!')
         })
     }
 }
@@ -173,8 +184,18 @@ const deleteItem = (item_id, item_name) => {
 const submit = () => {
     if (modal.value.mode === 'create') createItem()
     else if (modal.value.mode === 'update') updateItem()
-    else alert('Método desconhecido. Informar o Técnico.')
+    else $toast.error('Método desconhecido. Informar o Técnico.')
 }
+
+const total_prices_amount = computed(() => {
+    return props.items_list.reduce((accumulator, category) => {
+        // Assumindo que cada categoria tem uma lista de itens
+        return accumulator + category.items.reduce((catAccumulator, item) => {
+            return catAccumulator + (item.price * item.quantity);
+        }, 0);
+    }, 0);
+});
+
 </script>
 
 <template>
@@ -183,7 +204,8 @@ const submit = () => {
     <AppLayout :page="page" :page_options="page_options">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }}
+                {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">|
+                    {{ toMoney(total_prices_amount) }}</span>
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Item" />
         </template>

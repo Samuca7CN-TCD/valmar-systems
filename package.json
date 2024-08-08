@@ -11,7 +11,7 @@
         "@tailwindcss/typography": "^0.5.10",
         "@vitejs/plugin-vue": "^5.0.0",
         "autoprefixer": "^10.4.16",
-        "axios": "^1.6.4",
+        "axios": "^1.7.3",
         "laravel-vite-plugin": "^1.0",
         "postcss": "^8.4.32",
         "tailwindcss": "^3.4.0",
@@ -21,10 +21,13 @@
     "dependencies": {
         "@heroicons/vue": "^2.1.5",
         "@vueform/multiselect": "^2.6.8",
+        "chart.js": "^4.4.3",
+        "lodash": "^4.17.21",
         "mini-svg-data-uri": "^1.4.4",
         "primevue": "^4.0.0",
         "svgtodatauri": "^0.0.0",
         "tailwindcss-primeui": "^0.3.4",
+        "vue-multiselect": "^3.0.0",
         "vue-toast-notification": "^3.1.2"
     }
 }

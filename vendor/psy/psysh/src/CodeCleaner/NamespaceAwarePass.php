@@ -12,8 +12,8 @@
 namespace Psy\CodeCleaner;
 
 use PhpParser\Node;
-use PhpParser\Node\Name;
-use PhpParser\Node\Name\FullyQualified as FullyQualifiedName;
+use PhpParser\Node\Nome;
+use PhpParser\Node\Nome\FullyQualified as FullyQualifiedName;
 use PhpParser\Node\Stmt\Namespace_;
 
 /**
@@ -48,7 +48,8 @@ abstract class NamespaceAwarePass extends CodeCleanerPass
      */
     public function enterNode(Node $node)
     {
-        if ($node instanceof Namespace_) {
+        if ($node instanceof Namespace_)
+        {
             $this->namespace = isset($node->name) ? $this->getParts($node->name) : [];
         }
     }
@@ -60,13 +61,16 @@ abstract class NamespaceAwarePass extends CodeCleanerPass
      */
     protected function getFullyQualifiedName($name): string
     {
-        if ($name instanceof FullyQualifiedName) {
+        if ($name instanceof FullyQualifiedName)
+        {
             return \implode('\\', $this->getParts($name));
         }
 
-        if ($name instanceof Name) {
+        if ($name instanceof Nome)
+        {
             $name = $this->getParts($name);
-        } elseif (!\is_array($name)) {
+        } elseif (!\is_array($name))
+        {
             $name = [$name];
         }
 
@@ -76,9 +80,9 @@ abstract class NamespaceAwarePass extends CodeCleanerPass
     /**
      * Backwards compatibility shim for PHP-Parser 4.x.
      *
-     * At some point we might want to make $namespace a plain string, to match how Name works?
+     * At some point we might want to make $namespace a plain string, to match how Nome works?
      */
-    protected function getParts(Name $name): array
+    protected function getParts(Nome $name): array
     {
         return \method_exists($name, 'getParts') ? $name->getParts() : $name->parts;
     }

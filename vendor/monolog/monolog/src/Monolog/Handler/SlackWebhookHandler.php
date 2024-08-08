@@ -38,7 +38,7 @@ class SlackWebhookHandler extends AbstractProcessingHandler
     /**
      * @param string      $webhookUrl             Slack Webhook URL
      * @param string|null $channel                Slack channel (encoded ID or name)
-     * @param string|null $username               Name of a bot
+     * @param string|null $username               Nome of a bot
      * @param bool        $useAttachment          Whether the message should be added to Slack as attachment (plain text otherwise)
      * @param string|null $iconEmoji              The emoji name to use (or null)
      * @param bool        $useShortAttachment     Whether the the context/extra messages added to Slack as attachments are in a short style
@@ -59,7 +59,8 @@ class SlackWebhookHandler extends AbstractProcessingHandler
         bool $bubble = true,
         array $excludeFields = []
     ) {
-        if (!\extension_loaded('curl')) {
+        if (!\extension_loaded('curl'))
+        {
             throw new MissingExtensionException('The curl extension is needed to use the SlackWebhookHandler');
         }
 

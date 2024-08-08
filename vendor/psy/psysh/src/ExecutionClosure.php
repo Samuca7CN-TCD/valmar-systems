@@ -26,7 +26,8 @@ class ExecutionClosure
     public function __construct(Shell $__psysh__)
     {
         $this->setClosure($__psysh__, function () use ($__psysh__) {
-            try {
+            try
+            {
                 // Restore execution scope variables
                 \extract($__psysh__->getScopeVariables(false));
 
@@ -37,15 +38,18 @@ class ExecutionClosure
                 \set_error_handler([$__psysh__, 'handleError']);
 
                 // Evaluate the current code buffer
-                $_ = eval($__psysh__->onExecute($__psysh__->flushCode() ?: self::NOOP_INPUT));
-            } catch (\Throwable $_e) {
+                $_ = eval ($__psysh__->onExecute($__psysh__->flushCode() ?: self::NOOP_INPUT));
+            } catch (\Throwable $_e)
+            {
                 // Clean up on our way out.
-                if (\ob_get_level() > 0) {
+                if (\ob_get_level() > 0)
+                {
                     \ob_end_clean();
                 }
 
                 throw $_e;
-            } finally {
+            } finally
+            {
                 // Won't be needing this anymore
                 \restore_error_handler();
             }
@@ -53,7 +57,7 @@ class ExecutionClosure
             // Flush stdout (write to shell output, plus save to magic variable)
             \ob_end_flush();
 
-            // Save execution scope variables for next time
+            // Salvar execution scope variables for next time
             $__psysh__->setScopeVariables(\get_defined_vars());
 
             return $_;
@@ -70,9 +74,11 @@ class ExecutionClosure
     {
         $that = $shell->getBoundObject();
 
-        if (\is_object($that)) {
+        if (\is_object($that))
+        {
             $this->closure = $closure->bindTo($that, \get_class($that));
-        } else {
+        } else
+        {
             $this->closure = $closure->bindTo(null, $shell->getBoundClass());
         }
     }

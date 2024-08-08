@@ -7,10 +7,11 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Modifiers;
 use PhpParser\Node;
 
-class Param implements PhpParser\Builder {
+class Param implements PhpParser\Builder
+{
     protected string $name;
     protected ?Node\Expr $default = null;
-    /** @var Node\Identifier|Node\Name|Node\ComplexType|null */
+    /** @var Node\Identifier|Node\Nome|Node\ComplexType|null */
     protected ?Node $type = null;
     protected bool $byRef = false;
     protected int $flags = 0;
@@ -21,9 +22,10 @@ class Param implements PhpParser\Builder {
     /**
      * Creates a parameter builder.
      *
-     * @param string $name Name of the parameter
+     * @param string $name Nome of the parameter
      */
-    public function __construct(string $name) {
+    public function __construct(string $name)
+    {
         $this->name = $name;
     }
 
@@ -34,7 +36,8 @@ class Param implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function setDefault($value) {
+    public function setDefault($value)
+    {
         $this->default = BuilderHelpers::normalizeValue($value);
 
         return $this;
@@ -43,13 +46,15 @@ class Param implements PhpParser\Builder {
     /**
      * Sets type for the parameter.
      *
-     * @param string|Node\Name|Node\Identifier|Node\ComplexType $type Parameter type
+     * @param string|Node\Nome|Node\Identifier|Node\ComplexType $type Parameter type
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function setType($type) {
+    public function setType($type)
+    {
         $this->type = BuilderHelpers::normalizeType($type);
-        if ($this->type == 'void') {
+        if ($this->type == 'void')
+        {
             throw new \LogicException('Parameter type cannot be void');
         }
 
@@ -61,7 +66,8 @@ class Param implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makeByRef() {
+    public function makeByRef()
+    {
         $this->byRef = true;
 
         return $this;
@@ -72,7 +78,8 @@ class Param implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makeVariadic() {
+    public function makeVariadic()
+    {
         $this->variadic = true;
 
         return $this;
@@ -83,8 +90,9 @@ class Param implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makePublic() {
-        $this->flags = BuilderHelpers::addModifier($this->flags, Modifiers::PUBLIC);
+    public function makePublic()
+    {
+        $this->flags = BuilderHelpers::addModifier($this->flags, Modifiers::PUBLIC );
 
         return $this;
     }
@@ -94,8 +102,9 @@ class Param implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makeProtected() {
-        $this->flags = BuilderHelpers::addModifier($this->flags, Modifiers::PROTECTED);
+    public function makeProtected()
+    {
+        $this->flags = BuilderHelpers::addModifier($this->flags, Modifiers::PROTECTED );
 
         return $this;
     }
@@ -105,8 +114,9 @@ class Param implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makePrivate() {
-        $this->flags = BuilderHelpers::addModifier($this->flags, Modifiers::PRIVATE);
+    public function makePrivate()
+    {
+        $this->flags = BuilderHelpers::addModifier($this->flags, Modifiers::PRIVATE );
 
         return $this;
     }
@@ -116,8 +126,9 @@ class Param implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function makeReadonly() {
-        $this->flags = BuilderHelpers::addModifier($this->flags, Modifiers::READONLY);
+    public function makeReadonly()
+    {
+        $this->flags = BuilderHelpers::addModifier($this->flags, Modifiers::READONLY );
 
         return $this;
     }
@@ -129,7 +140,8 @@ class Param implements PhpParser\Builder {
      *
      * @return $this The builder instance (for fluid interface)
      */
-    public function addAttribute($attribute) {
+    public function addAttribute($attribute)
+    {
         $this->attributeGroups[] = BuilderHelpers::normalizeAttribute($attribute);
 
         return $this;
@@ -140,10 +152,17 @@ class Param implements PhpParser\Builder {
      *
      * @return Node\Param The built parameter node
      */
-    public function getNode(): Node {
+    public function getNode(): Node
+    {
         return new Node\Param(
             new Node\Expr\Variable($this->name),
-            $this->default, $this->type, $this->byRef, $this->variadic, [], $this->flags, $this->attributeGroups
+            $this->default,
+            $this->type,
+            $this->byRef,
+            $this->variadic,
+            [],
+            $this->flags,
+            $this->attributeGroups
         );
     }
 }

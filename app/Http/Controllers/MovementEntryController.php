@@ -24,36 +24,62 @@ class MovementEntryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
 
         $page = Department::find(3);
         $items = Item::with('measurement_unit')->orderBy('name')->get();
 
+        // Recebe os parâmetros da consulta, ou define os valores padrão
+        $parameters = [
+            'employee_id' => $request->query('employee_id', 0),
+            'motive' => $request->query('motive', ''),
+            'start_date' => $request->query('start_date', Carbon::today()->toDateString()),
+            'end_date' => $request->query('end_date', Carbon::today()->toDateString()),
+        ];
+
         $entries = Movement::where('type', 4)
-            ->with(['accounting', 'procedures.records'])
-            ->get()
-            ->map(function ($movement) {
-                $records = $movement->procedures->flatMap(function ($procedure) {
-                    return $procedure->records;
-                });
+            ->whereBetween('date', [$parameters['start_date'], $parameters['end_date']])
+            ->with(['accounting', 'procedures.records']);
 
-                // Filtra os registros com item_id diferente de null e mapeia para o item correspondente
-                $movement->items = $records->filter(function ($record) {
-                    return $record->item_id !== null;
-                });
-
-                return $movement;
+        if ($parameters['employee_id'])
+        {
+            $entries->whereHas('procedures.records', function ($query) use ($parameters) {
+                $query->where('employee_id', $parameters['employee_id']);
             });
+        }
+        if ($parameters['motive'])
+        {
+            $entries->where('motive', 'LIKE', "%{$parameters['motive']}%");
+        }
 
+        $entries = $entries->get()->map(function ($movement) {
+            $records = $movement->procedures->flatMap->records;
+            $movement->items = $records->filter(fn($record) => $record->item_id !== null);
+            return $movement;
+        });
 
-        // dd($entries);
+        $employees = Employee::all();
 
         return Inertia::render('Movements/Entries', [
             'page' => $page,
             'entries_list' => $entries,
             'items' => $items,
+            'employees_list' => $employees,
+            'parameters' => $parameters,
         ]);
+    }
+
+    public function filter(Request $request)
+    {
+        $parameters = [
+            'employee_id' => $request->input('employee_id', 0),
+            'motive' => $request->input('motive', ''),
+            'start_date' => $request->input('start_date', Carbon::today()->toDateString()),
+            'end_date' => $request->input('end_date', Carbon::today()->toDateString()),
+        ];
+
+        return redirect()->route('entries.index', $parameters);
     }
 
     /**
@@ -72,7 +98,7 @@ class MovementEntryController extends Controller
         //dd($request);
         return DB::transaction(function () use ($request) {
             $validated = $request->validate([
-                'employee' => ['required', 'string'],
+                // 'employee' => ['required', 'string'],
                 'motive' => ['required', 'string'],
                 'date' => ['required', 'date', 'date_format:Y-m-d'],
                 'observations' => ['nullable', 'string'],
@@ -85,6 +111,7 @@ class MovementEntryController extends Controller
                 'items_list.*.measurement_unit' => ['required', 'string'],
                 'items_list.*.price' => ['required', 'numeric', 'gt:0'],
                 'items_list.*.amount' => ['required', 'numeric', 'gt:0'],
+                'items_list.*.employee_id' => ['required', 'numeric', 'gt:0'],
             ]);
 
             $accounting = Accounting::create([
@@ -97,7 +124,7 @@ class MovementEntryController extends Controller
                 'type' => 4,
                 'accounting_id' => $accounting->id,
                 'motive' => $validated['motive'],
-                'entity_name' => $validated['employee'],
+                //'entity_name' => $validated['employee'],
                 'date' => $validated['date'],
                 'observations' => $validated['observations'],
             ]);
@@ -125,6 +152,7 @@ class MovementEntryController extends Controller
 
                 return Record::create([
                     'item_id' => $itemId,
+                    'employee_id' => $useRecord['employee_id'],
                     'name' => $useRecord['name'],
                     'quantity' => $useRecord['quantity'],
                     'movement_quantity' => $useRecord['movement_quantity'],
@@ -183,22 +211,28 @@ class MovementEntryController extends Controller
             ]);
 
             // Buscar todos os procedimentos associados ao movimento
-            //$procedures = Procedure::where('movement_id', $movement->id)->get();
+            $procedures = Procedure::where('movement_id', $movement->id)->get();
 
             // Para cada procedimento, excluir os registros associados
-            /*foreach ($procedures as $procedure) {
+            foreach ($procedures as $procedure)
+            {
                 $records = Record::where('procedure_id', $procedure->id)->get();
-                
-                foreach($records as $record){
-                    if($record->item_id !== null){
+
+                foreach ($records as $record)
+                {
+                    if ($record->item_id !== null)
+                    {
                         $item = Item::find($record->item_id);
-                        $item->quantity += $record->quantity;
-                        $item->save();
+                        if ($item)
+                        {
+                            $item->quantity -= $record->movement_quantity;
+                            $item->save();
+                        }
                     }
-                    $record->delete();
+                    //$record->delete();
                 }
-                $procedure->delete();
-            }*/
+                //$procedure->delete();
+            }
 
             // Excluir a contabilidade e o movimento
             //$accounting->delete();

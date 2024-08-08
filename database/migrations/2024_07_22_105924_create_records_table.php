@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('procedure_id');
             $table->unsignedBigInteger('item_id')->nullable();
+            $table->unsignedBigInteger('employee_id')->nullable();
             $table->string('name')->nullable();
             $table->float('quantity')->nullable();
             $table->string('measurement_unit')->nullable();
@@ -28,6 +29,7 @@ return new class extends Migration {
             $table->timestamps();
             $table->foreign('procedure_id')->references('id')->on('procedures');
             $table->foreign('item_id')->references('id')->on('items');
+            $table->foreign('employee_id')->references('id')->on('employees');
         });
     }
 

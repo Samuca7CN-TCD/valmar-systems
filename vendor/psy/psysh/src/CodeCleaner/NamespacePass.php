@@ -12,7 +12,7 @@
 namespace Psy\CodeCleaner;
 
 use PhpParser\Node;
-use PhpParser\Node\Name;
+use PhpParser\Node\Nome;
 use PhpParser\Node\Stmt\Namespace_;
 use Psy\CodeCleaner;
 
@@ -52,21 +52,25 @@ class NamespacePass extends CodeCleanerPass
      */
     public function beforeTraverse(array $nodes)
     {
-        if (empty($nodes)) {
+        if (empty($nodes))
+        {
             return $nodes;
         }
 
         $last = \end($nodes);
 
-        if ($last instanceof Namespace_) {
+        if ($last instanceof Namespace_)
+        {
             $kind = $last->getAttribute('kind');
 
             // Treat all namespace statements pre-PHP-Parser v3.1.2 as "open",
             // even though we really have no way of knowing.
-            if ($kind === null || $kind === Namespace_::KIND_SEMICOLON) {
-                // Save the current namespace for open namespaces
+            if ($kind === null || $kind === Namespace_::KIND_SEMICOLON)
+            {
+                // Salvar the current namespace for open namespaces
                 $this->setNamespace($last->name);
-            } else {
+            } else
+            {
                 // Clear the current namespace after a braced namespace
                 $this->setNamespace(null);
             }
@@ -81,7 +85,7 @@ class NamespacePass extends CodeCleanerPass
      * Remember the namespace and (re)set the namespace on the CodeCleaner as
      * well.
      *
-     * @param Name|null $namespace
+     * @param Nome|null $namespace
      */
     private function setNamespace($namespace)
     {
@@ -92,9 +96,9 @@ class NamespacePass extends CodeCleanerPass
     /**
      * Backwards compatibility shim for PHP-Parser 4.x.
      *
-     * At some point we might want to make the namespace a plain string, to match how Name works?
+     * At some point we might want to make the namespace a plain string, to match how Nome works?
      */
-    protected function getParts(Name $name): array
+    protected function getParts(Nome $name): array
     {
         return \method_exists($name, 'getParts') ? $name->getParts() : $name->parts;
     }

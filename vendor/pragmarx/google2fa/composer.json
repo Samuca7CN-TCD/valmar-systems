@@ -1,6 +1,6 @@
 {
     "name": "pragmarx/google2fa",
-    "description": "A One Time Password Authentication package, compatible with Google Authenticator.",
+    "description": "A One Time Senha Authentication package, compatible with Google Authenticator.",
     "keywords": [
         "authentication",
         "two factor authentication",
@@ -32,7 +32,9 @@
         "psr-4": {
             "PragmaRX\\Google2FA\\Tests\\": "tests/"
         },
-        "files": ["tests/helpers.php"]
+        "files": [
+            "tests/helpers.php"
+        ]
     },
     "scripts": {
         "test": "bash ./tests/tools/test.sh",

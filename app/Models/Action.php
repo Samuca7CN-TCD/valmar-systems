@@ -8,11 +8,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Action extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     public function procedures()
     {
-        return $this->belongsToMany(Procedure::class);
+        return $this->hasMany(Procedure::class); // Correção para hasMany
     }
 }

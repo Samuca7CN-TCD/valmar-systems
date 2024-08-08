@@ -5,9 +5,10 @@ namespace PhpParser\Node;
 use PhpParser\NodeAbstract;
 
 /**
- * Represents a non-namespaced name. Namespaced names are represented using Name nodes.
+ * Represents a non-namespaced name. Namespaced names are represented using Nome nodes.
  */
-class Identifier extends NodeAbstract {
+class Identifier extends NodeAbstract
+{
     /**
      * @psalm-var non-empty-string
      * @var string Identifier as string
@@ -16,7 +17,7 @@ class Identifier extends NodeAbstract {
 
     /** @var array<string, bool> */
     private static array $specialClassNames = [
-        'self'   => true,
+        'self' => true,
         'parent' => true,
         'static' => true,
     ];
@@ -27,8 +28,10 @@ class Identifier extends NodeAbstract {
      * @param string $name Identifier as string
      * @param array<string, mixed> $attributes Additional attributes
      */
-    public function __construct(string $name, array $attributes = []) {
-        if ($name === '') {
+    public function __construct(string $name, array $attributes = [])
+    {
+        if ($name === '')
+        {
             throw new \InvalidArgumentException('Identifier name cannot be empty');
         }
 
@@ -36,7 +39,8 @@ class Identifier extends NodeAbstract {
         $this->name = $name;
     }
 
-    public function getSubNodeNames(): array {
+    public function getSubNodeNames(): array
+    {
         return ['name'];
     }
 
@@ -46,7 +50,8 @@ class Identifier extends NodeAbstract {
      * @psalm-return non-empty-string
      * @return string Identifier as string.
      */
-    public function toString(): string {
+    public function toString(): string
+    {
         return $this->name;
     }
 
@@ -56,7 +61,8 @@ class Identifier extends NodeAbstract {
      * @psalm-return non-empty-string
      * @return string Lowercased identifier as string
      */
-    public function toLowerString(): string {
+    public function toLowerString(): string
+    {
         return strtolower($this->name);
     }
 
@@ -65,7 +71,8 @@ class Identifier extends NodeAbstract {
      *
      * @return bool Whether identifier is a special class name
      */
-    public function isSpecialClassName(): bool {
+    public function isSpecialClassName(): bool
+    {
         return isset(self::$specialClassNames[strtolower($this->name)]);
     }
 
@@ -75,11 +82,13 @@ class Identifier extends NodeAbstract {
      * @psalm-return non-empty-string
      * @return string Identifier as string
      */
-    public function __toString(): string {
+    public function __toString(): string
+    {
         return $this->name;
     }
 
-    public function getType(): string {
+    public function getType(): string
+    {
         return 'Identifier';
     }
 }

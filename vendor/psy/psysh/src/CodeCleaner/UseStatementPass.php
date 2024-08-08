@@ -12,8 +12,8 @@
 namespace Psy\CodeCleaner;
 
 use PhpParser\Node;
-use PhpParser\Node\Name;
-use PhpParser\Node\Name\FullyQualified as FullyQualifiedName;
+use PhpParser\Node\Nome;
+use PhpParser\Node\Nome\FullyQualified as FullyQualifiedName;
 use PhpParser\Node\Stmt\GroupUse;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Use_;
@@ -50,10 +50,12 @@ class UseStatementPass extends CodeCleanerPass
      */
     public function enterNode(Node $node)
     {
-        if ($node instanceof Namespace_) {
+        if ($node instanceof Namespace_)
+        {
             // If this is the same namespace as last namespace, let's do ourselves
             // a favor and reload all the aliases...
-            if (\strtolower($node->name ?: '') === \strtolower($this->lastNamespace ?: '')) {
+            if (\strtolower($node->name ?: '') === \strtolower($this->lastNamespace ?: ''))
+            {
                 $this->aliases = $this->lastAliases;
             }
         }
@@ -72,8 +74,10 @@ class UseStatementPass extends CodeCleanerPass
     public function leaveNode(Node $node)
     {
         // Store a reference to every "use" statement, because we'll need them in a bit.
-        if ($node instanceof Use_) {
-            foreach ($node->uses as $useItem) {
+        if ($node instanceof Use_)
+        {
+            foreach ($node->uses as $useItem)
+            {
                 $this->aliases[\strtolower($useItem->getAlias())] = $useItem->name;
             }
 
@@ -82,11 +86,13 @@ class UseStatementPass extends CodeCleanerPass
         }
 
         // Expand every "use" statement in the group into a full, standalone "use" and store 'em with the others.
-        if ($node instanceof GroupUse) {
-            foreach ($node->uses as $useItem) {
-                $this->aliases[\strtolower($useItem->getAlias())] = Name::concat($node->prefix, $useItem->name, [
+        if ($node instanceof GroupUse)
+        {
+            foreach ($node->uses as $useItem)
+            {
+                $this->aliases[\strtolower($useItem->getAlias())] = Nome::concat($node->prefix, $useItem->name, [
                     'startLine' => $node->prefix->getAttribute('startLine'),
-                    'endLine'   => $useItem->name->getAttribute('endLine'),
+                    'endLine' => $useItem->name->getAttribute('endLine'),
                 ]);
             }
 
@@ -95,7 +101,8 @@ class UseStatementPass extends CodeCleanerPass
         }
 
         // Start fresh, since we're done with this namespace.
-        if ($node instanceof Namespace_) {
+        if ($node instanceof Namespace_)
+        {
             $this->lastNamespace = $node->name;
             $this->lastAliases = $this->aliases;
             $this->aliases = [];
@@ -105,14 +112,18 @@ class UseStatementPass extends CodeCleanerPass
 
         // Do nothing with UseItem; this an entry in the list of uses in the use statement.
         // @todo Remove UseUse once we drop support for PHP-Parser 4.x
-        if ($node instanceof UseUse || $node instanceof UseItem) {
+        if ($node instanceof UseUse || $node instanceof UseItem)
+        {
             return;
         }
 
         // For everything else, we'll implicitly thunk all aliases into fully-qualified names.
-        foreach ($node as $name => $subNode) {
-            if ($subNode instanceof Name) {
-                if ($replacement = $this->findAlias($subNode)) {
+        foreach ($node as $name => $subNode)
+        {
+            if ($subNode instanceof Nome)
+            {
+                if ($replacement = $this->findAlias($subNode))
+                {
                     $node->$name = $replacement;
                 }
             }
@@ -124,18 +135,21 @@ class UseStatementPass extends CodeCleanerPass
     /**
      * Find class/namespace aliases.
      *
-     * @param Name $name
+     * @param Nome $name
      *
      * @return FullyQualifiedName|null
      */
-    private function findAlias(Name $name)
+    private function findAlias(Nome $name)
     {
         $that = \strtolower($name);
-        foreach ($this->aliases as $alias => $prefix) {
-            if ($that === $alias) {
+        foreach ($this->aliases as $alias => $prefix)
+        {
+            if ($that === $alias)
+            {
                 return new FullyQualifiedName($prefix->toString());
-            } elseif (\substr($that, 0, \strlen($alias) + 1) === $alias.'\\') {
-                return new FullyQualifiedName($prefix->toString().\substr($name, \strlen($alias)));
+            } elseif (\substr($that, 0, \strlen($alias) + 1) === $alias . '\\')
+            {
+                return new FullyQualifiedName($prefix->toString() . \substr($name, \strlen($alias)));
             }
         }
     }

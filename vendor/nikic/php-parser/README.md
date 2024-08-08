@@ -92,7 +92,7 @@ array(
         stmts: array(
             0: Stmt_Expression(
                 expr: Expr_FuncCall(
-                    name: Name(
+                    name: Nome(
                         name: var_dump
                     )
                     args: array(
@@ -201,9 +201,9 @@ Component documentation:
    * Interleaved visitors
    * Simple node finding API
    * Parent and sibling references
- * [Name resolution](doc/component/Name_resolution.markdown)
-   * Name resolver options
-   * Name resolution context
+ * [Nome resolution](doc/component/Name_resolution.markdown)
+   * Nome resolver options
+   * Nome resolution context
  * [Pretty printing](doc/component/Pretty_printing.markdown)
    * Converting AST back to PHP code
    * Customizing formatting

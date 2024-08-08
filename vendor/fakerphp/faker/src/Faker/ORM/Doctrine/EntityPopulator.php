@@ -80,31 +80,37 @@ class EntityPopulator
     public function guessColumnFormatters(\Faker\Generator $generator)
     {
         $formatters = [];
-        $nameGuesser = new \Faker\Guesser\Name($generator);
+        $nameGuesser = new \Faker\Guesser\Nome($generator);
         $columnTypeGuesser = new ColumnTypeGuesser($generator);
 
-        foreach ($this->class->getFieldNames() as $fieldName) {
-            if ($this->class->isIdentifier($fieldName) || !$this->class->hasField($fieldName)) {
+        foreach ($this->class->getFieldNames() as $fieldName)
+        {
+            if ($this->class->isIdentifier($fieldName) || !$this->class->hasField($fieldName))
+            {
                 continue;
             }
 
             $size = $this->class->fieldMappings[$fieldName]['length'] ?? null;
 
-            if ($formatter = $nameGuesser->guessFormat($fieldName, $size)) {
+            if ($formatter = $nameGuesser->guessFormat($fieldName, $size))
+            {
                 $formatters[$fieldName] = $formatter;
 
                 continue;
             }
 
-            if ($formatter = $columnTypeGuesser->guessFormat($fieldName, $this->class)) {
+            if ($formatter = $columnTypeGuesser->guessFormat($fieldName, $this->class))
+            {
                 $formatters[$fieldName] = $formatter;
 
                 continue;
             }
         }
 
-        foreach ($this->class->getAssociationNames() as $assocName) {
-            if ($this->class->isCollectionValuedAssociation($assocName)) {
+        foreach ($this->class->getAssociationNames() as $assocName)
+        {
+            if ($this->class->isCollectionValuedAssociation($assocName))
+            {
                 continue;
             }
 
@@ -112,12 +118,16 @@ class EntityPopulator
 
             $unique = $optional = false;
 
-            if ($this->class instanceof \Doctrine\ORM\Mapping\ClassMetadata) {
+            if ($this->class instanceof \Doctrine\ORM\Mapping\ClassMetadata)
+            {
                 $mappings = $this->class->getAssociationMappings();
 
-                foreach ($mappings as $mapping) {
-                    if ($mapping['targetEntity'] == $relatedClass) {
-                        if ($mapping['type'] == \Doctrine\ORM\Mapping\ClassMetadata::ONE_TO_ONE) {
+                foreach ($mappings as $mapping)
+                {
+                    if ($mapping['targetEntity'] == $relatedClass)
+                    {
+                        if ($mapping['type'] == \Doctrine\ORM\Mapping\ClassMetadata::ONE_TO_ONE)
+                        {
                             $unique = true;
                             $optional = $mapping['joinColumns'][0]['nullable'] ?? false;
 
@@ -125,12 +135,16 @@ class EntityPopulator
                         }
                     }
                 }
-            } elseif ($this->class instanceof \Doctrine\ODM\MongoDB\Mapping\ClassMetadata) {
+            } elseif ($this->class instanceof \Doctrine\ODM\MongoDB\Mapping\ClassMetadata)
+            {
                 $mappings = $this->class->associationMappings;
 
-                foreach ($mappings as $mapping) {
-                    if ($mapping['targetDocument'] == $relatedClass) {
-                        if ($mapping['type'] == \Doctrine\ODM\MongoDB\Mapping\ClassMetadata::ONE && $mapping['association'] == \Doctrine\ODM\MongoDB\Mapping\ClassMetadata::REFERENCE_ONE) {
+                foreach ($mappings as $mapping)
+                {
+                    if ($mapping['targetDocument'] == $relatedClass)
+                    {
+                        if ($mapping['type'] == \Doctrine\ODM\MongoDB\Mapping\ClassMetadata::ONE && $mapping['association'] == \Doctrine\ODM\MongoDB\Mapping\ClassMetadata::REFERENCE_ONE)
+                        {
                             $unique = true;
                             $optional = $mapping['nullable'] ?? false;
 
@@ -142,11 +156,14 @@ class EntityPopulator
 
             $index = 0;
             $formatters[$assocName] = static function ($inserted) use ($relatedClass, &$index, $unique, $optional, $generator) {
-                if (isset($inserted[$relatedClass])) {
-                    if ($unique) {
+                if (isset($inserted[$relatedClass]))
+                {
+                    if ($unique)
+                    {
                         $related = null;
 
-                        if (isset($inserted[$relatedClass][$index]) || !$optional) {
+                        if (isset($inserted[$relatedClass][$index]) || !$optional)
+                        {
                             $related = $inserted[$relatedClass][$index];
                         }
 
@@ -179,10 +196,12 @@ class EntityPopulator
         $this->fillColumns($obj, $insertedEntities);
         $this->callMethods($obj, $insertedEntities);
 
-        if ($generateId) {
+        if ($generateId)
+        {
             $idsName = $this->class->getIdentifier();
 
-            foreach ($idsName as $idName) {
+            foreach ($idsName as $idName)
+            {
                 $id = $this->generateId($obj, $idName, $manager);
                 $this->class->reflFields[$idName]->setValue($obj, $id);
             }
@@ -195,25 +214,33 @@ class EntityPopulator
 
     private function fillColumns($obj, $insertedEntities): void
     {
-        foreach ($this->columnFormatters as $field => $format) {
-            if (null !== $format) {
+        foreach ($this->columnFormatters as $field => $format)
+        {
+            if (null !== $format)
+            {
                 // Add some extended debugging information to any errors thrown by the formatter
-                try {
+                try
+                {
                     $value = is_callable($format) ? $format($insertedEntities, $obj) : $format;
-                } catch (\InvalidArgumentException $ex) {
-                    throw new \InvalidArgumentException(sprintf(
-                        'Failed to generate a value for %s::%s: %s',
-                        get_class($obj),
-                        $field,
-                        $ex->getMessage(),
-                    ));
+                } catch (\InvalidArgumentException $ex)
+                {
+                    throw new \InvalidArgumentException(
+                        sprintf(
+                            'Failed to generate a value for %s::%s: %s',
+                            get_class($obj),
+                            $field,
+                            $ex->getMessage(),
+                        )
+                    );
                 }
                 // Try a standard setter if it's available, otherwise fall back on reflection
                 $setter = sprintf('set%s', ucfirst($field));
 
-                if (is_callable([$obj, $setter])) {
+                if (is_callable([$obj, $setter]))
+                {
                     $obj->$setter($value);
-                } else {
+                } else
+                {
                     $this->class->reflFields[$field]->setValue($obj, $value);
                 }
             }
@@ -222,7 +249,8 @@ class EntityPopulator
 
     private function callMethods($obj, $insertedEntities): void
     {
-        foreach ($this->getModifiers() as $modifier) {
+        foreach ($this->getModifiers() as $modifier)
+        {
             $modifier($obj, $insertedEntities);
         }
     }
@@ -234,12 +262,13 @@ class EntityPopulator
     {
         $repository = $manager->getRepository(get_class($obj));
         $result = $repository->createQueryBuilder('e')
-                ->select(sprintf('e.%s', $column))
-                ->getQuery()
-                ->execute();
+            ->select(sprintf('e.%s', $column))
+            ->getQuery()
+            ->execute();
         $ids = array_map('current', $result->toArray());
 
-        do {
+        do
+        {
             $id = mt_rand();
         } while (in_array($id, $ids, false));
 

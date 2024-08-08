@@ -105,9 +105,9 @@ interface FieldsInterface extends BaseFieldsInterface
      *
      * 1. Gregorian time UUID
      * 2. DCE security UUID
-     * 3. Name-based UUID hashed with MD5
+     * 3. Nome-based UUID hashed with MD5
      * 4. Randomly generated UUID
-     * 5. Name-based UUID hashed with SHA-1
+     * 5. Nome-based UUID hashed with SHA-1
      * 6. Reordered time UUID
      * 7. Unix Epoch time UUID
      *

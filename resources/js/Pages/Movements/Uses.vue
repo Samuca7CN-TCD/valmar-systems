@@ -5,9 +5,10 @@ import FloatButton from '@/Components/FloatButton.vue'
 import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
-import { EyeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, ChevronUpIcon, InformationCircleIcon, EyeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
-
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
 // =============================================
 // Informações exteriores
 const props = defineProps({
@@ -19,6 +20,7 @@ const props = defineProps({
     uses_list: Object,
     employees_list: Array,
     items: Object,
+    parameters: Object,
 })
 
 
@@ -35,6 +37,15 @@ const use_data = useForm({
     'items_list': [],
 })
 
+const use_filter_toggle = ref(false)
+const use_filter = useForm({
+    employee_id: props.parameters.employee_id,
+    motive: props.parameters.motive,
+    start_date: props.parameters.start_date,
+    end_date: props.parameters.end_date,
+})
+
+const $toast = useToast();
 const search_term = ref("")
 
 const filtered_uses_list = computed(() => {
@@ -124,6 +135,23 @@ const createUse = () => {
     })
 }
 
+const get_filtered_data = () => {
+    use_filter.post(route('uses.filter'), {
+        preserveScroll: true,
+        /*onSuccess: (data) => {
+            console.log("SUCESSO: ", data);
+            $toast.success("Dados filtrados com sucesso!");
+        },
+        onError: (error) => {
+            $toast.error("Erro ao filtrar dados.");
+            console.error(error);
+        }*/
+    });
+};
+
+
+
+
 const updateUse = () => {
     use_data.put(route('uses.update', use_data.id), {
         preserveScroll: true,
@@ -136,7 +164,7 @@ const deleteUse = (use_id, use_name) => {
     if (confirm(`Você tem certeza que deseja excluir a uso de material para "${use_name}"? Todos os materiais comprados voltarão para o estoque! Esta ação não poderá ser desfeita!`)) {
         use_data.delete(route('uses.destroy', use_id), {
             preserveScroll: true,
-            onSuccess: () => alert('Uso deletado com sucesso!')
+            onSuccess: () => $toast.success('Uso deletado com sucesso!')
         })
     }
 }
@@ -146,7 +174,7 @@ const submit = () => {
         case 'create': return createUse()
         case 'update': return updateUse()
         case 'see': return closeModal()
-        default: alert('Método desconhecido. Informar o Técnico.')
+        default: $toast.error('Método desconhecido. Informar o Técnico.')
     }
 }
 </script>
@@ -157,7 +185,8 @@ const submit = () => {
     <AppLayout :page="page" :page_options="page_options">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }} | {{ toMoney(total_uses_amount) }}
+                {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{ toMoney(total_uses_amount)
+                    }}</span>
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Use" class="print:hidden" />
         </template>
@@ -169,7 +198,87 @@ const submit = () => {
                         <MagnifyingGlassIcon class="w-5 y-5" />
                         <input type="text" name="search_term" id="search_term" autocomplete="on" class="simple-input"
                             autofocus="true" placeholder="Pesquisar termo..." v-model="search_term" />
+                        <span class="cursor-help select-none"
+                            title="O campo de pesquisa ao lado filtra as informações carregadas na pagina. O formulário de pesquisa abaixo busca as informações filtradas no banco de dados e lista na página.">
+                            <InformationCircleIcon class="w-5 h-5" />
+                        </span>
+
+                        <span v-if="!use_filter_toggle" class="select-none cursor-pointer"
+                            title="Abrir opções de filtro" @click="use_filter_toggle = true">
+                            <ChevronDownIcon class="w-5 y-5" />
+                        </span>
+                        <span v-else class="select-none cursor-pointer" title="Fechar opções de filtro"
+                            @click="use_filter_toggle = false">
+                            <ChevronUpIcon class="w-5 y-5" />
+                        </span>
+
                     </div>
+                    <div v-show="use_filter_toggle" class="mt-3 grid grid-cols-4 gap-2">
+                        <div class="col-span-4 md:col-span-1">
+                            <label for="search-by-employee"
+                                class="block text-sm font-medium leading-6 text-gray-900">Funcionário</label>
+                            <div class="mt-2">
+                                <select name="search-by-employee" id="search-by-employee"
+                                    class="simple-select disabled:bg-gray-200" v-model="use_filter.employee_id"
+                                    @change="get_filtered_data">
+                                    <option :value="0">Todos</option>
+                                    <option v-for="employee in employees_list" :key="employee.id" :value="employee.id">
+                                        {{ employee.name }} {{ employee.surname }}
+                                    </option>
+                                </select>
+                                <p v-if="use_filter.errors.employee_id" class="text-red-500 text-sm">{{
+        use_filter.errors.employee_id }}</p>
+                            </div>
+                        </div>
+
+                        <div class="col-span-4 md:col-span-1">
+                            <label for="search-by-motive"
+                                class="block text-sm font-medium leading-6 text-gray-900">Motivo</label>
+                            <div class="mt-2">
+                                <input type="text" name="search-by-motive" id="search-by-motive"
+                                    class="simple-input disabled:bg-gray-200" placeholder="Filtrar por motivo"
+                                    v-model="use_filter.motive" @input="get_filtered_data" required>
+                                <p v-if="use_filter.errors.motive" class="text-red-500 text-sm">{{
+        use_filter.errors.motive }}</p>
+                            </div>
+                        </div>
+
+                        <div class="col-span-2 md:col-span-1">
+                            <label for="search-by-start-date"
+                                class="block text-sm font-medium leading-6 text-gray-900">Data
+                                (início)</label>
+                            <div class="mt-2">
+                                <input type="date" name="search-by-start-date" id="search-by-start-date"
+                                    class="simple-input disabled:bg-gray-200" placeholder="Filtrar por período (início)"
+                                    v-model="use_filter.start_date" @input="get_filtered_data" required>
+                                <p v-if="use_filter.errors.start_date" class="text-red-500 text-sm">{{
+        use_filter.errors.start_date }}</p>
+                            </div>
+                        </div>
+
+                        <div class="col-span-2 md:col-span-1">
+                            <label for="search-by-end-date"
+                                class="block text-sm font-medium leading-6 text-gray-900">Data
+                                (fim)</label>
+                            <div class="mt-2">
+                                <input type="date" name="search-by-end-date" id="search-by-end-date"
+                                    class="simple-input disabled:bg-gray-200" placeholder="Filtrar por período (fim)"
+                                    v-model="use_filter.end_date" @input="get_filtered_data" required>
+                                <p v-if="use_filter.errors.end_date" class="text-red-500 text-sm">{{
+        use_filter.errors.end_date }}</p>
+                            </div>
+
+                        </div>
+                        <a :href="route('uses.index')"
+                            class="text-red-500 hover:text-red-700 active:text-red-900 text-sm select-none mt-2"
+                            @click="use_filter.reset()">Resetar busca</a>
+                        <!--<button type="button"
+                            class="col-span-4 p-1 text-white rounded-md bg-green-500 hover:bg-green-700 active:bg-green-900"
+                            @click="get_filtered_data">
+                            Pesquisar
+                        </button>-->
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -183,10 +292,10 @@ const submit = () => {
                                 <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                                     <div class="overflow-hidden">
                                         <table class="min-w-full text-left text-sm font-light">
-                                            <thead class="border-b font-medium dark:border-neutral-500">
+                                            <thead class="border-b font-medium ">
                                                 <tr>
                                                     <th scope="col" class="px-6 py-4 text-center">#</th>
-                                                    <th scope="col" class="px-6 py-4 text-center">Funcionário</th>
+                                                    <!--<th scope="col" class="px-6 py-4 text-center">Funcionário</th>-->
                                                     <th scope="col" class="px-6 py-4 text-center">Motivo</th>
                                                     <th scope="col" class="px-6 py-4 text-center">Data do Uso
                                                     </th>
@@ -207,15 +316,13 @@ const submit = () => {
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
         use.id }}
                                                     </td>
-                                                    <td class="whitespace-normal px-6 py-4 text-center trim">{{
-        use.entity_name }}
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center">{{
+        toMoney(use.motive) }}
                                                         <span v-if="use.observations" :title="use.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
-                                                    <td class="whitespace-nowrap px-2 py-4 text-center">{{
-        toMoney(use.motive) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">{{
-        formatDate(use.date, true) }}</td>
+                                                        formatDate(use.date, true) }}</td>
                                                     <!--
                                                         <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-yellow-700 active:text-yellow-900 select-none print:hidden"
                                                         :title="'EDITAR: Compra de ' + use.entity_name"
@@ -224,13 +331,11 @@ const submit = () => {
                                                         </td>
                                                     -->
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-indigo-700 active:text-indigo-900 select-none print:hidden"
-                                                        :title="'VER: Compra de ' + use.entity_name"
-                                                        @click="openModal('see', use.id)">
+                                                        :title="'Ver Uso'" @click="openModal('see', use.id)">
                                                         <EyeIcon class="w-5 h-5 m-auto" />
                                                     </td>
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-red-700 active:text-red-900 select-none print:hidden"
-                                                        :title="'EXCLUIR: Compra de ' + use.entity_name"
-                                                        @click="deleteUse(use.id, use.entity_name)">
+                                                        :title="'Excluir Uso'" @click="deleteUse(use.id, use.motive)">
                                                         <XMarkIcon class="w-5 h-5 m-auto" />
                                                     </td>
                                                 </tr>

@@ -6,8 +6,9 @@ use PhpParser\Modifiers;
 use PhpParser\Node;
 use PhpParser\NodeAbstract;
 
-class Param extends NodeAbstract {
-    /** @var null|Identifier|Name|ComplexType Type declaration */
+class Param extends NodeAbstract
+{
+    /** @var null|Identifier|Nome|ComplexType Type declaration */
     public ?Node $type;
     /** @var bool Whether parameter is passed by reference */
     public bool $byRef;
@@ -27,7 +28,7 @@ class Param extends NodeAbstract {
      *
      * @param Expr\Variable|Expr\Error $var Parameter variable
      * @param null|Expr $default Default value
-     * @param null|Identifier|Name|ComplexType $type Type declaration
+     * @param null|Identifier|Nome|ComplexType $type Type declaration
      * @param bool $byRef Whether is passed by reference
      * @param bool $variadic Whether this is a variadic argument
      * @param array<string, mixed> $attributes Additional attributes
@@ -35,8 +36,11 @@ class Param extends NodeAbstract {
      * @param list<AttributeGroup> $attrGroups PHP attribute groups
      */
     public function __construct(
-        Expr $var, ?Expr $default = null, ?Node $type = null,
-        bool $byRef = false, bool $variadic = false,
+        Expr $var,
+        ?Expr $default = null,
+        ?Node $type = null,
+        bool $byRef = false,
+        bool $variadic = false,
         array $attributes = [],
         int $flags = 0,
         array $attrGroups = []
@@ -51,34 +55,41 @@ class Param extends NodeAbstract {
         $this->attrGroups = $attrGroups;
     }
 
-    public function getSubNodeNames(): array {
+    public function getSubNodeNames(): array
+    {
         return ['attrGroups', 'flags', 'type', 'byRef', 'variadic', 'var', 'default'];
     }
 
-    public function getType(): string {
+    public function getType(): string
+    {
         return 'Param';
     }
 
     /**
      * Whether this parameter uses constructor property promotion.
      */
-    public function isPromoted(): bool {
+    public function isPromoted(): bool
+    {
         return $this->flags !== 0;
     }
 
-    public function isPublic(): bool {
-        return (bool) ($this->flags & Modifiers::PUBLIC);
+    public function isPublic(): bool
+    {
+        return (bool) ($this->flags & Modifiers::PUBLIC );
     }
 
-    public function isProtected(): bool {
-        return (bool) ($this->flags & Modifiers::PROTECTED);
+    public function isProtected(): bool
+    {
+        return (bool) ($this->flags & Modifiers::PROTECTED );
     }
 
-    public function isPrivate(): bool {
-        return (bool) ($this->flags & Modifiers::PRIVATE);
+    public function isPrivate(): bool
+    {
+        return (bool) ($this->flags & Modifiers::PRIVATE );
     }
 
-    public function isReadonly(): bool {
-        return (bool) ($this->flags & Modifiers::READONLY);
+    public function isReadonly(): bool
+    {
+        return (bool) ($this->flags & Modifiers::READONLY );
     }
 }

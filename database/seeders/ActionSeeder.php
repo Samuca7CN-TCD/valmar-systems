@@ -28,6 +28,7 @@ class ActionSeeder extends Seeder
             ['type' => 'print', 'name' => 'imprimir', 'past' => 'imprimiu', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'refund', 'name' => 'reembolsar', 'past' => 'reembolsou', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'devolution', 'name' => 'devolver', 'past' => 'devolveu', 'created_at' => $now, 'updated_at' => $now],
+            ['type' => 'save', 'name' => 'salvar', 'past' => 'salvou', 'created_at' => $now, 'updated_at' => $now],
         ]);
     }
 }

@@ -41,7 +41,7 @@ class SlackRecord
     private string|null $channel;
 
     /**
-     * Name of a bot
+     * Nome of a bot
      */
     private string|null $username;
 
@@ -98,7 +98,8 @@ class SlackRecord
             ->excludeFields($excludeFields)
             ->setFormatter($formatter);
 
-        if ($this->includeContextAndExtra) {
+        if ($this->includeContextAndExtra)
+        {
             $this->normalizerFormatter = new NormalizerFormatter();
         }
     }
@@ -113,53 +114,65 @@ class SlackRecord
     {
         $dataArray = [];
 
-        if ($this->username !== null) {
+        if ($this->username !== null)
+        {
             $dataArray['username'] = $this->username;
         }
 
-        if ($this->channel !== null) {
+        if ($this->channel !== null)
+        {
             $dataArray['channel'] = $this->channel;
         }
 
-        if ($this->formatter !== null && !$this->useAttachment) {
+        if ($this->formatter !== null && !$this->useAttachment)
+        {
             $message = $this->formatter->format($record);
-        } else {
+        } else
+        {
             $message = $record->message;
         }
 
         $recordData = $this->removeExcludedFields($record);
 
-        if ($this->useAttachment) {
+        if ($this->useAttachment)
+        {
             $attachment = [
-                'fallback'  => $message,
-                'text'      => $message,
-                'color'     => $this->getAttachmentColor($record->level),
-                'fields'    => [],
+                'fallback' => $message,
+                'text' => $message,
+                'color' => $this->getAttachmentColor($record->level),
+                'fields' => [],
                 'mrkdwn_in' => ['fields'],
-                'ts'        => $recordData['datetime']->getTimestamp(),
-                'footer'      => $this->username,
+                'ts' => $recordData['datetime']->getTimestamp(),
+                'footer' => $this->username,
                 'footer_icon' => $this->userIcon,
             ];
 
-            if ($this->useShortAttachment) {
+            if ($this->useShortAttachment)
+            {
                 $attachment['title'] = $recordData['level_name'];
-            } else {
+            } else
+            {
                 $attachment['title'] = 'Message';
                 $attachment['fields'][] = $this->generateAttachmentField('Level', $recordData['level_name']);
             }
 
-            if ($this->includeContextAndExtra) {
-                foreach (['extra', 'context'] as $key) {
-                    if (!isset($recordData[$key]) || \count($recordData[$key]) === 0) {
+            if ($this->includeContextAndExtra)
+            {
+                foreach (['extra', 'context'] as $key)
+                {
+                    if (!isset($recordData[$key]) || \count($recordData[$key]) === 0)
+                    {
                         continue;
                     }
 
-                    if ($this->useShortAttachment) {
+                    if ($this->useShortAttachment)
+                    {
                         $attachment['fields'][] = $this->generateAttachmentField(
                             $key,
                             $recordData[$key]
                         );
-                    } else {
+                    } else
+                    {
                         // Add all extra fields as individual fields in attachment
                         $attachment['fields'] = array_merge(
                             $attachment['fields'],
@@ -170,14 +183,18 @@ class SlackRecord
             }
 
             $dataArray['attachments'] = [$attachment];
-        } else {
+        } else
+        {
             $dataArray['text'] = $message;
         }
 
-        if ($this->userIcon !== null) {
-            if (false !== ($iconUrl = filter_var($this->userIcon, FILTER_VALIDATE_URL))) {
+        if ($this->userIcon !== null)
+        {
+            if (false !== ($iconUrl = filter_var($this->userIcon, FILTER_VALIDATE_URL)))
+            {
                 $dataArray['icon_url'] = $iconUrl;
-            } else {
+            } else
+            {
                 $dataArray['icon_emoji'] = ":{$this->userIcon}:";
             }
         }
@@ -191,7 +208,8 @@ class SlackRecord
      */
     public function getAttachmentColor(Level $level): string
     {
-        return match ($level) {
+        return match ($level)
+        {
             Level::Error, Level::Critical, Level::Alert, Level::Emergency => static::COLOR_DANGER,
             Level::Warning => static::COLOR_WARNING,
             Level::Info, Level::Notice => static::COLOR_GOOD,
@@ -213,7 +231,7 @@ class SlackRecord
         $hasOnlyNonNumericKeys = \count(array_filter(array_keys($normalized), 'is_numeric')) === 0;
 
         return $hasSecondDimension || $hasOnlyNonNumericKeys
-            ? Utils::jsonEncode($normalized, JSON_PRETTY_PRINT|Utils::DEFAULT_JSON_FLAGS)
+            ? Utils::jsonEncode($normalized, JSON_PRETTY_PRINT | Utils::DEFAULT_JSON_FLAGS)
             : Utils::jsonEncode($normalized, Utils::DEFAULT_JSON_FLAGS);
     }
 
@@ -260,7 +278,8 @@ class SlackRecord
     {
         $this->userIcon = $userIcon;
 
-        if (\is_string($userIcon)) {
+        if (\is_string($userIcon))
+        {
             $this->userIcon = trim($userIcon, ':');
         }
 
@@ -284,7 +303,8 @@ class SlackRecord
     {
         $this->includeContextAndExtra = $includeContextAndExtra;
 
-        if ($this->includeContextAndExtra) {
+        if ($this->includeContextAndExtra)
+        {
             $this->normalizerFormatter = new NormalizerFormatter();
         }
 
@@ -345,7 +365,8 @@ class SlackRecord
         $normalized = $this->normalizerFormatter->normalizeValue($data);
 
         $fields = [];
-        foreach ($normalized as $key => $value) {
+        foreach ($normalized as $key => $value)
+        {
             $fields[] = $this->generateAttachmentField((string) $key, $value);
         }
 
@@ -360,15 +381,19 @@ class SlackRecord
     private function removeExcludedFields(LogRecord $record): array
     {
         $recordData = $record->toArray();
-        foreach ($this->excludeFields as $field) {
+        foreach ($this->excludeFields as $field)
+        {
             $keys = explode('.', $field);
             $node = &$recordData;
             $lastKey = end($keys);
-            foreach ($keys as $key) {
-                if (!isset($node[$key])) {
+            foreach ($keys as $key)
+            {
+                if (!isset($node[$key]))
+                {
                     break;
                 }
-                if ($lastKey === $key) {
+                if ($lastKey === $key)
+                {
                     unset($node[$key]);
                     break;
                 }

@@ -49,7 +49,7 @@ class Google2FA
     protected $window = 1; // Keys will be valid for 60 seconds
 
     /**
-     * Find a valid One Time Password.
+     * Find a valid One Time Senha.
      *
      * @param string   $secret
      * @param string   $key
@@ -72,13 +72,16 @@ class Google2FA
         $timestamp,
         $oldTimestamp = null
     ) {
-        for (;
+        for (
+        ;
             $startingTimestamp <= $timestamp + $this->getWindow($window);
             $startingTimestamp++
-        ) {
+        )
+        {
             if (
                 hash_equals($this->oathTotp($secret, $startingTimestamp), $key)
-            ) {
+            )
+            {
                 return is_null($oldTimestamp)
                     ? true
                     : $startingTimestamp;
@@ -243,7 +246,8 @@ class Google2FA
      */
     protected function makeTimestamp($timestamp = null)
     {
-        if (is_null($timestamp)) {
+        if (is_null($timestamp))
+        {
             return $this->getTimestamp();
         }
 
@@ -265,7 +269,8 @@ class Google2FA
      */
     public function oathTotp($secret, $counter)
     {
-        if (strlen($secret) < 8) {
+        if (strlen($secret) < 8)
+        {
             throw new SecretKeyTooShortException();
         }
 
@@ -310,7 +315,7 @@ class Google2FA
     public function removeInvalidChars($string)
     {
         return preg_replace(
-            '/[^'.Constants::VALID_FOR_B32.']/',
+            '/[^' . Constants::VALID_FOR_B32 . ']/',
             '',
             $string
         );
@@ -343,7 +348,8 @@ class Google2FA
     public function setAlgorithm($algorithm)
     {
         // Default to SHA1 HMAC algorithm
-        if (!in_array($algorithm, $this->getValidAlgorithms())) {
+        if (!in_array($algorithm, $this->getValidAlgorithms()))
+        {
             throw new InvalidAlgorithmException();
         }
 

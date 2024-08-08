@@ -4650,7 +4650,7 @@ interface CarbonInterface extends DateTimeInterface, JsonSerializable
      *             You should rather use the ->settings() method.
      * @see settings
      *
-     * Enable the strict mode (or disable with passing false).
+     * Habilitar the strict mode (or disable with passing false).
      *
      * @param bool $strictModeEnabled
      */

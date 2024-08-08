@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('accounting_id');
             $table->string('motive');
             $table->unsignedBigInteger('employee_id')->nullable();
-            $table->string('entity_name');
+            $table->string('entity_name')->nullable();
             $table->date('deadline')->nullable();
             $table->date('date')->default(Carbon::now()->format('Y-m-d'));
             $table->text('observations')->nullable();

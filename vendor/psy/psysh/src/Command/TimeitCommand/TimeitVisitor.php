@@ -16,7 +16,7 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\FunctionLike;
-use PhpParser\Node\Name\FullyQualified as FullyQualifiedName;
+use PhpParser\Node\Nome\FullyQualified as FullyQualifiedName;
 use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeVisitorAbstract;
@@ -52,14 +52,16 @@ class TimeitVisitor extends NodeVisitorAbstract
     {
         // keep track of nested function-like nodes, because they can have
         // returns statements... and we don't want to call markEnd for those.
-        if ($node instanceof FunctionLike) {
+        if ($node instanceof FunctionLike)
+        {
             $this->functionDepth++;
 
             return;
         }
 
         // replace any top-level `return` statements with a `markEnd` call
-        if ($this->functionDepth === 0 && $node instanceof Return_) {
+        if ($this->functionDepth === 0 && $node instanceof Return_)
+        {
             return new Return_($this->getEndCall($node->expr), $node->getAttributes());
         }
     }
@@ -71,7 +73,8 @@ class TimeitVisitor extends NodeVisitorAbstract
      */
     public function leaveNode(Node $node)
     {
-        if ($node instanceof FunctionLike) {
+        if ($node instanceof FunctionLike)
+        {
             $this->functionDepth--;
         }
     }
@@ -88,15 +91,19 @@ class TimeitVisitor extends NodeVisitorAbstract
 
         // append a `markEnd` call (wrapping the final node, if it's an expression)
         $last = $nodes[\count($nodes) - 1];
-        if ($last instanceof Expr) {
+        if ($last instanceof Expr)
+        {
             \array_pop($nodes);
             $nodes[] = $this->getEndCall($last);
-        } elseif ($last instanceof Expression) {
+        } elseif ($last instanceof Expression)
+        {
             \array_pop($nodes);
             $nodes[] = new Expression($this->getEndCall($last->expr), $last->getAttributes());
-        } elseif ($last instanceof Return_) {
+        } elseif ($last instanceof Return_)
+        {
             // nothing to do here, we're already ending with a return call
-        } else {
+        } else
+        {
             $nodes[] = new Expression($this->getEndCall(), []);
         }
 
@@ -122,7 +129,8 @@ class TimeitVisitor extends NodeVisitorAbstract
      */
     private function getEndCall(?Expr $arg = null): StaticCall
     {
-        if ($arg === null) {
+        if ($arg === null)
+        {
             $arg = NoReturnValue::create();
         }
 
