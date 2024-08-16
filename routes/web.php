@@ -1,8 +1,5 @@
 <?php
-
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
@@ -55,6 +52,7 @@ Route::middleware([
 
     Route::resource('/movements/entries', MovementEntryController::class);
     Route::post('/movements/filter/entries', [MovementEntryController::class, 'filter'])->name('entries.filter');
+    Route::post('/movements/delete-item/entries', [MovementEntryController::class, 'delete_item'])->name('entries.delete_item');
 
     Route::resource('/payments', PaymentController::class);
     Route::put('/payments/pay/{payment}', [PaymentController::class, 'pay'])->where('payment', '[0-9]+')->name('payments.pay');

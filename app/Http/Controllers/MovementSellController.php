@@ -97,7 +97,7 @@ class MovementSellController extends Controller
                 'observations' => ['nullable', 'string'],
                 'items_list' => ['required', 'array', 'min:1'],
                 'items_list.*.id' => ['required', 'numeric', 'exists:items,id'],
-                'items_list.*.name' => ['required', 'string', 'exists:items,name'],
+                'items_list.*.name' => ['required', 'string'],
                 'items_list.*.movement_quantity' => ['required', 'numeric', 'gt:0', 'lte:items_list.*.quantity'],
                 'items_list.*.quantity' => ['required', 'numeric', 'gt:0'],
                 'items_list.*.measurement_unit' => ['required', 'string'],
@@ -151,6 +151,7 @@ class MovementSellController extends Controller
                     'amount' => $sellRecord['amount'],
                     'procedure_id' => $procedure->id,
                     'past' => true,
+                    'content' => json_encode($sellRecord),
                     'register_date' => $validated['date'],
                 ]);
             });

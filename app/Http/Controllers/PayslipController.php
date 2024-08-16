@@ -23,7 +23,7 @@ class PayslipController extends Controller
     {
         // Obter dados gerais
         $page = Department::where('type', 'payslip')->first();
-        $employees = Employee::where('id', '>', 1)->get();
+        $employees = Employee::where('id', '>', 1)->orderBy('name')->orderBy('surname')->get();
         [$current_month, $current_year] = $this->getCurrentMonthYear($month, $year);
         $employee = $this->getEmployee($employee_id);
 
@@ -77,6 +77,7 @@ class PayslipController extends Controller
             ->when($mode === 'transportation-voucher', function ($query) {
                 return $query->where('transportation_voucher', true);
             })
+            ->orderBy('name')->orderBy('surname')
             ->get();
 
 
@@ -107,7 +108,7 @@ class PayslipController extends Controller
             return Employee::findOrFail($employee_id);
         } else
         {
-            return Employee::where('id', '>', 1)->first();
+            return Employee::where('id', '>', 1)->orderBy('name')->orderBy('surname')->first();
         }
     }
 

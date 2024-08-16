@@ -1,11 +1,12 @@
 <script setup>
 import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
-import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { ref, computed, reactive } from 'vue';
 import { formatDate, toMoney } from '@/general.js';
 import { useForm } from '@inertiajs/vue3';
+import SelectSearch from '@/Components/SelectSearch.vue'
 import { useToast } from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
 
@@ -18,6 +19,7 @@ const props = defineProps({
     },
     items: Array,
     employees_list: Array,
+    services_list: Array,
 });
 
 const $toast = useToast();
@@ -41,13 +43,21 @@ const canAddItems = computed(() => {
 });
 
 const enableSubmit = computed(() => {
-    const { items_list } = props.use;
-    if (!canAddItems) return false;
-    if (!items_list.length) return false;
-    const items_okay = items_list.every(item => {
-        return item.movement_quantity > 0 && item.movement_quantity <= item.quantity;
-    });
-    return items_okay; // Early return based on item checks
+    const { employee, motive, date, items_list } = props.use;
+
+    // Verifica se todos os campos obrigatórios estão preenchidos
+    if (!motive || !motive.length) return false;
+    if (!date || !dateRegex.test(date)) return false;
+    if (!items_list || items_list.length < 1) return false;
+
+    // Verifica se todos os itens da lista atendem aos critérios
+    const items_okay = items_list.every(item =>
+        item.movement_quantity > 0 && item.movement_quantity <= item.quantity &&
+        item.employee_id > 0 //&&
+        //item.motive && item.motive.length
+    );
+
+    return items_okay;
 });
 
 const disableAllInputs = computed(() => {
@@ -100,8 +110,11 @@ const updateEstimatedValue = () => {
 }
 
 const last_selected_employee = ref(props.employees_list ? props.employees_list[0]?.id : null);
+//const last_inputed_motive_mode = ref(true);
+//const last_inputed_motive = ref("");
 const selectItem = (item) => {
     props.use.items_list.push({
+        id: (props.use.items_list[props.use.items_list.length - 1]?.id ?? 0) + 1,
         id: item.id,
         name: item.name,
         quantity: item.quantity,
@@ -112,6 +125,8 @@ const selectItem = (item) => {
         price: item.price,
         amount: item.price,
         employee_id: last_selected_employee.value,
+        //motive_mode: last_inputed_motive_mode.value,
+        //motive: last_inputed_motive.value,
     })
 
     searchTerm.value = "";
@@ -119,16 +134,29 @@ const selectItem = (item) => {
     updateEstimatedValue()
 }
 
+const changeMotiveMode = (item_id) => {
+    const item = props.use.items_list.find(el => el.id === item_id);
+    item.motive_mode = !item.motive_mode
+    item.motive = ""
+}
+
+
 const removeSelectedItem = (index) => {
     props.use.items_list = props.use.items_list.filter((item) => item.id !== index)
     updateEstimatedValue()
 }
 
+const updateMotive = (newMotive) => {
+    props.use.motive = newMotive;
+};
+
 const close = () => {
+    last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
     emit('close')
 }
 
 const submit = () => {
+    last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
     emit('submit')
 }
 </script>
@@ -214,9 +242,12 @@ const submit = () => {
                                 <label for="use-motive"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Motivo</label>
                                 <div class="mt-2">
-                                    <input type="text" name="use-motive" id="use-motive" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" placeholder="Motivo do Uso"
-                                        v-model="use.motive" :disabled="disableAllInputs" required>
+                                    <input v-if="see_disabled" type="text" name="use-motive" id="use-motive"
+                                        autocomplete="on" class="simple-input disabled:bg-gray-200"
+                                        placeholder="Motivo do Uso" v-model="use.motive" :disabled="disableAllInputs"
+                                        required>
+
+                                    <SelectSearch v-else :options="services_list" @update:modelValue="updateMotive" />
                                     <p v-if="use.errors.motive" class="text-red-500 text-sm">{{
         use.errors.motive }}</p>
                                 </div>
@@ -242,7 +273,7 @@ const submit = () => {
 
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-4">
 
-                            <div class="sm:col-span-4">
+                            <div v-if="!see_disabled" class="sm:col-span-4">
                                 <div class="relative">
                                     <label for="item-selecter"
                                         class="block text-sm font-medium leading-6 text-gray-900">Selecione os itens de
@@ -280,6 +311,7 @@ const submit = () => {
                                             <th scope="col" class="px-6 py-4 text-center">Qtd. Uso</th>
                                             <th scope="col" class="px-6 py-4 text-center">Und. Medida</th>
                                             <th scope="col" class="px-6 py-4 text-center">Funcionário</th>
+                                            <!--<th scope="col" class="px-6 py-4 text-center">Motivo</th>-->
                                             <th v-if="modal.mode !== 'see'" scope="col" class="px-6 py-4 text-center">
                                                 Deletar</th>
                                         </tr>
@@ -326,6 +358,28 @@ const submit = () => {
                                                     </option>
                                                 </select>
                                             </td>
+
+                                            <!--<td
+                                                class="whitespace-nowrap py-4 text-center font-medium flex gap-3 items-center">
+                                                <select v-if="item.motive_mode"
+                                                    class="simple-select disabled:bg-gray-200"
+                                                    :disabled="modal.mode !== 'create'" v-model="item.motive"
+                                                    @change="last_inputed_motive = $event.target.value" required>
+                                                    <option value="" selected disabled>Selecione um serviço</option>
+                                                    <option v-for="service in services_list" :key="service.id"
+                                                        :value="service.motive + (service.entity_name)">{{
+        service.motive }} ({{ service.entity_name
+                                                        }})</option>
+                                                </select>
+                                                <input v-else type="text" class="simple-input disabled:bg-gray-200"
+                                                    :disabled="modal.mode !== 'create'" v-model="item.motive"
+                                                    placeholder="Descreva o motivo do movimento"
+                                                    @input="last_inputed_motive = $event.target.value" required />
+                                                <button @click="changeMotiveMode(item.id)"
+                                                    title="Alterar modo de motivo">
+                                                    <ArrowsRightLeftIcon class="w-5 h-4" />
+                                                </button>
+                                            </td>-->
 
                                             <td v-if="modal.mode !== 'see'"
                                                 class="whitespace-nowrap py-4 text-center font-mono text-2xl"><button

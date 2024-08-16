@@ -32,6 +32,7 @@ class MovementUseController extends Controller
 
         // Recebe os parâmetros da consulta, ou define os valores padrão
         $parameters = [
+            'default' => count($request->query->all()) > 0 ? false : true,
             'employee_id' => $request->query('employee_id', 0),
             'motive' => $request->query('motive', ''),
             'start_date' => $request->query('start_date', Carbon::today()->toDateString()),
@@ -60,7 +61,8 @@ class MovementUseController extends Controller
             return $movement;
         });
 
-        $employees = Employee::all();
+        $employees = Employee::orderBy('name')->orderBy('surname')->get();
+        $services = Movement::where('type', 1)->get();
 
         return Inertia::render('Movements/Uses', [
             'page' => $page,
@@ -68,6 +70,7 @@ class MovementUseController extends Controller
             'items' => $items,
             'employees_list' => $employees,
             'parameters' => $parameters,
+            'services_list' => $services,
         ]);
     }
 
@@ -109,8 +112,8 @@ class MovementUseController extends Controller
                 'total_value' => ['required', 'numeric', 'gt:0'],
                 'items_list' => ['required', 'array', 'min:1'],
                 'items_list.*.id' => ['required', 'numeric', 'exists:items,id'],
-                'items_list.*.name' => ['required', 'string', 'exists:items,name'],
-                'items_list.*.movement_quantity' => ['required', 'numeric', 'gt:0', 'lte:items_list.*.quantity'],
+                'items_list.*.name' => ['required', 'string'],
+                'items_list.*.movement_quantity' => ['required', 'numeric', 'gt:0'],
                 'items_list.*.quantity' => ['required', 'numeric', 'gt:0'],
                 'items_list.*.measurement_unit' => ['required', 'string'],
                 'items_list.*.price' => ['required', 'numeric', 'gt:0'],
@@ -167,6 +170,7 @@ class MovementUseController extends Controller
                     'amount' => $useRecord['amount'],
                     'procedure_id' => $procedure->id,
                     'past' => true,
+                    'content' => json_encode($useRecord),
                     'register_date' => $validated['date'],
                 ]);
             });

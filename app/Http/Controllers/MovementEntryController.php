@@ -26,12 +26,12 @@ class MovementEntryController extends Controller
      */
     public function index(Request $request)
     {
-
         $page = Department::find(3);
         $items = Item::with('measurement_unit')->orderBy('name')->get();
 
         // Recebe os parâmetros da consulta, ou define os valores padrão
         $parameters = [
+            'default' => count($request->query->all()) > 0 ? false : true,
             'employee_id' => $request->query('employee_id', 0),
             'motive' => $request->query('motive', ''),
             'start_date' => $request->query('start_date', Carbon::today()->toDateString()),
@@ -59,7 +59,8 @@ class MovementEntryController extends Controller
             return $movement;
         });
 
-        $employees = Employee::all();
+        $employees = Employee::orderBy('name')->orderBy('surname')->get();
+        $services = Movement::where('type', 1)->get();
 
         return Inertia::render('Movements/Entries', [
             'page' => $page,
@@ -67,6 +68,7 @@ class MovementEntryController extends Controller
             'items' => $items,
             'employees_list' => $employees,
             'parameters' => $parameters,
+            'services_list' => $services,
         ]);
     }
 
@@ -105,7 +107,7 @@ class MovementEntryController extends Controller
                 'total_value' => ['required', 'numeric', 'gt:0'],
                 'items_list' => ['required', 'array', 'min:1'],
                 'items_list.*.id' => ['required', 'numeric', 'exists:items,id'],
-                'items_list.*.name' => ['required', 'string', 'exists:items,name'],
+                'items_list.*.name' => ['required', 'string'],
                 'items_list.*.movement_quantity' => ['required', 'numeric', 'gt:0'],
                 'items_list.*.quantity' => ['required', 'numeric'],
                 'items_list.*.measurement_unit' => ['required', 'string'],
@@ -138,8 +140,8 @@ class MovementEntryController extends Controller
 
             $items = Item::whereIn('id', collect($validated['items_list'])->pluck('id'))->lockForUpdate()->get()->keyBy('id');
 
-            $records = collect($validated['items_list'])->map(function ($useRecord) use ($procedure, $validated, $items) {
-                $itemId = $useRecord['id'];
+            $records = collect($validated['items_list'])->map(function ($entryRecord) use ($procedure, $validated, $items) {
+                $itemId = $entryRecord['id'];
                 $item = $items->get($itemId);
 
                 if (!$item)
@@ -147,20 +149,21 @@ class MovementEntryController extends Controller
                     throw new \Exception("Item com ID $itemId não existe.");
                 }
 
-                $item->quantity += $useRecord['movement_quantity'];
+                $item->quantity += $entryRecord['movement_quantity'];
                 $item->save();
 
                 return Record::create([
                     'item_id' => $itemId,
-                    'employee_id' => $useRecord['employee_id'],
-                    'name' => $useRecord['name'],
-                    'quantity' => $useRecord['quantity'],
-                    'movement_quantity' => $useRecord['movement_quantity'],
-                    'measurement_unit' => $useRecord['measurement_unit'],
-                    'price' => $useRecord['price'],
-                    'amount' => $useRecord['amount'],
+                    'employee_id' => $entryRecord['employee_id'],
+                    'name' => $entryRecord['name'],
+                    'quantity' => $entryRecord['quantity'],
+                    'movement_quantity' => $entryRecord['movement_quantity'],
+                    'measurement_unit' => $entryRecord['measurement_unit'],
+                    'price' => $entryRecord['price'],
+                    'amount' => $entryRecord['amount'],
                     'procedure_id' => $procedure->id,
                     'past' => true,
+                    'content' => json_encode($entryRecord),
                     'register_date' => $validated['date'],
                 ]);
             });
@@ -192,6 +195,87 @@ class MovementEntryController extends Controller
     {
         //
     }
+
+    public function delete_item(Request $request)
+    {
+        $request->validate([
+            'entry_id' => 'required|exists:movements,id',
+            'item_id' => 'required',
+        ]);
+
+        return DB::transaction(function () use ($request) {
+            // Encontrar o record do item a ser excluído diretamente pelo item_id
+            $record = Record::with('procedure.movement')
+                ->where('id', $request->item_id)
+                ->whereHas('procedure.movement', function ($query) use ($request) {
+                    $query->where('id', $request->entry_id);
+                })
+                ->firstOrFail();
+
+
+            if (!$record)
+            {
+                return response()->json(['message' => 'Registro não encontrado no movimento.'], 404);
+            }
+
+            // Encontrar o movimento associado ao record
+            $movement = $record->procedure->movement;
+
+            // Salvar o estado do movimento antes da exclusão
+            $beforeDelete = json_encode($movement->toArray());
+
+            // Atualizar a quantidade do item no estoque, se ele ainda existir
+            $item = Item::find($record->item_id);
+            if ($item)
+            {
+                $item->quantity -= $record->movement_quantity;
+                $item->save();
+            }
+
+            // Excluir o record
+            $record->delete();
+
+            // Verificar se o movimento tem outros registros
+            $hasOtherRecords = $movement->procedures->flatMap(function ($procedure) {
+                return $procedure->records;
+            })->count() > 0;
+
+            // Excluir o movimento se não tiver outros registros
+            if (!$hasOtherRecords)
+            {
+                $movement->delete();
+            }
+
+            // Salvar o estado do movimento após a exclusão
+            $afterDelete = json_encode($movement->toArray());
+
+            // Criar um procedimento de exclusão
+            $procedure = Procedure::create([
+                'user_id' => Auth::id(),
+                'action_id' => 3, // ID da ação de exclusão
+                'department_id' => 3, // ID do departamento de entrada
+                'movement_id' => $movement->id,
+            ]);
+
+            // Criar um novo record para registrar a exclusão
+            Record::create([
+                'item_id' => $item ? $item->id : null,  // Verificar se $item não é nulo
+                'procedure_id' => $procedure->id,
+                'past' => true,
+                'content' => json_encode([
+                    'before' => $beforeDelete,
+                    'after' => $afterDelete,
+                ]),
+                'register_date' => now(),
+            ]);
+
+            return response()->json(['message' => 'Item deletado com sucesso'], 200);
+        });
+    }
+
+
+
+
 
     /**
      * Remove the specified resource from storage.

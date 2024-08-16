@@ -41,11 +41,10 @@ const search_term = ref("")
 
 const filtered_services_list = computed(() => {
     const searchTermLower = search_term.value.toLowerCase()
-
     return props.services_list.filter(el =>
         (el.motive.toLowerCase().includes(searchTermLower)) ||
         (el.entity_name.toLowerCase().includes(searchTermLower)) ||
-        (el.observations.toLowerCase().includes(searchTermLower)) ||
+        (el.observations?.toLowerCase().includes(searchTermLower)) ||
         (toMoney(el.accounting.total_value).toString().toLowerCase().includes(searchTermLower)) ||
         (toMoney(el.accounting.partial_value).toString().toLowerCase().includes(searchTermLower)) ||
         (el.deadline.includes(searchTermLower))
@@ -201,7 +200,7 @@ const submit = () => {
             </div>
         </div>
 
-        <div class="py-12 print:py-6">
+        <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
                 <div class="px-0 print:px-0">
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg print:shadow-none">

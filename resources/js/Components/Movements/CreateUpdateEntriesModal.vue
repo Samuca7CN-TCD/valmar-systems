@@ -1,11 +1,14 @@
 <script setup>
 import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
-import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { ref, computed, reactive } from 'vue';
 import { formatDate, toMoney } from '@/general.js';
 import { useForm } from '@inertiajs/vue3';
+import { useToast } from 'vue-toast-notification';
+import SelectSearch from '@/Components/SelectSearch.vue'
+import 'vue-toast-notification/dist/theme-sugar.css';
 
 const emit = defineEmits(['close', 'submit']);
 const props = defineProps({
@@ -16,8 +19,10 @@ const props = defineProps({
     },
     items: Array,
     employees_list: Array,
+    services_list: Array,
 });
 
+const $toast = useToast();
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/
 
 const canAddItems = computed(() => {
@@ -32,15 +37,22 @@ const canAddItems = computed(() => {
 
 const enableSubmit = computed(() => {
     const { employee, motive, date, items_list } = props.entry;
-    //if (!employee || !employee.length) return false;
+
+    // Verifica se todos os campos obrigatórios estão preenchidos
     if (!motive || !motive.length) return false;
     if (!date || !dateRegex.test(date)) return false;
-    if (items_list.length < 1) return false;
-    const items_okay = items_list.every(item => {
-        return item.movement_quantity > 0 && item.employee_id !== null;
-    });
-    return items_okay; // Early return based on item checks
+    if (!items_list || items_list.length < 1) return false;
+
+    // Verifica se todos os itens da lista atendem aos critérios
+    const items_okay = items_list.every(item =>
+        item.movement_quantity > 0 &&
+        item.employee_id > 0 //&&
+        // item.motive && item.motive.length
+    );
+
+    return items_okay;
 });
+
 
 const see_disabled = computed(() => {
     return props.modal.mode === 'see'
@@ -67,8 +79,11 @@ const updateEstimatedValue = () => {
 }
 
 const last_selected_employee = ref(props.employees_list ? props.employees_list[0]?.id : null);
+// const last_inputed_motive_mode = ref(true);
+// const last_inputed_motive = ref(null);
 const selectItem = (item) => {
-    props.entry.items_list.push({
+    const new_item = {
+        order_id: (props.entry.items_list[props.entry.items_list.length - 1]?.order_id ?? 0) + 1,
         id: item.id,
         name: item.name,
         quantity: item.quantity,
@@ -79,23 +94,57 @@ const selectItem = (item) => {
         price: item.price,
         amount: item.price,
         employee_id: last_selected_employee.value,
-    })
-
+        // motive_mode: last_inputed_motive_mode.value,
+        // motive: last_inputed_motive.value,
+    }
+    props.entry.items_list.push(new_item)
+    console.log("NOVO ITEM: ", new_item)
     searchTerm.value = "";
     showResults.value = false;
     updateEstimatedValue()
 }
 
-const removeSelectedItem = (index) => {
-    props.entry.items_list = props.entry.items_list.filter((item) => item.id !== index)
-    updateEstimatedValue()
+const changeMotiveMode = (item_id) => {
+    const item = props.entry.items_list.find(el => el.id === item_id);
+    item.motive_mode = !item.motive_mode
+    item.motive = ""
 }
 
+const removeSelectedItem = async (index, event) => {
+    event.preventDefault(); // Adicione isso para evitar o envio do formulário
+
+    console.log('removeSelectedItem chamado com index:', index);
+
+    if (props.modal.mode === 'see') {
+        if (!confirm("Você tem certeza que deseja deletar esse item? Esta ação não poderá ser desfeita!")) return;
+
+        try {
+            const response = await axios.post(route('entries.delete_item'), { entry_id: props.entry.id, item_id: index });
+            props.entry.items_list = props.entry.items_list.filter((item) => item.id !== index);
+            updateEstimatedValue();
+            $toast.success('Item deletado da entrada com sucesso');
+        } catch (error) {
+            console.error('Erro ao deletar o item:', error.message);
+            $toast.error(`Erro ao deletar o item: ${error.message}`);
+        }
+    } else {
+        console.log('Executando else, removendo item com order_id:', index);
+        props.entry.items_list = props.entry.items_list.filter((item) => item.order_id !== index);
+        updateEstimatedValue();
+    }
+};
+
+const updateMotive = (newMotive) => {
+    props.entry.motive = newMotive;
+};
+
 const close = () => {
+    last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
     emit('close')
 }
 
 const submit = () => {
+    last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
     emit('submit')
 }
 </script>
@@ -158,9 +207,12 @@ const submit = () => {
                                 <label for="entry-motive"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Motivo</label>
                                 <div class="mt-2">
-                                    <input type="text" name="entry-motive" id="entry-motive" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" :disabled="see_disabled"
-                                        placeholder="Motivo do Entrada" v-model="entry.motive" required>
+                                    <input v-if="see_disabled" type="text" name="entry-motive" id="entry-motive"
+                                        autocomplete="on" class="simple-input disabled:bg-gray-200"
+                                        :disabled="see_disabled" placeholder="Motivo do Entrada" v-model="entry.motive"
+                                        required>
+
+                                    <SelectSearch v-else :options="services_list" @update:modelValue="updateMotive" />
                                     <p v-if="entry.errors.motive" class="text-red-500 text-sm">{{
         entry.errors.motive }}</p>
                                 </div>
@@ -186,10 +238,11 @@ const submit = () => {
 
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-4">
 
-                            <div class="sm:col-span-4">
+                            <div v-if="!see_disabled" class="sm:col-span-4">
                                 <div class="relative">
                                     <label for="item-selecter"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Selecione os itens de
+                                        class="block text-sm font-medium leading-6 text-gray-900">Selecione os itens
+                                        de
                                         entrada</label>
                                     <input id="item-selecter" v-model="searchTerm" @focus="handleInput('in')"
                                         @blur="handleInput('out')"
@@ -201,19 +254,14 @@ const submit = () => {
                                         <li v-for="(item, index) in filteredItems" :key="index"
                                             class="py-2 px-4 cursor-pointer hover:bg-gray-200"
                                             @mousedown="selectItem(item)">
-                                            <span class="inline" :class="{
-        'text-blue-500': item.quantity != 0 && item.quantity >= item.max_quantity,
-        'text-green-500': item.quantity < item.max_quantity && item.quantity >= item.min_quantity,
-        'text-yellow-500': item.quantity < item.min_quantity && item.quantity > 0,
-        'text-red-500': item.quantity == 0
-    }">({{ item.quantity }})</span> {{ item.name }}
+                                            <span class="inline">({{ item.quantity }})</span> {{ item.name }}
                                         </li>
                                     </ul>
                                 </div>
                             </div>
 
                             <div class="sm:col-span-4">
-                                <table v-if="props.entry.items_list.length"
+                                <table v-if="entry.items_list.length"
                                     class="min-w-full text-left text-sm font-medium leading-6 text-gray-900">
                                     <thead class="border-b font-medium">
                                         <tr>
@@ -224,14 +272,15 @@ const submit = () => {
                                             <th scope="col" class="px-6 py-4 text-center">Qtd. Entrada</th>
                                             <th scope="col" class="px-6 py-4 text-center">Und. Medida</th>
                                             <th scope="col" class="px-6 py-4 text-center">Funcionário</th>
-                                            <th v-if="modal.mode !== 'see'" scope="col" class="px-6 py-4 text-center">
+                                            <!--<th scope="col" class="px-6 py-4 text-center">Motivo</th>-->
+                                            <th v-if="!see_disabled" scope="col" class="px-6 py-4 text-center">
                                                 Deletar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr v-for="(item) in props.entry.items_list" :key="item.id"
                                             class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid"
-                                            :class="{ 'bg-yellow-100': item.movement_quantity == item.quantity, 'bg-red-100': item.movement_quantity > item.quantity }">
+                                            :class="{ 'opaciti-50': item.deleted_at }">
                                             <!--<td class="whitespace-nowrap py-4 text-center font-medium"><input
                                                     type="checkbox"
                                                     class="rounded border-gray-500 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50"
@@ -240,12 +289,8 @@ const submit = () => {
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{ item.name }}
                                             </td>
-                                            <td class="whitespace-nowrap py-4 text-center font-medium" :class="{
-        'text-blue-500': item.quantity != 0 && item.quantity >= item.max_quantity,
-        'text-green-500': item.quantity < item.max_quantity && item.quantity >= item.min_quantity,
-        'text-yellow-500': item.quantity < item.min_quantity && item.quantity > 0,
-        'text-red-500': item.quantity == 0,
-    }"> {{ item.quantity }}
+                                            <td class="whitespace-nowrap py-4 text-center font-medium"> {{ item.quantity
+                                                }}
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium flex
                                                 justify-center">
@@ -262,14 +307,36 @@ const submit = () => {
                                                     :disabled="modal.mode !== 'create'" v-model="item.employee_id"
                                                     @change="last_selected_employee = $event.target.value" required>
                                                     <option v-for="employee in employees_list" :key="employee.id"
-                                                        :value="employee.id">{{ employee.name }}
+                                                        :value="employee.id">{{
+        employee.name }}
                                                         {{ employee.surname }}</option>
                                                 </select>
                                             </td>
-                                            <td v-if="modal.mode !== 'see'"
+                                            <!--<td
+                                                class="whitespace-nowrap py-4 text-center font-medium flex gap-3 items-center">
+                                                <select v-if="item.motive_mode"
+                                                    class="simple-select disabled:bg-gray-200"
+                                                    :disabled="modal.mode !== 'create'" v-model="item.motive"
+                                                    @change="last_inputed_motive = $event.target.value" required>
+                                                    <option value="" selected disabled>Selecione um serviço</option>
+                                                    <option v-for="service in services_list" :key="service.id"
+                                                        :value="service.motive + (service.entity_name)">{{
+        service.motive }} ({{ service.entity_name
+                                                        }})</option>
+                                                </select>
+                                                <input v-else type="text" class="simple-input disabled:bg-gray-200"
+                                                    :disabled="modal.mode !== 'create'" v-model="item.motive"
+                                                    placeholder="Descreva o motivo do movimento"
+                                                    @input="last_inputed_motive = $event.target.value" required />
+                                                <button @click="changeMotiveMode(item.id)"
+                                                    title="Alterar modo de motivo">
+                                                    <ArrowsRightLeftIcon class="w-5 h-4" />
+                                                </button>
+                                            </td>-->
+                                            <td v-if="!see_disabled"
                                                 class="whitespace-nowrap py-4 text-center font-mono text-2xl"><button
-                                                    @click="removeSelectedItem(item.id)"
-                                                    :title="'Remover ' + item.name">&times;</button></td>
+                                                    @click="removeSelectedItem((modal.mode === 'see' ? item.id : item.order_id), $event)"
+                                                    type="button" :title="'Remover ' + item.name">&times;</button></td>
                                         </tr>
                                     </tbody>
                                 </table>

@@ -21,6 +21,7 @@ const props = defineProps({
     employees_list: Array,
     items: Object,
     parameters: Object,
+    services_list: Array,
 })
 
 
@@ -37,7 +38,7 @@ const use_data = useForm({
     'items_list': [],
 })
 
-const use_filter_toggle = ref(false)
+const use_filter_toggle = ref(!props.parameters.default)
 const use_filter = useForm({
     employee_id: props.parameters.employee_id,
     motive: props.parameters.motive,
@@ -181,7 +182,7 @@ const submit = () => {
 
 <template>
 
-    <Head :title="page.name" />
+    <Head class="print:hidden" :title="page.name" />
     <AppLayout :page="page" :page_options="page_options">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -283,7 +284,7 @@ const submit = () => {
             </div>
         </div>
 
-        <div class="py-12 print:py-6">
+        <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
                 <div class="px-0 print:px-0">
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg print:shadow-none">
@@ -321,8 +322,8 @@ const submit = () => {
                                                         <span v-if="use.observations" :title="use.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
-                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">{{
-                                                        formatDate(use.date, true) }}</td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center">{{
+        formatDate(use.date, true) }}</td>
                                                     <!--
                                                         <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-yellow-700 active:text-yellow-900 select-none print:hidden"
                                                         :title="'EDITAR: Compra de ' + use.entity_name"
@@ -357,7 +358,7 @@ const submit = () => {
         </div>
 
         <CreateUpdateUsesModal :modal="modal" :use="use_data" :items="items" :employees_list="employees_list"
-            @submit="submit" @close="closeModal" />
+            :services_list="services_list" @submit="submit" @close="closeModal" />
 
     </AppLayout>
 </template>

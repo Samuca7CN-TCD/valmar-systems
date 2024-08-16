@@ -17,6 +17,9 @@ const props = defineProps({
     items: Array,
 });
 
+const items_list = ref(JSON.parse(JSON.stringify(props.items)))
+const pay_all = ref(false);
+
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/
 const canAddItems = computed(() => {
     const { client, date } = props.sell;
@@ -56,7 +59,7 @@ const searchTerm = ref("");
 const showResults = ref(false);
 
 const filteredItems = computed(() => {
-    return props.items.filter((item) =>
+    return items_list.value.filter((item) =>
         item.name.toLowerCase().includes(searchTerm.value.toLowerCase())
     );
 });
@@ -83,7 +86,7 @@ const selectItem = (item) => {
         price: item.price,
         amount: item.price,
     })
-
+    reloadItemsList()
     searchTerm.value = "";
     showResults.value = false;
     updateEstimatedValue()
@@ -91,8 +94,16 @@ const selectItem = (item) => {
 
 const removeSelectedItem = (index) => {
     props.sell.items_list = props.sell.items_list.filter((item) => item.id !== index)
+    reloadItemsList()
     updateEstimatedValue()
 }
+
+const reloadItemsList = () => {
+    items_list.value = props.items.filter(item =>
+        !props.sell.items_list.some(sellItem => sellItem.id === item.id)
+    );
+}
+
 
 const handleInputValue = (e, input) => {
     props.sell[input] = e.target.value
@@ -122,6 +133,22 @@ const calc_final_values = (mode) => {
             break;
     }
     Object.assign(props.sell, { estimated_value, total_value, discount_percent, discount });
+}
+
+const payAll = () => {
+    if (pay_all.value) {
+        props.sell.entry_value = props.sell.total_value;
+    } else {
+        props.sell.entry_value = 0
+    }
+}
+
+const verifyPayAll = () => {
+    if (props.sell.partialValue === 0) {
+        pay_all.value = true
+    } else {
+        pay_all.value = false
+    }
 }
 
 const close = () => {
@@ -165,8 +192,8 @@ const submit = () => {
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Cliente</label>
                                 <div class="mt-2">
                                     <input type="text" name="sell-client" id="sell-client" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" placeholder="Nome do cliente"
-                                        v-model="sell.client" required>
+                                        class="simple-input disabled:bg-gray-200" :disabled="see_disabled"
+                                        placeholder="Nome do cliente" v-model="sell.client" required>
                                     <p v-if="sell.errors.client" class="text-red-500 text-sm">{{
         sell.errors.client }}</p>
                                 </div>
@@ -179,8 +206,9 @@ const submit = () => {
                                     Venda</label>
                                 <div class="mt-2">
                                     <input type="date" name="sell-date" id="sell-date" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" autofocus="true"
-                                        placeholder="Data da Venda" :max="formatDate()" v-model="sell.date" required>
+                                        class="simple-input disabled:bg-gray-200" :disabled="see_disabled"
+                                        autofocus="true" placeholder="Data da Venda" :max="formatDate()"
+                                        v-model="sell.date" required>
                                     <p v-if="sell.errors.date" class="text-red-500 text-sm">{{
         sell.errors.date }}</p>
                                 </div>
@@ -192,6 +220,7 @@ const submit = () => {
                                 <div class="mt-2">
                                     <textarea type="text" observations="sell-observations" id="sell-observations"
                                         autocomplete="on" class="simple-input disabled:bg-gray-200"
+                                        :disabled="see_disabled"
                                         placeholder="Descreva a título mais detalhadamente ou insira informações adicionais"
                                         v-model="sell.observations"></textarea>
                                     <p v-if="sell.errors.observations" class="text-red-500 text-sm">{{
@@ -207,7 +236,7 @@ const submit = () => {
 
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-4">
 
-                            <div class="sm:col-span-4">
+                            <div v-if="!see_disabled" class="sm:col-span-4">
                                 <div class="relative">
                                     <label for="item-selecter"
                                         class="block text-sm font-medium leading-6 text-gray-900">Selecione os itens de
@@ -418,9 +447,17 @@ const submit = () => {
                                         class="block w-full rounded-md border-0 py-1.5 pl-9 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6 disabled:bg-gray-200"
                                         placeholder="Valor de pagamneto de entrada"
                                         :disabled="!sell.items_list.length || see_disabled" v-model="sell.entry_value"
-                                        required>
+                                        @input="verifyPayAll()" required>
                                     <p v-if="sell.errors.entry_value" class="text-red-500 text-sm">{{
                                         sell.errors.entry_value }}</p>
+                                </div>
+                                <div class="relative mt-2 rounded-md shadow-sm">
+                                    <input type="checkbox" id="pay-all"
+                                        class=" focus:bg-green-700 focus:ring-green-700 text-green-700 border-neutral-400 rounded-sm disabled:opacity-50"
+                                        v-model="pay_all" @change="payAll()"
+                                        :disabled="!sell.items_list.length || see_disabled" />
+                                    <label for="pay-all" class="ml-3 text-sm text-neutral-500 select-none">Pagar
+                                        agora</label>
                                 </div>
                             </div>
 
@@ -435,8 +472,7 @@ const submit = () => {
                                     </div>
                                     <input id="sell-partial-value" type="number" step="0.01" min="0" autocomplete="off"
                                         class="block w-full rounded-md border-0 py-1.5 pl-9 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6 disabled:bg-gray-200"
-                                        placeholder="Valor restante para pagamento posterior"
-                                        :disabled="!sell.items_list.length || see_disabled"
+                                        placeholder="Valor restante para pagamento posterior" :disabled="true"
                                         :value="decimal_format(partialValue, 2)" readonly required>
                                     <p v-if="sell.errors.partial_value" class="text-red-500 text-sm">{{
                                         sell.errors.partial_value }}</p>

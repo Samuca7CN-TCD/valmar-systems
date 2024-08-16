@@ -1,69 +1,77 @@
 <script setup>
-import TextInput from './TextInput.vue'
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from "vue";
 
 const props = defineProps({
-    align: {
-        type: String,
-        default: 'right',
-    },
-    width: {
-        type: String,
-        default: '48',
-    },
-    contentClasses: {
+    options: {
         type: Array,
-        default: () => ['py-1', 'bg-white'],
+        required: true,
+        default: () => [],
     },
 });
 
-const search = ref("")
-let open = ref(false);
+const emit = defineEmits(['update:modelValue']); // Define o evento personalizado
 
-const closeOnEscape = (e) => {
-    if (open.value && e.key === 'Escape') {
-        open.value = false;
+const search = ref("");
+const dropdownOpen = ref(false);
+
+const openDropdown = () => {
+    dropdownOpen.value = true;
+};
+
+const closeDropdown = () => {
+    dropdownOpen.value = false;
+};
+
+const selectOption = (option) => {
+    console.log("OPTIONS: ", option)
+    if (typeof option === "string") {
+        search.value = option;
+    } else {
+        search.value = `${option.motive} (${option.entity_name})`;
+        closeDropdown();
+    }
+    console.log("sdlzfjk: ", search.value)
+    emit('update:modelValue', search.value); // Emite o evento com o valor selecionado
+};
+
+const filteredOptions = computed(() => {
+    return props.options.filter(
+        (option) =>
+            option.motive.toLowerCase().includes(search.value.toLowerCase()) ||
+            option.entity_name.toLowerCase().includes(search.value.toLowerCase())
+    );
+});
+
+const handleClickOutside = (event) => {
+    const dropdownElement = event.target.closest('.dropdown-container');
+    if (!dropdownElement) {
+        closeDropdown();
     }
 };
 
-onMounted(() => document.addEventListener('keydown', closeOnEscape));
-onUnmounted(() => document.removeEventListener('keydown', closeOnEscape));
-
-const widthClass = computed(() => {
-    return {
-        '48': 'w-48',
-    }[props.width.toString()];
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
 });
 
-const alignmentClasses = computed(() => {
-    if (props.align === 'left') {
-        return 'origin-top-left left-0';
-    }
-
-    if (props.align === 'right') {
-        return 'origin-top-right right-0';
-    }
-
-    return 'origin-top';
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
 });
 
 </script>
+
 <template>
-    <div class="relative"></div>
-
-    <TextInput v-model="search" type="text" class="mt-1 block w-full" @focus="open = !open" />
-
-    <!-- Full Screen Dropdown Overlay -->
-    <div v-show="open" class="fixed inset-0 z-40" @click="open = false" />
-
-    <transition enter-active-class="transition ease-out duration-200" enter-from-class="transform opacity-0 scale-95"
-        enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75"
-        leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-        <div v-show="open" class="absolute z-50 -mt-10 rounded-md shadow-lg" :class="[widthClass, alignmentClasses]"
-            style="display: none;" @click="open = false">
-            <div class="rounded-md ring-1 ring-black ring-opacity-5" @mouseleave="open = false" :class="contentClasses">
-                <slot name="content" />
-            </div>
-        </div>
-    </transition>
+    <div class="relative dropdown-container">
+        <input v-model="search" @focus="openDropdown" @click.stop @input="selectOption($event.target.value)"
+            class="simple-input" type="text" placeholder="Selecione ou escreva um motivo" />
+        <ul v-if="dropdownOpen"
+            class="absolute w-full mt-2 bg-white border rounded shadow-md max-h-40 overflow-y-auto z-10">
+            <li v-for="(option, index) in filteredOptions" :key="index" @click="selectOption(option)"
+                class="px-4 py-2 cursor-pointer hover:bg-gray-200">
+                <div>{{ option.motive }} ({{ option.entity_name }})</div>
+            </li>
+            <li v-if="filteredOptions.length === 0" class="px-4 py-2 text-gray-500">
+                Nenhuma opção encontrada
+            </li>
+        </ul>
+    </div>
 </template>

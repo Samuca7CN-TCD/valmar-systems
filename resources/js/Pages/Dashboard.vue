@@ -1,11 +1,11 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Welcome from '@/Components/Welcome.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue'
 import SeeRecords from '@/Components/Dashboard/SeeRecords.vue'
 import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
-import { formatDate } from '@/general.js';
+import { formatDate, toMoney } from '@/general.js';
+import Chart from 'chart.js/auto';
 
 const props = defineProps({
     page: Object,
@@ -15,6 +15,15 @@ const props = defineProps({
     users: Array,
     actions: Array,
     departments: Array,
+    amount_values: Object,
+    weekly_amount_values: {
+        type: Object,
+        default: () => ({
+            weekly_payments: {},
+            weekly_services: {},
+            weekly_warehouse: {}
+        })
+    }
 })
 
 const modal = ref(false);
@@ -28,15 +37,94 @@ const form = useForm({
     'end_date': props.parameters.end_date,
 })
 
-const getMovementType = (type_cod) => {
-    [
-        'Pagamento',
-        'Serviço',
-        'Venda de Material',
-        'Uso de Material',
-        'Entrada de Material'
-    ][type_cod]
-}
+const heritage_data = ref({
+    labels: [
+        'Almoxarifado',
+        'Pagamentos',
+        'Serviços'
+    ],
+    datasets: [{
+        label: 'R$',
+        data: [props.amount_values.warehouse, props.amount_values.payments, props.amount_values.services],
+        backgroundColor: [
+            'rgb(54, 162, 235)',
+            'rgb(255, 205, 86)',
+            'rgb(255, 99, 132)',
+        ],
+        hoverOffset: 4
+    }]
+});
+
+const heritage_config = {
+    type: 'doughnut',
+    data: heritage_data.value,
+};
+
+const weekly_heritage_data = ref({
+    labels: Object.keys(props.weekly_amount_values.weekly_payments), // Assume que a chave é a semana
+    datasets: [
+        {
+            label: 'Pagamentos',
+            data: Object.values(props.weekly_amount_values.weekly_payments),
+            borderColor: 'rgb(54, 162, 235)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            fill: false,
+        },
+        {
+            label: 'Serviços',
+            data: Object.values(props.weekly_amount_values.weekly_services),
+            borderColor: 'rgb(255, 205, 86)',
+            backgroundColor: 'rgba(255, 205, 86, 0.2)',
+            fill: false,
+        },
+        {
+            label: 'Estoque',
+            data: Object.values(props.weekly_amount_values.weekly_warehouse),
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            fill: false,
+        }
+    ]
+});
+
+const weekly_heritage_config = {
+    type: 'line',
+    data: weekly_heritage_data.value,
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function (tooltipItem) {
+                        return tooltipItem.dataset.label + ': ' + tooltipItem.raw;
+                    },
+                },
+            },
+        },
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Semana',
+                },
+                ticks: {
+                    autoSkip: true,
+                    maxTicksLimit: 12, // Limita o número de ticks no eixo X
+                },
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Valor',
+                },
+                beginAtZero: true,
+            },
+        },
+    },
+};
 
 const openModal = (procedure) => {
     selected_procedure.value = procedure;
@@ -48,6 +136,18 @@ const closeModal = () => {
     modal.value = false;
 }
 
+// Initialize the chart after the component has been mounted
+onMounted(() => {
+    const heritage_ctx = document.getElementById('heritage-chart');
+    new Chart(heritage_ctx, heritage_config);
+
+    const weekly_heritage_ctx = document.getElementById('weekly-heritage-chart');
+    new Chart(weekly_heritage_ctx, weekly_heritage_config);
+});
+
+const heritage_total_amount = () => {
+    return props.amount_values.warehouse + props.amount_values.payments + props.amount_values.services
+}
 </script>
 
 <template>
@@ -56,13 +156,45 @@ const closeModal = () => {
     <AppLayout :page="page">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }}
+                {{ page.name }} | {{ toMoney(heritage_total_amount()) }}
             </h2>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 items-center align-middle justify-center">
+                        <div></div>
+                        <div>
+                            <canvas id="heritage-chart"></canvas>
+                            <ul
+                                class="m-2 rounded-lg overflow-hidden border border-neutral-400 divide-y divide-neutral-400 p-2 text-neutral-700 text-center bg-neutral-100">
+                                <li class="py-2 hover:font-bold hover:text-blue-500 hover:bg-blue-50">Almoxarifado: {{
+        toMoney(amount_values.warehouse) }}</li>
+                                <li class="py-2 hover:font-bold hover:text-yellow-500 hover:bg-yellow-50">Pagamentos: {{
+        toMoney(amount_values.payments) }}</li>
+                                <li class="py-2 hover:font-bold hover:text-red-500 hover:bg-red-50">Serviços: {{
+        toMoney(amount_values.services) }}</li>
+                            </ul>
+                        </div>
+                        <div></div>
+                        <!--<div class="col-span-2">
+                            <canvas id="weekly-heritage-chart"></canvas>
+                            <p class="my-5 text-neutral-700 text-sm text-center">Este gráfico trás uma aproximação do
+                                comportamento
+                                do
+                                patrimônio
+                                nas ultimas 12 semanas
+                                (3 meses)
+                            </p>
+                        </div>-->
+                    </div>
+
+                    <div
+                        class="w-full rounded-lg bg-neutral-200 text-neutral-700 uppercase text-xl font-bold text-center p-2 my-10">
+                        Registro de Atividades
+                    </div>
+
                     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 print:hidden">
                         <div>
                             <label for="filter-procedure-start_date" class="text-xs text-neutral-500">Data
@@ -71,7 +203,8 @@ const closeModal = () => {
                                 v-model="form.start_date" />
                         </div>
                         <div>
-                            <label for="filter-procedure-end_date" class="text-xs text-neutral-500">Data (fim)</label>
+                            <label for="filter-procedure-end_date" class="text-xs text-neutral-500">Data
+                                (fim)</label>
                             <input id="filter-procedure-end_date" type="date" class="simple-input"
                                 v-model="form.end_date" />
                         </div>
@@ -120,9 +253,9 @@ const closeModal = () => {
                                     <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-neutral-900">
                                         Data
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-neutral-900">
+                                    <!--<th scope="col" class="px-6 py-3 text-left text-sm font-medium text-neutral-900">
                                         Ações
-                                    </th>
+                                    </th>-->
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-neutral-200">
@@ -149,7 +282,8 @@ const closeModal = () => {
                                 </tr>
                             </tbody>
                         </table>
-                        <p v-else class="text-sm text-neutral-500 text-center pt-5">Nenhum procedimento registrado no
+                        <p v-else class="text-sm text-neutral-500 text-center pt-5">Nenhum procedimento registrado
+                            no
                             período especificado.</p>
                     </div>
 

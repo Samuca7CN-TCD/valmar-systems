@@ -123,7 +123,7 @@ const closeModal = () => {
             </div>
         </div>
 
-        <div class="py-12 print:py-6">
+        <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
                 <div class="px-0 print:px-0">
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg print:shadow-none">

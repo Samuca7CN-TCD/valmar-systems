@@ -21,6 +21,7 @@ const props = defineProps({
     employees_list: Array,
     items: Object,
     parameters: Object,
+    services_list: Array,
 })
 
 const $toast = useToast();
@@ -36,7 +37,7 @@ const entry_data = useForm({
     'items_list': [],
 })
 
-const entry_filter_toggle = ref(false)
+const entry_filter_toggle = ref(!props.parameters.default)
 const entry_filter = useForm({
     employee_id: props.parameters.employee_id,
     motive: props.parameters.motive,
@@ -124,7 +125,7 @@ const closeModal = () => {
 
 // =============================================
 // Métodos de CRUD
-const createUse = () => {
+const createEntry = () => {
     entry_data.post(route('entries.store'), {
         preserveScroll: true,
         onSuccess: () => closeModal(),
@@ -138,7 +139,7 @@ const get_filtered_data = () => {
     });
 };
 
-const updateUse = () => {
+const updateEntry = () => {
     entry_data.put(route('entries.update', entry_data.id), {
         preserveScroll: true,
         onSuccess: () => closeModal()
@@ -146,7 +147,7 @@ const updateUse = () => {
 }
 
 
-const deleteUse = (entry_id, entry_name) => {
+const deleteEntry = (entry_id, entry_name) => {
     if (confirm(`Você tem certeza que deseja excluir a entrada de material para "${entry_name}"? Todos os materiais comprados voltarão para o estoque! Esta ação não poderá ser desfeita!`)) {
         entry_data.delete(route('entries.destroy', entry_id), {
             preserveScroll: true,
@@ -157,8 +158,8 @@ const deleteUse = (entry_id, entry_name) => {
 
 const submit = () => {
     switch (modal.value.mode) {
-        case 'create': return createUse()
-        case 'update': return updateUse()
+        case 'create': return createEntry()
+        case 'update': return updateEntry()
         case 'see': return closeModal()
         default: $toast.error('Método desconhecido. Informar o Técnico.')
     }
@@ -268,7 +269,7 @@ const submit = () => {
             </div>
         </div>
 
-        <div class="py-12 print:py-6">
+        <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
                 <div class="px-0 print:px-0">
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg print:shadow-none">
@@ -311,8 +312,8 @@ const submit = () => {
                                                         <span v-if="entry.observations" :title="entry.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
-                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">{{
-        formatDate(entry.date, true) }}</td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center">{{
+                                                        formatDate(entry.date, true) }}</td>
                                                     <!--
                                                         <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-yellow-700 active:text-yellow-900 select-none print:hidden"
                                                         :title="'EDITAR: Compra de ' + entry.entity_name"
@@ -326,7 +327,7 @@ const submit = () => {
                                                     </td>
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-red-700 active:text-red-900 select-none print:hidden"
                                                         title="Excluir entrada"
-                                                        @click="deleteUse(entry.id, entry.motive)">
+                                                        @click="deleteEntry(entry.id, entry.motive)">
                                                         <XMarkIcon class="w-5 h-5 m-auto" />
                                                     </td>
                                                 </tr>
@@ -348,7 +349,7 @@ const submit = () => {
         </div>
 
         <CreateUpdateEntriesModal :modal="modal" :entry="entry_data" :items="items" :employees_list="employees_list"
-            @submit="submit" @close="closeModal" />
+            :services_list="services_list" @submit="submit" @close="closeModal" />
 
     </AppLayout>
 </template>

@@ -101,7 +101,7 @@ const logout = () => {
             <div class="min-h-screen print:w-full"
                 :class="{ 'w-full': !page_options, 'w-full md:w-3/4 lg:4/5 xl:w-5/6': page_options }">
 
-                <Head :title="page ? page.name : 'Valmar Inox'" />
+                <Head class="print:hidden" :title="page ? page.name : 'Valmar Inox'" />
 
                 <Banner class="print:hidden" />
 
@@ -661,7 +661,7 @@ const logout = () => {
                     </div>
 
                     <!-- Page Content -->
-                    <main class="print:break-inside-avoid">
+                    <main>
                         <slot />
                     </main>
                 </div>

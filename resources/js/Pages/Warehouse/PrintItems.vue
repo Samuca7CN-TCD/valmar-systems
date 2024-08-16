@@ -81,7 +81,7 @@ const printList = () => {
     <AppLayout :page="page">
         <template #header class="print:hidden">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Listagem de Items
+                {{ buy_option ? "Lista de Compra" : "Listagem Geral de Items" }}
             </h2>
             <FloatButton icon="printer" @click="printList" title="Imprimir Lista" />
         </template>
@@ -91,14 +91,14 @@ const printList = () => {
                     <div class="print:hidden flex-col-config p-5 w-full">
                         <ul class="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1">
                             <li v-for="cat in categories_list_mapped" :key="cat.id"
-                                class="py-1 px-2 rounded-full flex flex-row items-center space-x bg-neutral-100 justify-between">
-                                <span class="text-xs sm:text-sm md:text-md whitespace-nowrap truncate">{{ cat.category
-                                    }}</span>
+                                class="py-1 px-2 rounded-lg flex flex-row items-center space-x bg-neutral-100 gap-3">
                                 <span>
                                     <input type="checkbox" :checked="selected_categories.some(el => el.id === cat.id)"
                                         @change="toggleCategory(cat)"
-                                        class="appearance-none transition-colors cursor-pointer w-14 h-7 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black text-green-500 focus:ring-green-500 focus:bg-green-200 checked:bg-green-500 bg-green-200" />
+                                        class="appearance-none transition-colors cursor-pointer w-7 h-7 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black text-green-500 focus:ring-green-500 focus:bg-green-200 checked:bg-green-500 bg-green-200" />
                                 </span>
+                                <span class="text-xs sm:text-sm md:text-md whitespace-nowrap truncate">{{ cat.category
+                                    }}</span>
                             </li>
                         </ul>
 
@@ -118,51 +118,56 @@ const printList = () => {
                     <div class="flex flex-col w-full print:w-fit">
                         <div class="overflow-x-auto print:overflow-hidden sm:-mx-6 lg:-mx-8">
                             <div class="inline-block min-w-full sm:px-6 lg:px-8">
-                                <div class="overflow-hidden">
-                                    <table class="min-w-full text-center text-sm font-light print:break-inside-avoid">
-                                        <thead class="border-b bg-neutral-800 font-medium text-white">
-                                            <tr>
-                                                <th scope="col" class="px-6 py-2 print:hidden">Imprimir</th>
-                                                <th scope="col" class="px-6 py-2">Nome</th>
-                                                <th scope="col" class="px-6 py-2">Qtd. em estoque</th>
-                                                <th v-if="buy_option" scope="col" class="px-6 py-2">Qtd. para compra
-                                                </th>
-                                                <th scope="col" class="px-6 py-2">Categoria</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody v-if="items_list_filtered.length" class="print:break-inside-avoid">
-                                            <tr v-for="item in items_list_filtered" :key="item.id"
-                                                :class="{ 'print:hidden': hidden_print_display_list.includes(item.id) }"
-                                                class="border-b transition duration-150 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
-                                                <td class="whitespace-nowrap px-6 py-2 print:hidden">
-                                                    <Checkbox @input="toggle_print_display(item.id)" checked />
-                                                </td>
-                                                <td class=" px-6 py-2 font-medium">{{ item.name }}</td>
-                                                <td class="whitespace-nowrap px-6 py-2">{{ item.quantity }} {{
-        item.quantity ==
-            1 ? item.measurement_unit.name : item.measurement_unit.name_plural
+                                <div class="break-inside-avoid-page">
+                                    <div class="overflow-hidden">
+                                        <table class="min-w-full text-center text-sm font-light">
+                                            <thead
+                                                class="border-b bg-neutral-800 font-medium text-white table-header-group">
+                                                <tr>
+                                                    <th scope="col" class="px-6 py-2 print:hidden">Imprimir</th>
+                                                    <th scope="col" class="px-6 py-2">Nome</th>
+                                                    <th scope="col" class="px-6 py-2">Qtd. em estoque</th>
+                                                    <th v-if="buy_option" scope="col" class="px-6 py-2">Qtd. para compra
+                                                    </th>
+                                                    <th scope="col" class="px-6 py-2">Categoria</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody v-if="items_list_filtered.length">
+                                                <tr v-for="item in items_list_filtered" :key="item.id"
+                                                    :class="{ 'print:hidden': hidden_print_display_list.includes(item.id) }"
+                                                    class="border-b transition duration-150 ease-in-out hover:bg-neutral-100 print:break-inside-avoid-page">
+                                                    <td class="whitespace-nowrap px-6 py-2 print:hidden">
+                                                        <Checkbox @input="toggle_print_display(item.id)" checked />
+                                                    </td>
+                                                    <td class="px-6 py-2 font-medium">{{ item.name }}</td>
+                                                    <td class="whitespace-nowrap px-6 py-2">{{ item.quantity }} {{
+        item.quantity == 1 ? item.measurement_unit.name :
+            item.measurement_unit.name_plural
     }}</td>
-                                                <td v-if="buy_option" class="whitespace-nowrap px-6 py-2">{{
-        item.min_quantity -
-        item.quantity }} {{ (item.min_quantity - item.quantity) == 1 ?
-                                                    item.measurement_unit.name : item.measurement_unit.name_plural }}
-                                                </td>
-                                                <td class="whitespace-nowrap px-6 py-2">{{ item.category.name }}</td>
-                                            </tr>
-                                        </tbody>
-                                        <tbody v-else>
-                                            <tr
-                                                class="border-b transition duration-300 ease-in-out hover:bg-neutral-200">
-                                                <td colspan="5" class="whitespace-nowrap px-6 py-2 font-medium">Não há
-                                                    items nas
-                                                    categorias selecionadas</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                                    <td v-if="buy_option" class="whitespace-nowrap px-6 py-2">{{
+        item.min_quantity - item.quantity }} {{ (item.min_quantity -
+        item.quantity) == 1 ?
+                                                        item.measurement_unit.name : item.measurement_unit.name_plural
+                                                        }}
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-6 py-2">{{ item.category.name }}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                            <tbody v-else>
+                                                <tr
+                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-200">
+                                                    <td colspan="5" class="whitespace-nowrap px-6 py-2 font-medium">Não
+                                                        há items nas categorias selecionadas</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>

@@ -37,6 +37,7 @@ const payment_data = useForm({
 })
 
 const search_term = ref("")
+const show_services = ref(true)
 
 const filtered_payments_list = computed(() => {
     const searchTermLower = search_term.value.toLowerCase();
@@ -51,6 +52,12 @@ const filtered_payments_list = computed(() => {
 
 const total_payments_amount = computed(() => {
     return props.payments_list.reduce((accumulator, payment) => {
+        return accumulator + payment.accounting.partial_value;
+    }, 0);
+});
+
+const total_payments_amount_without_services = computed(() => {
+    return props.payments_list.filter(el => el.type !== 1).reduce((accumulator, payment) => {
         return accumulator + payment.accounting.partial_value;
     }, 0);
 });
@@ -157,8 +164,11 @@ const submit = () => {
     <AppLayout :page="page" :page_options="page_options">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{ toMoney(total_payments_amount)
-                    }}</span>
+                {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{
+        toMoney(total_payments_amount_without_services)
+    }}</span><span v-if="$page.props.auth.user.hierarchy < 2" class="text-neutral-400"> | {{
+        toMoney(total_payments_amount)
+    }} <span class="text-xs"> (pagamentos + serviços)</span></span>
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Payment" class="print:hidden" />
         </template>
@@ -171,11 +181,18 @@ const submit = () => {
                         <input type="text" name="search_term" id="search_term" autocomplete="on" class="simple-input"
                             autofocus="true" placeholder="Pesquisar termo..." v-model="search_term" />
                     </div>
+                    <div class="ml-8 mt-1">
+                        <input type="checkbox" id="show-services"
+                            class="focus:ring-green-700 text-green-700 border-neutral-500 rounded-sm disabled:opacity-50"
+                            v-model="show_services" :checked="show_services" />
+                        <label for="show-services" class="ml-3 text-xs text-neutral-500 select-none">Mostrar
+                            serviços</label>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="py-12 print:py-6">
+        <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
                 <div class="px-0 print:px-0">
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg print:shadow-none">
@@ -202,7 +219,8 @@ const submit = () => {
                                             <tbody>
                                                 <tr v-if="filtered_payments_list.length"
                                                     v-for="payment in filtered_payments_list"
-                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
+                                                    class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid"
+                                                    :class="{ 'hidden': payment.type === 1 && show_services === false }">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
         payment.id }}
                                                     </td>

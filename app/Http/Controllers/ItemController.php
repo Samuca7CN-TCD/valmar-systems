@@ -78,7 +78,7 @@ class ItemController extends Controller
 
         // Carregar todos os itens e funcionários
         $items = Item::where('list_in_uses', true)->orderBy('name')->get();
-        $employees = Employee::all();
+        $employees = Employee::orderBy('name')->orderBy('surname')->get();
 
         // Assumindo que você tem um relacionamento adequado 'procedure' e 'movement' em Record
         // e que a data está no formato correto (yyyy-mm)

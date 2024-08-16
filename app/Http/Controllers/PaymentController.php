@@ -55,7 +55,7 @@ class PaymentController extends Controller
     {
         $page = Department::find(7);
 
-        $services = Movement::where('type', 0)->with(['accounting', 'procedures.records'])
+        $payments = Movement::where('type', 0)->with(['accounting', 'procedures.records'])
             ->whereHas('accounting', function ($query) {
                 $query->where('partial_value', 0);
             })
@@ -70,7 +70,7 @@ class PaymentController extends Controller
 
         return Inertia::render('Payments/Previous', [
             'page' => $page,
-            'payments_list' => $services,
+            'payments_list' => $payments,
         ]);
     }
 
@@ -225,6 +225,8 @@ class PaymentController extends Controller
                     'department_id' => 7, // Ajuste conforme necessário
                     'movement_id' => $movement->id,
                 ]);
+
+
             }
 
             // Atualiza os registros

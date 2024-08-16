@@ -30,7 +30,7 @@ class ServiceController extends Controller
     {
         $page = Department::find(8);
 
-        $services = Movement::where('type', 1)->where('ready', false)->with(['accounting', 'procedures.records'])->get()
+        $services = Movement::where('type', 1)->where('ready', false)->orderBy('deadline')->with(['accounting', 'procedures.records'])->get()
             ->map(function ($movement) {
                 $records = $movement->procedures->flatMap(function ($procedure) {
                     return $procedure->records;
@@ -49,7 +49,7 @@ class ServiceController extends Controller
     {
         $page = Department::find(8);
 
-        $services = Movement::where('type', 1)->where('ready', true)->with(['accounting', 'procedures.records'])
+        $services = Movement::where('type', 1)->where('ready', true)->orderBy('deadline')->with(['accounting', 'procedures.records'])
             ->whereHas('accounting', function ($query) {
                 $query->where('partial_value', 0);
             })

@@ -173,9 +173,9 @@ const submit = () => {
 
 <template>
 
-    <Head :title="page.name" />
+    <Head class="print:hidden" :title="page.name" />
     <AppLayout :page="page" :page_options="page_options">
-        <template #header>
+        <template class="print:hidden" #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{ toMoney(total_sells_amount)
                     }}</span>
@@ -258,7 +258,7 @@ const submit = () => {
             </div>
         </div>
 
-        <div class="py-12 print:py-6">
+        <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
                 <div class="px-0 print:px-0">
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg print:shadow-none">
@@ -303,7 +303,7 @@ const submit = () => {
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
         sell.accounting.total_value > 0 ?
             toMoney(sell.accounting.total_value) : 'Pago' }}</td>
-                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">{{
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center">{{
                                                         formatDate(sell.date, true) }}</td>
                                                     <!--
                                                         <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-yellow-700 active:text-yellow-900 select-none print:hidden"

@@ -25,7 +25,7 @@ class EmployeeController extends Controller
     public function index()
     {
         $page = Department::where('type', 'employee')->first();
-        $employees = Employee::all();
+        $employees = Employee::orderBy('name')->orderBy('surname')->get();
         $account_types = AccountType::all();
         $payment_method = PaymentMethod::all();
         $banks = Bank::all();
@@ -117,7 +117,7 @@ class EmployeeController extends Controller
     {
         // Carregando dados essenciais de uma vez
         $page = Department::find(11);
-        $employees = Employee::with('overtimePaymentMethod')->where('id', '<>', 1)->get();
+        $employees = Employee::with('overtimePaymentMethod')->where('id', '<>', 1)->orderBy('name')->orderBy('surname')->get();
         $account_types = AccountType::all();
         $payment_method = PaymentMethod::all();
         $banks = Bank::all();
