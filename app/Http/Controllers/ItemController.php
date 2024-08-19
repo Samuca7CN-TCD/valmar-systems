@@ -157,19 +157,39 @@ class ItemController extends Controller
             ]);
 
             $profile_img = $validate->profile_img ?: null;
+            $profile_img = $validate->profile_img ?: null;
+
             if ($profile_img)
             {
                 $profile_img = $profile_img->store('public/img/items');
             } else if ($validate->profile_img_url)
             {
-                $profile_img = "copy_" . explode('/', $validate->profile_img_url)[4];
-                while (Storage::disk('public')->exists('img/items/' . $profile_img))
+                $original_img = explode('/', $validate->profile_img_url)[4];
+
+                // Verifica se a imagem original existe
+                if (Storage::disk('public')->exists('img/items/' . $original_img))
                 {
-                    $profile_img = 'copy_' . $profile_img;
+                    $profile_img = "copy_" . $original_img;
+                    while (Storage::disk('public')->exists('img/items/' . $profile_img))
+                    {
+                        $profile_img = 'copy_' . $profile_img;
+                    }
+                    Storage::disk('public')->copy('img/items/' . $original_img, 'img/items/' . $profile_img);
+                    $profile_img = "public/img/items/" . $profile_img;
+                } else
+                {
+                    // Se a imagem não for encontrada, armazena uma nova imagem (se existir uma nova imagem)
+                    if ($profile_img)
+                    {
+                        $profile_img = $profile_img->store('public/img/items');
+                    } else
+                    {
+                        // Defina um comportamento alternativo se não houver imagem nova para salvar
+                        $profile_img = null;
+                    }
                 }
-                Storage::disk('public')->copy('img/items/' . explode('/', $validate->profile_img_url)[4], 'img/items/' . $profile_img);
-                $profile_img = "public/img/items/" . $profile_img;
             }
+
             $item = Item::create([
                 'profile_img' => $profile_img,
                 'name' => $validate->name,
@@ -249,20 +269,30 @@ class ItemController extends Controller
             ]);
 
             $profile_img = $request->profile_img !== null ? $request->file('profile_img') : null;
+
             if ($profile_img)
             {
-                if ($item->profile_img)
+                // Verifica se a imagem atual existe antes de tentar excluí-la
+                if ($item->profile_img && file_exists(storage_path('app/' . $item->profile_img)))
+                {
                     unlink(storage_path('app/' . $item->profile_img));
+                }
+                // Armazena a nova imagem
                 $item->profile_img = $profile_img->store('public/img/items');
             } else
             {
                 if ($request->profile_img_url === null)
                 {
-                    if ($item->profile_img)
+                    // Verifica se a imagem atual existe antes de tentar excluí-la
+                    if ($item->profile_img && file_exists(storage_path('app/' . $item->profile_img)))
+                    {
                         unlink(storage_path('app/' . $item->profile_img));
+                    }
+                    // Remove a imagem do item
                     $item->profile_img = null;
                 }
             }
+
 
             $item->name = $request->name;
             $item->category_id = $request->category_id;

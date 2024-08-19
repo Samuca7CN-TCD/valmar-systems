@@ -7,7 +7,8 @@ import { ref, computed, reactive } from 'vue';
 import { formatDate, toMoney } from '@/general.js';
 import { useForm } from '@inertiajs/vue3';
 import { useToast } from 'vue-toast-notification';
-import SelectSearch from '@/Components/SelectSearch.vue'
+import SelectSearchService from '@/Components/SelectSearchService.vue'
+import SelectSearchItem from '@/Components/SelectSearchItem.vue'
 import 'vue-toast-notification/dist/theme-sugar.css';
 
 const emit = defineEmits(['close', 'submit']);
@@ -138,6 +139,10 @@ const updateMotive = (newMotive) => {
     props.entry.motive = newMotive;
 };
 
+const updateItem = (newItem) => {
+    selectItem(newItem)
+}
+
 const close = () => {
     last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
     emit('close')
@@ -212,7 +217,8 @@ const submit = () => {
                                         :disabled="see_disabled" placeholder="Motivo do Entrada" v-model="entry.motive"
                                         required>
 
-                                    <SelectSearch v-else :options="services_list" @update:modelValue="updateMotive" />
+                                    <SelectSearchService v-else :options="services_list"
+                                        @update:modelValue="updateMotive" />
                                     <p v-if="entry.errors.motive" class="text-red-500 text-sm">{{
         entry.errors.motive }}</p>
                                 </div>
@@ -239,6 +245,14 @@ const submit = () => {
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-4">
 
                             <div v-if="!see_disabled" class="sm:col-span-4">
+                                <label for="item-selecter"
+                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Selecione
+                                    os itens de entrada</label>
+                                <div class="mt-2">
+                                    <SelectSearchItem :options="items" @update:modelValue="updateItem" />
+                                </div>
+                            </div>
+                            <!--<div v-if="!see_disabled" class="sm:col-span-4">
                                 <div class="relative">
                                     <label for="item-selecter"
                                         class="block text-sm font-medium leading-6 text-gray-900">Selecione os itens
@@ -258,7 +272,7 @@ const submit = () => {
                                         </li>
                                     </ul>
                                 </div>
-                            </div>
+                            </div>-->
 
                             <div class="sm:col-span-4">
                                 <table v-if="entry.items_list.length"

@@ -24,6 +24,9 @@ export const formatDate = (date = null, format = null) => {
 
     const currentDate = new Date(date);
 
+    // Adjust for timezone offset to ensure correct date
+    currentDate.setMinutes(currentDate.getMinutes() + currentDate.getTimezoneOffset());
+
     if (format === null || format === 'new_date') {
         return currentDate.toISOString().substring(0, 10); // Format YYYY-MM-DD
     } else if (format === 'reading') {
@@ -49,6 +52,7 @@ export const formatDate = (date = null, format = null) => {
         return `${day}/${month}/${year}`; // Format DD/MM/YYYY
     }
 };
+
 
 
 export const formatPhoneNumber = (phone_number) => {

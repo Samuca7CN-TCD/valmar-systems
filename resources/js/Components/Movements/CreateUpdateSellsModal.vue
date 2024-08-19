@@ -6,6 +6,7 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { ref, computed, reactive } from 'vue';
 import { formatDate, toMoney } from '@/general.js';
 import { useForm } from '@inertiajs/vue3';
+import SelectSearchItem from '@/Components/SelectSearchItem.vue'
 
 const emit = defineEmits(['close', 'submit']);
 const props = defineProps({
@@ -151,6 +152,10 @@ const verifyPayAll = () => {
     }
 }
 
+const updateItem = (newItem) => {
+    selectItem(newItem)
+}
+
 const close = () => {
     emit('close')
 }
@@ -237,6 +242,15 @@ const submit = () => {
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-4">
 
                             <div v-if="!see_disabled" class="sm:col-span-4">
+                                <label for="item-selecter"
+                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Selecione
+                                    os itens de venda</label>
+                                <div class="mt-2">
+                                    <SelectSearchItem :options="items" @update:modelValue="updateItem" />
+                                </div>
+                            </div>
+
+                            <!--<div v-if="!see_disabled" class="sm:col-span-4">
                                 <div class="relative">
                                     <label for="item-selecter"
                                         class="block text-sm font-medium leading-6 text-gray-900">Selecione os itens de
@@ -260,7 +274,7 @@ const submit = () => {
                                         </li>
                                     </ul>
                                 </div>
-                            </div>
+                            </div>-->
 
                             <div class="md:col-span-2 lg:col-span-1">
                                 <label for="sell-estimated-amount"
@@ -449,7 +463,7 @@ const submit = () => {
                                         :disabled="!sell.items_list.length || see_disabled" v-model="sell.entry_value"
                                         @input="verifyPayAll()" required>
                                     <p v-if="sell.errors.entry_value" class="text-red-500 text-sm">{{
-                                        sell.errors.entry_value }}</p>
+        sell.errors.entry_value }}</p>
                                 </div>
                                 <div class="relative mt-2 rounded-md shadow-sm">
                                     <input type="checkbox" id="pay-all"
@@ -475,7 +489,7 @@ const submit = () => {
                                         placeholder="Valor restante para pagamento posterior" :disabled="true"
                                         :value="decimal_format(partialValue, 2)" readonly required>
                                     <p v-if="sell.errors.partial_value" class="text-red-500 text-sm">{{
-                                        sell.errors.partial_value }}</p>
+        sell.errors.partial_value }}</p>
                                 </div>
                             </div>
 
@@ -491,7 +505,7 @@ const submit = () => {
             </SecondaryButton>
             <PrimaryButton :class="{ 'disabled': (sell.processing || !enableSubmit) }"
                 :disabled="(sell.processing || !enableSubmit)" @click="submit()">{{
-                modal.primary_button_txt
+        modal.primary_button_txt
                 }}</PrimaryButton>
         </template>
     </CreateUpdateModal>

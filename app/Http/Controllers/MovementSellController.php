@@ -92,7 +92,7 @@ class MovementSellController extends Controller
                 'client' => ['required', 'string'],
                 'date' => ['required', 'date', 'date_format:Y-m-d'],
                 'estimated_value' => ['required', 'numeric', 'gt:0'],
-                'total_value' => ['required', 'numeric', 'gt:0', 'lte:estimated_value'],
+                'total_value' => ['required', 'numeric', 'gt:0'],
                 'entry_value' => ['required', 'numeric', 'gte:0', 'lte:total_value'],
                 'observations' => ['nullable', 'string'],
                 'items_list' => ['required', 'array', 'min:1'],
