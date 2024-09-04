@@ -106,7 +106,7 @@ class ItemController extends Controller
             $itemId = $record->item_id;
             $quantity = $record->movement_quantity;
 
-            if (isset($itemCounts[$itemId][$employeeId]))
+            if (array_key_exists($itemId, $itemCounts) && array_key_exists($employeeId, $itemCounts[$itemId]))
             {
                 $itemCounts[$itemId][$employeeId] += $quantity;
             } else

@@ -89,11 +89,12 @@ const printList = () => {
                                             <tr v-for="item in items" :key="item.id"
                                                 class="border-b transition duration-150 ease-in-out hover:bg-neutral-100 print:break-inside-avoid divide-x">
                                                 <td class="px-6 py-2 text-right">{{ item.name }}</td>
-                                                <td v-for="(qtd, index) in itemCounts[item.id]" :key="index"
-                                                    :class="'use-table-col-' + index"
+                                                <td v-for="employee in employees" :key="employee.id"
+                                                    :class="'use-table-col-' + employee.id"
                                                     class="use-table-cols whitespace-nowrap px-6 py-2 hover:bg-neutral-200"
-                                                    @mouseout="clearColumnHover" @mouseover="columnHover(index)">
-                                                    {{ qtd ? qtd : '' }}
+                                                    @mouseout="clearColumnHover" @mouseover="columnHover(employee.id)">
+                                                    {{ itemCounts[item.id][employee.id] ?
+        itemCounts[item.id][employee.id] : '' }}
                                                 </td>
                                             </tr>
                                         </tbody>
