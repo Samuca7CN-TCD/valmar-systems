@@ -99,7 +99,7 @@
                 </div>
             </div>
             <div class="min-h-screen print:w-full"
-                :class="{ 'w-full': !page_options, 'w-full xl:w-5/6': page_options }">
+                :class="{ 'w-full': !page_options, 'w-full xl:w-4/5': page_options }">
 
                 <Head class="print:hidden" :title="page ? page.name : 'Valmar Inox'" />
 
