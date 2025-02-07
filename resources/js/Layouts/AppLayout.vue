@@ -1,51 +1,51 @@
 <script setup>
-import { ref } from 'vue'
-import { Head, router } from '@inertiajs/vue3'
-import Banner from '@/Components/Banner.vue'
-import Dropdown from '@/Components/Dropdown.vue'
-import DropdownLink from '@/Components/DropdownLink.vue'
-import NavLink from '@/Components/NavLink.vue'
-import SubNavLink from '@/Components/SubNavLink.vue'
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue'
-import { RectangleGroupIcon, ChevronDownIcon, ChevronUpIcon, ArrowDownIcon, UserGroupIcon, UserIcon, PresentationChartLineIcon, RectangleStackIcon, ArrowPathRoundedSquareIcon, BanknotesIcon, BriefcaseIcon } from '@heroicons/vue/24/outline'
+    import { ref } from 'vue'
+    import { Head, router } from '@inertiajs/vue3'
+    import Banner from '@/Components/Banner.vue'
+    import Dropdown from '@/Components/Dropdown.vue'
+    import DropdownLink from '@/Components/DropdownLink.vue'
+    import NavLink from '@/Components/NavLink.vue'
+    import SubNavLink from '@/Components/SubNavLink.vue'
+    import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue'
+    import { RectangleGroupIcon, ChevronDownIcon, ChevronUpIcon, ArrowDownIcon, UserGroupIcon, UserIcon, PresentationChartLineIcon, RectangleStackIcon, ArrowPathRoundedSquareIcon, BanknotesIcon, BriefcaseIcon } from '@heroicons/vue/24/outline'
 
-const props = defineProps({
-    page: Object,
-    page_options: {
-        type: Array,
-        default: null,
-    },
-    payslip_month: {
-        type: Number,
-        default: null,
-    },
-    payslip_year: {
-        type: Number,
-        default: null,
-    }
-})
-
-const showingNavigationDropdown = ref(false)
-const options_collapse = ref(false)
-
-const switchToTeam = (team) => {
-    router.put(route('current-team.update'), {
-        team_id: team.id,
-    }, {
-        preserveState: false,
+    const props = defineProps({
+        page: Object,
+        page_options: {
+            type: Array,
+            default: null,
+        },
+        payslip_month: {
+            type: Number,
+            default: null,
+        },
+        payslip_year: {
+            type: Number,
+            default: null,
+        }
     })
-}
 
-const logout = () => {
-    router.post(route('logout'))
-}
+    const showingNavigationDropdown = ref(false)
+    const options_collapse = ref(false)
+
+    const switchToTeam = (team) => {
+        router.put(route('current-team.update'), {
+            team_id: team.id,
+        }, {
+            preserveState: false,
+        })
+    }
+
+    const logout = () => {
+        router.post(route('logout'))
+    }
 </script>
 
 <template>
     <div class="min-w-[320px]">
         <div class="flex flex-row">
             <div v-if="page_options"
-                class="hidden md:block print:hidden md:w-1/4 lg:1/5 xl:1/6 min-h-screen relative bg-white text-black shadow-xl">
+                class="hidden xl:block print:hidden md:w-1/4 lg:1/5 xl:1/6 min-h-screen relative bg-white text-black shadow-xl">
                 <div class="w-full flex-col-config">
                     <!-- Logo -->
                     <a href="/" class="p-10 bg-slate-100">
@@ -99,7 +99,7 @@ const logout = () => {
                 </div>
             </div>
             <div class="min-h-screen print:w-full"
-                :class="{ 'w-full': !page_options, 'w-full md:w-3/4 lg:4/5 xl:w-5/6': page_options }">
+                :class="{ 'w-full': !page_options, 'w-full xl:w-5/6': page_options }">
 
                 <Head class="print:hidden" :title="page ? page.name : 'Valmar Inox'" />
 
@@ -113,11 +113,11 @@ const logout = () => {
                                 <div class="flex">
                                     <a href="/" class="h-full flex items-center">
                                         <img src="/storage/img/theme/logos/logo-name.png" class="h-7 my-auto"
-                                            :class="{ 'md:hidden': page_options }" />
+                                            :class="{ 'lg:hidden': page_options }" />
                                     </a>
 
                                     <!-- Navigation Links -->
-                                    <div class="hidden space-x-8 sm:-my-px sm:ml-10 xl:flex">
+                                    <div class="hidden space-x-8 lg:space-x-4 xl:space-x-8 sm:-my-px sm:ml-10 lg:flex">
                                         <NavLink v-if="$page.props.auth.user.hierarchy < 2"
                                             :href="route('dashboard.index')"
                                             :active="route().current('home') || route().current('dashboard.*')">
@@ -233,7 +233,7 @@ const logout = () => {
                                     </div>
                                 </div>
 
-                                <div class="hidden xl:flex sm:items-center sm:ml-6">
+                                <div class="hidden lg:flex sm:items-center sm:ml-6">
                                     <div class="ml-3 relative">
                                         <!-- Teams Dropdown -->
                                         <Dropdown v-if="$page.props.jetstream.hasTeamFeatures" align="right" width="60">
@@ -367,7 +367,7 @@ const logout = () => {
                                 </div>
 
                                 <!-- Hamburger -->
-                                <div class="-mr-2 flex items-center xl:hidden">
+                                <div class="-mr-2 flex items-center lg:hidden">
                                     <button
                                         class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition"
                                         @click="showingNavigationDropdown = !showingNavigationDropdown">
@@ -610,7 +610,7 @@ const logout = () => {
 
 
                     <div v-if="page_options"
-                        class="md:hidden print:hidden bg-white shadow border-b md:border-none text-gray-700 select-none cursor-pointer"
+                        class="xl:hidden print:hidden bg-white shadow border-b md:border-none text-gray-700 select-none cursor-pointer"
                         title="Clique para ver as opções da página" @click="options_collapse = !options_collapse">
                         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-row space-x-3 items-center">
                             <p>Opções da Página</p>
