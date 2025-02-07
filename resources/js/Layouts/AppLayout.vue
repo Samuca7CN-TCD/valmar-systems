@@ -45,7 +45,7 @@
     <div class="min-w-[320px]">
         <div class="flex flex-row">
             <div v-if="page_options"
-                class="hidden xl:block print:hidden md:w-1/4 lg:w-1/5 min-h-screen relative bg-white text-black shadow-xl">
+                class="hidden xl:block print:hidden md:w-1/4 lg:w-1/6 min-h-screen relative bg-white text-black shadow-xl">
                 <div class="w-full flex-col-config">
                     <!-- Logo -->
                     <a href="/" class="p-10 bg-slate-100">
@@ -99,7 +99,7 @@
                 </div>
             </div>
             <div class="min-h-screen print:w-full"
-                :class="{ 'w-full': !page_options, 'w-full xl:w-4/5': page_options }">
+                :class="{ 'w-full': !page_options, 'w-full xl:w-5/6': page_options }">
 
                 <Head class="print:hidden" :title="page ? page.name : 'Valmar Inox'" />
 
