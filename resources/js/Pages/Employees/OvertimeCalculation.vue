@@ -1,278 +1,272 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue'
-import SeeOldOvertimeCalculations from '@/Components/Employees/SeeOldOvertimeCalculations.vue'
-import FloatButton from '@/Components/FloatButton.vue'
-import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
-import { Head, useForm, router } from '@inertiajs/vue3'
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { ArrowDownIcon, ArrowsUpDownIcon, ChevronDownIcon, DocumentDuplicateIcon, EyeIcon, MagnifyingGlassIcon, PencilIcon, XCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { toMoney, formatDate, formatPhoneNumber, calcDeadlineDays } from '@/general.js'
-import { useToast } from 'vue-toast-notification';
-import 'vue-toast-notification/dist/theme-sugar.css';
+    import AppLayout from '@/Layouts/AppLayout.vue'
+    import SeeOldOvertimeCalculations from '@/Components/Employees/SeeOldOvertimeCalculations.vue'
+    import FloatButton from '@/Components/FloatButton.vue'
+    import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
+    import { Head, useForm, router } from '@inertiajs/vue3'
+    import { computed, ref, onMounted, onUnmounted } from 'vue'
+    import { ArrowDownIcon, ArrowsUpDownIcon, ChevronDownIcon, DocumentDuplicateIcon, EyeIcon, MagnifyingGlassIcon, PencilIcon, XCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+    import { toMoney, formatDate, formatPhoneNumber, calcDeadlineDays } from '@/general.js'
+    import { useToast } from 'vue-toast-notification';
+    import 'vue-toast-notification/dist/theme-sugar.css';
 
-// =============================================
-// Informações exteriores
-const props = defineProps({
-    page: Object,
-    page_mode: String,
-    user: Object,
-    procedure_date: String,
-    page_options: {
-        type: Array,
-        default: null,
-    },
-    employees_list: Array,
-    account_types_list: Array,
-    payment_methods_list: Array,
-    banks_list: Array,
-    total_fifty_percent_value: Number,
-    total_hundred_percent_value: Number,
-})
+    // =============================================
+    // Informações exteriores
+    const props = defineProps({
+        page: Object,
+        page_mode: String,
+        user: Object,
+        procedure_date: String,
+        page_options: {
+            type: Array,
+            default: null,
+        },
+        employees_list: Array,
+        account_types_list: Array,
+        payment_methods_list: Array,
+        banks_list: Array,
+        total_fifty_percent_value: Number,
+        total_hundred_percent_value: Number,
+    })
 
-const $toast = useToast();
-const employees = ref(JSON.parse(JSON.stringify(props.employees_list)));
-const original_data = JSON.parse(JSON.stringify(props.employees_list));
-const check_mode = ref(false);
-const show_fifty = ref(true)
-const show_hundred = ref(true)
-const show_disabled_employees = ref(false)
-const isModified = ref(false)
+    const $toast = useToast();
+    const employees = ref(JSON.parse(JSON.stringify(props.employees_list)));
+    const original_data = JSON.parse(JSON.stringify(props.employees_list));
+    const check_mode = ref(false);
+    const show_fifty = ref(true)
+    const show_hundred = ref(true)
+    const show_disabled_employees = ref(false)
+    const isModified = ref(false)
 
-const totalFiftyPercentValue = ref(props.total_fifty_percent_value);
-const totalHundredPercentValue = ref(props.total_hundred_percent_value);
+    const totalFiftyPercentValue = ref(props.total_fifty_percent_value);
+    const totalHundredPercentValue = ref(props.total_hundred_percent_value);
 
-const resetTable = () => {
-    $toast.clear();
-    employees.value = original_data
-    isModified.value = false;
-    $toast.success(`Tabela resetada com sucesso!`);
-}
-
-const toggleCheckRows = () => {
-    employees.value.forEach(el => hideEmployee(el, check_mode.value))
-    check_mode.value = !check_mode.value
-    isModified.value = true;
-}
-
-const disable_all = computed(() => {
-    return props.page_mode === 'old';
-})
-
-const getPixType = (codigo) => {
-    switch (codigo) {
-        case 'pix_email': return "E-mail"
-        case 'pix_cpf': return "Cpf"
-        case 'pix_phone_number': return "Telefone"
-        case 'pix_token': return "Token"
+    const resetTable = () => {
+        $toast.clear();
+        employees.value = original_data
+        isModified.value = false;
+        $toast.success(`Tabela resetada com sucesso!`);
     }
-    return '-'
-}
 
-const copyToClipboard = (employee) => {
-    let text = employee[employee.overtime_payment_method.cod];
-    // Verifica se a API Clipboard está disponível
-    $toast.clear();
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        return navigator.clipboard.writeText(text)
-            .then(() => {
+    const toggleCheckRows = () => {
+        employees.value.forEach(el => hideEmployee(el, check_mode.value))
+        check_mode.value = !check_mode.value
+        isModified.value = true;
+    }
+
+    const disable_all = computed(() => {
+        return props.page_mode === 'old';
+    })
+
+    const getPixType = (codigo) => {
+        switch (codigo) {
+            case 'pix_email': return "E-mail"
+            case 'pix_cpf': return "Cpf"
+            case 'pix_phone_number': return "Telefone"
+            case 'pix_token': return "Token"
+        }
+        return '-'
+    }
+
+    const copyToClipboard = (employee) => {
+        let text = employee[employee.overtime_payment_method.cod];
+        // Verifica se a API Clipboard está disponível
+        $toast.clear();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text)
+                .then(() => {
+                    $toast.success(`PIX de ${employee.name} copiado para a área de transferência`);
+                })
+                .catch(err => {
+                    $toast.error(`Não foi possível copiar o PIX de ${employee.name} para a área de transferência`);
+                    console.error('Erro ao copiar texto para a área de transferência', err);
+                });
+        } else {
+            // Fallback para navegadores que não suportam a API Clipboard
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
                 $toast.success(`PIX de ${employee.name} copiado para a área de transferência`);
-                console.log('Texto copiado para a área de transferência');
-            })
-            .catch(err => {
+            } catch (err) {
                 $toast.error(`Não foi possível copiar o PIX de ${employee.name} para a área de transferência`);
                 console.error('Erro ao copiar texto para a área de transferência', err);
-            });
-    } else {
-        // Fallback para navegadores que não suportam a API Clipboard
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
+            }
 
-        try {
-            document.execCommand('copy');
-            $toast.success(`PIX de ${employee.name} copiado para a área de transferência`);
-            console.log('Texto copiado para a área de transferência');
-        } catch (err) {
-            $toast.error(`Não foi possível copiar o PIX de ${employee.name} para a área de transferência`);
-            console.error('Erro ao copiar texto para a área de transferência', err);
+            document.body.removeChild(textArea);
+        }
+    }
+
+    const applyToEntireCol = (value, camp_name) => {
+        if (!employees || !employees.value || !Array.isArray(employees.value)) {
+            console.error('As informações dos funcionários não estão devidamente formatadas.');
+            return;
         }
 
-        document.body.removeChild(textArea);
-    }
-}
+        employees.value.forEach(employee => {
+            if (employee.show) {
+                employee[camp_name] = value;
+                isModified.value = true;
+            }
+        });
+    };
 
-const applyToEntireCol = (value, camp_name) => {
-    if (!employees || !employees.value || !Array.isArray(employees.value)) {
-        console.error('As informações dos funcionários não estão devidamente formatadas.');
-        return;
-    }
+    const parseTime = (timeStr) => {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours * 60 + minutes; // Retorna o tempo em minutos
+    };
 
-    employees.value.forEach(employee => {
+    const calcTotalTime = (employee) => {
+        if (!employee.check_in_time || !employee.leave_for_lunch_break || !employee.check_in_after_lunch_break || !employee.check_out_time) {
+            employee.total_time = 0;
+            employee.fifty_percent_value = 0;
+            employee.hundred_percent_value = 0;
+            return 0;
+        }
+
+        const check_in_time = parseTime(employee.check_in_time);
+        const leave_for_lunch_break = parseTime(employee.leave_for_lunch_break);
+        const check_in_after_lunch_break = parseTime(employee.check_in_after_lunch_break);
+        const check_out_time = parseTime(employee.check_out_time);
+
+        const morningMinutes = leave_for_lunch_break - check_in_time;
+        const afternoonMinutes = check_out_time - check_in_after_lunch_break;
+
+        const totalMinutes = morningMinutes + afternoonMinutes;
+        const totalHours = totalMinutes / 60;
+
+        employee.total_time = totalHours.toFixed(2);
+        employee.fifty_percent_value = calcTotalValue(employee, 0.5);
+        employee.hundred_percent_value = calcTotalValue(employee, 1);
+
+        updateTotals(); // Atualiza os totais globalmente após as mudanças
+
+        return totalHours.toFixed(2);
+    };
+
+    const calcTotalValue = (employee, percent) => {
+        const total_time = parseFloat(employee.total_time) || 0;
+        const hourly_rate = employee.salary / 220;
+        const percent_rate = 1 + percent;
+        return (hourly_rate * total_time) * percent_rate;
+    };
+
+    const updateTotals = () => {
+        // Recalcula os totais a partir da lista de funcionários
+        let newTotalFiftyPercentValue = 0;
+        let newTotalHundredPercentValue = 0;
+
+        employees.value.forEach(employee => {
+            newTotalFiftyPercentValue += employee.fifty_percent_value || 0;
+            newTotalHundredPercentValue += employee.hundred_percent_value || 0;
+        });
+
+        totalFiftyPercentValue.value = newTotalFiftyPercentValue;
+        totalHundredPercentValue.value = newTotalHundredPercentValue;
+    };
+
+    const hideEmployee = (employee, mode = null) => {
+        const total_time = 8.75;
+        const hourly_rate = employee.salary / 220;
+        const fifty_percent_value = (hourly_rate * total_time) * 1.5;
+        const hundred_percent_value = (hourly_rate * total_time) * 2;
+
+        if (mode !== null) employee.show = !mode;
+
         if (employee.show) {
-            console.log("SHOW: ", employee.show)
-            employee[camp_name] = value;
-            isModified.value = true;
+            // Remove current values from totals
+            totalFiftyPercentValue.value -= employee.fifty_percent_value || 0;
+            totalHundredPercentValue.value -= employee.hundred_percent_value || 0;
+
+            // Hide employee and reset values
+            if (mode !== null) employee.show = mode;
+            employee.check_in_time = null;
+            employee.leave_for_lunch_break = null;
+            employee.check_in_after_lunch_break = null;
+            employee.check_out_time = null;
+            employee.total_time = 0;
+            employee.fifty_percent_value = 0;
+            employee.hundred_percent_value = 0;
+            updateTotals(); // Atualiza os totais após a remoção do funcionário
+        } else {
+            // Show employee and set values
+            if (mode !== null) employee.show = mode;
+            employee.check_in_time = "07:00";
+            employee.leave_for_lunch_break = "12:00";
+            employee.check_in_after_lunch_break = "13:15";
+            employee.check_out_time = "17:00";
+            employee.total_time = total_time;
+            employee.fifty_percent_value = fifty_percent_value;
+            employee.hundred_percent_value = hundred_percent_value;
+
+            // Add new values to totals
+            totalFiftyPercentValue.value += fifty_percent_value;
+            totalHundredPercentValue.value += hundred_percent_value;
+
+            updateTotals(); // Atualiza os totais após a adição do funcionário
         }
-    });
-};
-
-const parseTime = (timeStr) => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return hours * 60 + minutes; // Retorna o tempo em minutos
-};
-
-const calcTotalTime = (employee) => {
-    if (!employee.check_in_time || !employee.leave_for_lunch_break || !employee.check_in_after_lunch_break || !employee.check_out_time) {
-        employee.total_time = 0;
-        employee.fifty_percent_value = 0;
-        employee.hundred_percent_value = 0;
-        return 0;
+        if (mode === null) employee.show = !employee.show;
+        isModified.value = true;
     }
 
-    const check_in_time = parseTime(employee.check_in_time);
-    const leave_for_lunch_break = parseTime(employee.leave_for_lunch_break);
-    const check_in_after_lunch_break = parseTime(employee.check_in_after_lunch_break);
-    const check_out_time = parseTime(employee.check_out_time);
+    const computedTotals = computed(() => ({
+        totalFiftyPercentValue: totalFiftyPercentValue.value,
+        totalHundredPercentValue: totalHundredPercentValue.value
+    }));
 
-    const morningMinutes = leave_for_lunch_break - check_in_time;
-    const afternoonMinutes = check_out_time - check_in_after_lunch_break;
+    const modal = ref(false);
+    const openModal = () => {
+        modal.value = true;
+    }
 
-    const totalMinutes = morningMinutes + afternoonMinutes;
-    const totalHours = totalMinutes / 60;
+    const closeModal = () => {
+        modal.value = false;
+    }
 
-    employee.total_time = totalHours.toFixed(2);
-    employee.fifty_percent_value = calcTotalValue(employee, 0.5);
-    employee.hundred_percent_value = calcTotalValue(employee, 1);
+    const set_last_records = async () => {
+        if (!isModified.value) return;
+        if (props.page_mode === 'old') return;
+        router.post(route('employee.overtime_calculation_save'), { employees: JSON.stringify(employees.value) }, {
+            preserveScroll: true,
+            onSuccess: () => console.log("Dados salvos com sucesso"),
+            onError: (error) => console.log("Erro ao salvar dados: ", error),
+            onFinish: () => isModified.value = false
+        });
+    }
 
-    updateTotals(); // Atualiza os totais globalmente após as mudanças
+    // Executa set_last_records a cada 1 minuto
+    let intervalId = null;
+    const startAutoSave = () => {
+        intervalId = setInterval(set_last_records, 10000); // 60000 ms = 1 minuto
+    };
 
-    return totalHours.toFixed(2);
-};
+    const stopAutoSave = () => {
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+    };
 
-const calcTotalValue = (employee, percent) => {
-    const total_time = parseFloat(employee.total_time) || 0;
-    const hourly_rate = employee.salary / 220;
-    const percent_rate = 1 + percent;
-    return (hourly_rate * total_time) * percent_rate;
-};
+    const handleBeforeUnload = (event) => {
+        // Faz o save se o usuário estiver saindo da página
+        set_last_records();
+        // Personalize a mensagem do navegador
+        // event.preventDefault();
+        // event.returnValue = '';
+    };
 
-const updateTotals = () => {
-    // Recalcula os totais a partir da lista de funcionários
-    let newTotalFiftyPercentValue = 0;
-    let newTotalHundredPercentValue = 0;
-
-    employees.value.forEach(employee => {
-        newTotalFiftyPercentValue += employee.fifty_percent_value || 0;
-        newTotalHundredPercentValue += employee.hundred_percent_value || 0;
+    onMounted(() => {
+        startAutoSave();
+        window.addEventListener('beforeunload', handleBeforeUnload);
     });
 
-    totalFiftyPercentValue.value = newTotalFiftyPercentValue;
-    totalHundredPercentValue.value = newTotalHundredPercentValue;
-};
-
-const hideEmployee = (employee, mode = null) => {
-    const total_time = 8.75;
-    const hourly_rate = employee.salary / 220;
-    const fifty_percent_value = (hourly_rate * total_time) * 1.5;
-    const hundred_percent_value = (hourly_rate * total_time) * 2;
-
-    if (mode !== null) employee.show = !mode;
-
-    if (employee.show) {
-        // Remove current values from totals
-        totalFiftyPercentValue.value -= employee.fifty_percent_value || 0;
-        totalHundredPercentValue.value -= employee.hundred_percent_value || 0;
-
-        // Hide employee and reset values
-        if (mode !== null) employee.show = mode;
-        employee.check_in_time = null;
-        employee.leave_for_lunch_break = null;
-        employee.check_in_after_lunch_break = null;
-        employee.check_out_time = null;
-        employee.total_time = 0;
-        employee.fifty_percent_value = 0;
-        employee.hundred_percent_value = 0;
-        updateTotals(); // Atualiza os totais após a remoção do funcionário
-    } else {
-        // Show employee and set values
-        if (mode !== null) employee.show = mode;
-        employee.check_in_time = "07:00";
-        employee.leave_for_lunch_break = "12:00";
-        employee.check_in_after_lunch_break = "13:15";
-        employee.check_out_time = "17:00";
-        employee.total_time = total_time;
-        employee.fifty_percent_value = fifty_percent_value;
-        employee.hundred_percent_value = hundred_percent_value;
-
-        // Add new values to totals
-        totalFiftyPercentValue.value += fifty_percent_value;
-        totalHundredPercentValue.value += hundred_percent_value;
-
-        updateTotals(); // Atualiza os totais após a adição do funcionário
-    }
-    if (mode === null) employee.show = !employee.show;
-    isModified.value = true;
-}
-
-const computedTotals = computed(() => ({
-    totalFiftyPercentValue: totalFiftyPercentValue.value,
-    totalHundredPercentValue: totalHundredPercentValue.value
-}));
-
-const modal = ref(false);
-const openModal = () => {
-    modal.value = true;
-}
-
-const closeModal = () => {
-    modal.value = false;
-}
-
-const set_last_records = async () => {
-    console.log("KKK")
-    if (!isModified.value) return;
-    console.log("hihihi")
-    if (props.page_mode === 'old') return;
-    console.log("rsrsrs")
-    router.post(route('employee.overtime_calculation_save'), { employees: JSON.stringify(employees.value) }, {
-        preserveScroll: true,
-        onSuccess: () => console.log("Dados salvos com sucesso"),
-        onError: (error) => console.log("Erro ao salvar dados: ", error),
-        onFinish: () => isModified.value = false
+    onUnmounted(() => {
+        stopAutoSave();
+        window.removeEventListener('beforeunload', handleBeforeUnload);
     });
-}
-
-// Executa set_last_records a cada 1 minuto
-let intervalId = null;
-const startAutoSave = () => {
-    intervalId = setInterval(set_last_records, 10000); // 60000 ms = 1 minuto
-};
-
-const stopAutoSave = () => {
-    if (intervalId) {
-        clearInterval(intervalId);
-    }
-};
-
-const handleBeforeUnload = (event) => {
-    // Faz o save se o usuário estiver saindo da página
-    set_last_records();
-    // Personalize a mensagem do navegador
-    // event.preventDefault();
-    // event.returnValue = '';
-};
-
-onMounted(() => {
-    startAutoSave();
-    window.addEventListener('beforeunload', handleBeforeUnload);
-});
-
-onUnmounted(() => {
-    stopAutoSave();
-    window.removeEventListener('beforeunload', handleBeforeUnload);
-});
 
 </script>
 <template>
@@ -413,7 +407,7 @@ onUnmounted(() => {
                                                     <td
                                                         class="whitespace-nowrap py-1 print:p-0 text-center font-medium  print:hidden">
                                                         {{
-        toMoney(employee.salary || 0) }}
+                                                            toMoney(employee.salary || 0) }}
                                                     </td>
                                                     <td
                                                         class="whitespace-nowrap py-1 print:p-0 text-center font-medium print:hidden relative">
@@ -488,8 +482,8 @@ onUnmounted(() => {
                                                         <span
                                                             class="flex flex-row justify-center items-center align-middle gap-3">
                                                             {{ employee.overtime_payment_method?.cod ?
-        employee[employee.overtime_payment_method.cod]
-        : '-' }}
+                                                                employee[employee.overtime_payment_method.cod]
+                                                                : '-' }}
                                                             <DocumentDuplicateIcon
                                                                 v-if="employee.overtime_payment_method?.cod"
                                                                 class="w-4 h-4 print:hidden" />

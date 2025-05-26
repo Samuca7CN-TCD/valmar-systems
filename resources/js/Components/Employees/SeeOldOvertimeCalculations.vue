@@ -1,45 +1,45 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import axios from 'axios'; // Certifique-se de que o Axios está instalado
-import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
-import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import { toMoney, formatDate, formatPhoneNumber, calcDeadlineDays } from '@/general.js';
+    import { ref, onMounted, watch } from 'vue';
+    import axios from 'axios'; // Certifique-se de que o Axios está instalado
+    import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
+    import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import SecondaryButton from '@/Components/SecondaryButton.vue';
+    import { toMoney, formatDate, formatPhoneNumber, calcDeadlineDays } from '@/general.js';
 
-const emit = defineEmits(['close']);
-const props = defineProps({
-    modal: Boolean,
-});
+    const emit = defineEmits(['close']);
+    const props = defineProps({
+        modal: Boolean,
+    });
 
-const records_list = ref([]);
-const processing = ref(true);
-const records_date = ref(null);
+    const records_list = ref([]);
+    const processing = ref(true);
+    const records_date = ref(null);
 
-// A função que obtém os últimos registros
-const get_last_records = async (date = '') => {
-    processing.value = true;
-    try {
-        const response = await axios.get(`${route('employee.overtime_calculation_list')}/${date}`);
-        records_list.value = response.data;
-    } catch (error) {
-        console.error('Erro ao buscar registros:', error);
-    } finally {
-        processing.value = false;
-    }
-};
+    // A função que obtém os últimos registros
+    const get_last_records = async (date = '') => {
+        processing.value = true;
+        try {
+            const response = await axios.get(`${route('employee.overtime_calculation_list')}/${date}`);
+            records_list.value = response.data;
+        } catch (error) {
+            console.error('Erro ao buscar registros:', error);
+        } finally {
+            processing.value = false;
+        }
+    };
 
-// Atualize records_date sempre que records_list mudar
-watch(records_list, () => {
-    records_date.value = records_list.value.length ? formatDate(records_list.value[0].created_at) : formatDate();
-}, { immediate: true });
+    // Atualize records_date sempre que records_list mudar
+    watch(records_list, () => {
+        records_date.value = records_list.value.length ? formatDate(records_list.value[0].created_at) : formatDate();
+    }, { immediate: true });
 
-// Obtém registros ao montar o componente
-onMounted(() => {
-    get_last_records();
-});
+    // Obtém registros ao montar o componente
+    onMounted(() => {
+        get_last_records();
+    });
 
-const close = () => emit('close');
+    const close = () => emit('close');
 </script>
 <template>
     <CreateUpdateModal :show="modal" :maxWidth="'2xl'" @close="close">
@@ -67,7 +67,7 @@ const close = () => emit('close');
             <ul v-if="records_list.length" class="text-sm text-neutral-500">
                 <li v-for="(record, index) in records_list"
                     class="flex justify-between p-3 even:bg-neutral-100 hover:bg-neutral-200">
-                    <span>{{ record.procedure.user.name }} {{ record.procedure.user.surname }}</span>
+                    <span>{{ record?.procedure?.user?.name }} {{ record?.procedure?.user?.surname }}</span>
                     <span>{{ formatDate(record.created_at, 'reading_date_time') }}</span>
                     <a :href="route('employee.overtime_calculation', record.procedure.id)"
                         class="text-green-500 hover:text-green-700 active:text-green-900">Ver</a>

@@ -1,157 +1,153 @@
 <script setup>
-import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
-import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import { ref, computed, reactive } from 'vue';
-import { formatDate, toMoney } from '@/general.js';
-import { useForm } from '@inertiajs/vue3';
-import { useToast } from 'vue-toast-notification';
-import SelectSearchService from '@/Components/SelectSearchService.vue'
-import SelectSearchItem from '@/Components/SelectSearchItem.vue'
-import 'vue-toast-notification/dist/theme-sugar.css';
+    import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
+    import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import SecondaryButton from '@/Components/SecondaryButton.vue';
+    import { ref, computed, reactive } from 'vue';
+    import { formatDate, toMoney } from '@/general.js';
+    import { useForm } from '@inertiajs/vue3';
+    import { useToast } from 'vue-toast-notification';
+    import SelectSearchService from '@/Components/SelectSearchService.vue'
+    import SelectSearchItem from '@/Components/SelectSearchItem.vue'
+    import 'vue-toast-notification/dist/theme-sugar.css';
 
-const emit = defineEmits(['close', 'submit']);
-const props = defineProps({
-    modal: Object,
-    entry: {
-        type: Object,
-        default: null,
-    },
-    items: Array,
-    employees_list: Array,
-    services_list: Array,
-});
+    const emit = defineEmits(['close', 'submit']);
+    const props = defineProps({
+        modal: Object,
+        entry: {
+            type: Object,
+            default: null,
+        },
+        items: Array,
+        employees_list: Array,
+        services_list: Array,
+    });
 
-const $toast = useToast();
-const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+    const $toast = useToast();
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
 
-const canAddItems = computed(() => {
-    const { motive, /*employee,*/ date } = props.entry;
+    const canAddItems = computed(() => {
+        const { motive, /*employee,*/ date } = props.entry;
 
-    //if (!employee || !employee.length) return false;
-    if (!motive || !motive.length) return false;
-    const isDateValid = date && dateRegex.test(date);
+        //if (!employee || !employee.length) return false;
+        if (!motive || !motive.length) return false;
+        const isDateValid = date && dateRegex.test(date);
 
-    return isDateValid;
-});
+        return isDateValid;
+    });
 
-const enableSubmit = computed(() => {
-    const { employee, motive, date, items_list } = props.entry;
+    const enableSubmit = computed(() => {
+        const { employee, motive, date, items_list } = props.entry;
 
-    // Verifica se todos os campos obrigatórios estão preenchidos
-    if (!motive || !motive.length) return false;
-    if (!date || !dateRegex.test(date)) return false;
-    if (!items_list || items_list.length < 1) return false;
+        // Verifica se todos os campos obrigatórios estão preenchidos
+        if (!motive || !motive.length) return false;
+        if (!date || !dateRegex.test(date)) return false;
+        if (!items_list || items_list.length < 1) return false;
 
-    // Verifica se todos os itens da lista atendem aos critérios
-    const items_okay = items_list.every(item =>
-        item.movement_quantity > 0 &&
-        item.employee_id > 0 //&&
-        // item.motive && item.motive.length
-    );
+        // Verifica se todos os itens da lista atendem aos critérios
+        const items_okay = items_list.every(item =>
+            item.movement_quantity > 0 &&
+            item.employee_id > 0 //&&
+            // item.motive && item.motive.length
+        );
 
-    return items_okay;
-});
-
-
-const see_disabled = computed(() => {
-    return props.modal.mode === 'see'
-})
+        return items_okay;
+    });
 
 
-const searchTerm = ref("");
-const showResults = ref(false);
+    const see_disabled = computed(() => {
+        return props.modal.mode === 'see'
+    })
 
-const filteredItems = computed(() => {
-    return props.items.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.value.toLowerCase())
-    );
-});
 
-const handleInput = (type) => {
-    if (type === 'in') showResults.value = true;
-    if (type === 'out') showResults.value = false;
-}
+    const searchTerm = ref("");
+    const showResults = ref(false);
 
-const updateEstimatedValue = () => {
-    props.entry.estimated_value = props.entry.items_list.reduce((total, item) => total + (item.price * item.movement_quantity), 0);
-    props.entry.total_value = props.entry.estimated_value
-}
+    const filteredItems = computed(() => {
+        return props.items.filter((item) =>
+            item.name.toLowerCase().includes(searchTerm.value.toLowerCase())
+        );
+    });
 
-const last_selected_employee = ref(props.employees_list ? props.employees_list[0]?.id : null);
-// const last_inputed_motive_mode = ref(true);
-// const last_inputed_motive = ref(null);
-const selectItem = (item) => {
-    const new_item = {
-        order_id: (props.entry.items_list[props.entry.items_list.length - 1]?.order_id ?? 0) + 1,
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        max_quantity: item.max_quantity,
-        min_quantity: item.min_quantity,
-        movement_quantity: 1,
-        measurement_unit: item.measurement_unit.abbreviation,
-        price: item.price,
-        amount: item.price,
-        employee_id: last_selected_employee.value,
-        // motive_mode: last_inputed_motive_mode.value,
-        // motive: last_inputed_motive.value,
+    const handleInput = (type) => {
+        if (type === 'in') showResults.value = true;
+        if (type === 'out') showResults.value = false;
     }
-    props.entry.items_list.push(new_item)
-    console.log("NOVO ITEM: ", new_item)
-    searchTerm.value = "";
-    showResults.value = false;
-    updateEstimatedValue()
-}
 
-const changeMotiveMode = (item_id) => {
-    const item = props.entry.items_list.find(el => el.id === item_id);
-    item.motive_mode = !item.motive_mode
-    item.motive = ""
-}
+    const updateEstimatedValue = () => {
+        props.entry.estimated_value = props.entry.items_list.reduce((total, item) => total + (item.price * item.movement_quantity), 0);
+        props.entry.total_value = props.entry.estimated_value
+    }
 
-const removeSelectedItem = async (index, event) => {
-    event.preventDefault(); // Adicione isso para evitar o envio do formulário
-
-    console.log('removeSelectedItem chamado com index:', index);
-
-    if (props.modal.mode === 'see') {
-        if (!confirm("Você tem certeza que deseja deletar esse item? Esta ação não poderá ser desfeita!")) return;
-
-        try {
-            const response = await axios.post(route('entries.delete_item'), { entry_id: props.entry.id, item_id: index });
-            props.entry.items_list = props.entry.items_list.filter((item) => item.id !== index);
-            updateEstimatedValue();
-            $toast.success('Item deletado da entrada com sucesso');
-        } catch (error) {
-            console.error('Erro ao deletar o item:', error.message);
-            $toast.error(`Erro ao deletar o item: ${error.message}`);
+    const last_selected_employee = ref(props.employees_list ? props.employees_list[0]?.id : null);
+    // const last_inputed_motive_mode = ref(true);
+    // const last_inputed_motive = ref(null);
+    const selectItem = (item) => {
+        const new_item = {
+            order_id: (props.entry.items_list[props.entry.items_list.length - 1]?.order_id ?? 0) + 1,
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            max_quantity: item.max_quantity,
+            min_quantity: item.min_quantity,
+            movement_quantity: 1,
+            measurement_unit: item.measurement_unit.abbreviation,
+            price: item.price,
+            amount: item.price,
+            employee_id: last_selected_employee.value,
+            // motive_mode: last_inputed_motive_mode.value,
+            // motive: last_inputed_motive.value,
         }
-    } else {
-        console.log('Executando else, removendo item com order_id:', index);
-        props.entry.items_list = props.entry.items_list.filter((item) => item.order_id !== index);
-        updateEstimatedValue();
+        props.entry.items_list.push(new_item)
+        searchTerm.value = "";
+        showResults.value = false;
+        updateEstimatedValue()
     }
-};
 
-const updateMotive = (newMotive) => {
-    props.entry.motive = newMotive;
-};
+    const changeMotiveMode = (item_id) => {
+        const item = props.entry.items_list.find(el => el.id === item_id);
+        item.motive_mode = !item.motive_mode
+        item.motive = ""
+    }
 
-const updateItem = (newItem) => {
-    selectItem(newItem)
-}
+    const removeSelectedItem = async (index, event) => {
+        event.preventDefault(); // Adicione isso para evitar o envio do formulário
 
-const close = () => {
-    last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
-    emit('close')
-}
+        if (props.modal.mode === 'see') {
+            if (!confirm("Você tem certeza que deseja deletar esse item? Esta ação não poderá ser desfeita!")) return;
 
-const submit = () => {
-    last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
-    emit('submit')
-}
+            try {
+                const response = await axios.post(route('entries.delete_item'), { entry_id: props.entry.id, item_id: index });
+                props.entry.items_list = props.entry.items_list.filter((item) => item.id !== index);
+                updateEstimatedValue();
+                $toast.success('Item deletado da entrada com sucesso');
+            } catch (error) {
+                console.error('Erro ao deletar o item:', error.message);
+                $toast.error(`Erro ao deletar o item: ${error.message}`);
+            }
+        } else {
+            props.entry.items_list = props.entry.items_list.filter((item) => item.order_id !== index);
+            updateEstimatedValue();
+        }
+    };
+
+    const updateMotive = (newMotive) => {
+        props.entry.motive = newMotive;
+    };
+
+    const updateItem = (newItem) => {
+        selectItem(newItem)
+    }
+
+    const close = () => {
+        last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
+        emit('close')
+    }
+
+    const submit = () => {
+        last_selected_employee.value = props.employees_list ? props.employees_list[0]?.id : null
+        emit('submit')
+    }
 </script>
 <template>
     <CreateUpdateModal :show="modal.show" :maxWidth="(canAddItems || see_disabled) ? '3xl' : '2xl'" @close="close">
@@ -204,7 +200,7 @@ const submit = () => {
                                         placeholder="Data do Entrada" :max="formatDate()" :disabled="see_disabled"
                                         v-model="entry.date" required>
                                     <p v-if="entry.errors.date" class="text-red-500 text-sm">{{
-        entry.errors.date }}</p>
+                                        entry.errors.date }}</p>
                                 </div>
                             </div>
 
@@ -220,7 +216,7 @@ const submit = () => {
                                     <SelectSearchService v-else :options="services_list"
                                         @update:modelValue="updateMotive" />
                                     <p v-if="entry.errors.motive" class="text-red-500 text-sm">{{
-        entry.errors.motive }}</p>
+                                        entry.errors.motive }}</p>
                                 </div>
                             </div>
 
@@ -233,7 +229,7 @@ const submit = () => {
                                         placeholder="Descreva a título mais detalhadamente ou insira informações adicionais"
                                         :disabled="see_disabled" v-model="entry.observations"></textarea>
                                     <p v-if="entry.errors.observations" class="text-red-500 text-sm">{{
-        entry.errors.observations }}</p>
+                                        entry.errors.observations }}</p>
                                 </div>
                             </div>
                         </div>
@@ -315,14 +311,14 @@ const submit = () => {
                                                     :disabled="modal.mode !== 'create'">
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{
-        item.measurement_unit }}</td>
+                                                item.measurement_unit }}</td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">
                                                 <select class="simple-select disabled:bg-gray-200"
                                                     :disabled="modal.mode !== 'create'" v-model="item.employee_id"
                                                     @change="last_selected_employee = $event.target.value" required>
                                                     <option v-for="employee in employees_list" :key="employee.id"
                                                         :value="employee.id">{{
-        employee.name }}
+                                                            employee.name }}
                                                         {{ employee.surname }}</option>
                                                 </select>
                                             </td>
@@ -370,7 +366,7 @@ const submit = () => {
             </SecondaryButton>
             <PrimaryButton :class="{ 'disabled': (entry.processing || !enableSubmit) }"
                 :disabled="(entry.processing || !enableSubmit)" @click="submit()">{{
-                modal.primary_button_txt
+                    modal.primary_button_txt
                 }}</PrimaryButton>
         </template>
     </CreateUpdateModal>

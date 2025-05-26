@@ -2,7 +2,7 @@
 
 namespace App\Actions\Fortify;
 
-use Illuminate\Validation\Rules\Senha;
+use Illuminate\Validation\Rules\Password;
 
 trait PasswordValidationRules
 {
@@ -13,6 +13,6 @@ trait PasswordValidationRules
      */
     protected function passwordRules(): array
     {
-        return ['required', 'string', Senha::default(), 'confirmed'];
+        return ['required', 'string', Password::default(), 'confirmed'];
     }
 }

@@ -1,120 +1,132 @@
 <script setup>
-import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
-import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import { ref, computed } from 'vue';
-import { formatDate, toMoney } from '@/general.js';
-import { useForm } from '@inertiajs/vue3';
+    import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
+    import SelectSearchSell from '@/Components/SelectSearchSell.vue';
+    import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import SecondaryButton from '@/Components/SecondaryButton.vue';
+    import { ref, computed } from 'vue';
+    import { calcDeadlineDays, formatDate, getPaymentMethodLabel, toMoney } from '@/general.js';
+    import { useForm } from '@inertiajs/vue3';
 
-const emit = defineEmits(['close', 'submit']);
-const props = defineProps({
-    modal: Object,
-    service: {
-        type: Object,
-        default: null,
-    },
-});
+    const emit = defineEmits(['close', 'submit']);
+    const props = defineProps({
+        modal: Object,
+        service: {
+            type: Object,
+            default: null,
+        },
+        sells_list: {
+            type: Array,
+            default: [],
+        }
+    });
 
-const calc_record = computed(() => props.service.records_list.data.length + 1);
+    const calc_record = computed(() => props.service.records_list.data.length + 1);
 
-const remaining_amount = computed(() => {
-    return enable_records_inputs && (props.service.total_value - props.service.records_list.data.reduce((sum, record) => sum + record.amount, 0));
-})
+    const remaining_amount = computed(() => {
+        return enable_records_inputs && (props.service.total_value - props.service.records_list.data.reduce((sum, record) => sum + record.amount, 0));
+    })
 
-const invalid_record_date = computed(() => {
-    const today = new Date();
-    return props.service.records_list.data.some(data => new Date(data.date) > today);
-});
+    const invalid_record_date = computed(() => {
+        const today = new Date();
+        return props.service.records_list.data.some(data => new Date(data.date) > today);
+    });
 
-const invalid_record_amount = computed(() => {
-    return props.service.records_list.data.some(data => data.amount <= 0);
-});
+    const invalid_record_amount = computed(() => {
+        return props.service.records_list.data.some(data => data.amount <= 0);
+    });
 
-const records_list = computed(() => {
-    return props.service.records_list.data.sort((a, b) => { return new Date(a.date) - new Date(b.date) })
-})
+    const records_list = computed(() => {
+        return props.service.records_list.data.sort((a, b) => { return new Date(a.date) - new Date(b.date) })
+    })
 
-const disable_services_inputs = computed(() => {
-    return props.modal.mode === 'pay' || props.modal.mode === 'see'
-});
+    const disable_services_inputs = computed(() => {
+        return props.modal.mode === 'pay' || props.modal.mode === 'see'
+    });
 
-const enable_records_inputs = computed(() => {
-    return props.modal.mode !== 'create' || props.service.records_list.enable_records;
-});
+    const enable_records_inputs = computed(() => {
+        return props.modal.mode !== 'create' || props.service.records_list.enable_records;
+    });
 
-const can_add_record = computed(() =>
-    props.service.title.length && props.service.client.length && props.service.total_value > 0
-);
+    const can_add_record = computed(() =>
+        props.service.title.length && props.service.client.length && props.service.total_value > 0
+    );
 
 
-const record = useForm({
-    id: calc_record,
-    amount: 0,
-    past: false,
-    register_date: formatDate(),
-    filepath: null,
-})
+    const record = useForm({
+        id: calc_record,
+        amount: 0,
+        past: false,
+        register_date: formatDate(),
+        payment_method: 'cartao_credito',
+        filepath: null,
+    })
 
-const insert_file = ref(false);
+    const insert_file = ref(false);
 
-const toggle_enable_records = () => {
-    if (props.service.records_list.enable_records && props.service.records_list.data.length) {
-        if (!confirm('Tem certeza que deseja desmarcar? Todos os registros serão excluídos!')) {
+    const toggle_enable_records = () => {
+        if (props.service.records_list.enable_records && props.service.records_list.data.length) {
+            if (!confirm('Tem certeza que deseja desmarcar? Todos os registros serão excluídos!')) {
+                return;
+            } else {
+                props.service.records_list.data.length = [];
+                record.reset();
+            }
+        }
+        props.service.records_list.enable_records = !props.service.records_list.enable_records;
+    };
+
+    const addRecord = () => {
+        if (!record.amount || record.amount > remaining_amount.value) {
+            record.errors.amount = `O valor do registro deve ser maior que R$ 0,00 e menor que ${toMoney(remaining_amount.value)}`;
+            return;
+        }
+        record.errors.amount = "";
+
+        if (!record.register_date || new Date(record.register_date) > new Date()) {
+            record.errors.date = `A data do registro deve ser menor ou igual a ${formatDate()}`;
+            return;
+        }
+        record.errors.date = "";
+
+        if (!record.payment_method) {
+            record.errors.payment_method = `Um método de pagamento deve ser selecionado`;
+            return;
+        }
+        record.errors.payment_method = "";
+
+        if (!insert_file.value) record.filepath = null;
+
+        props.service.records_list.data.push({ ...record });
+        insert_file.value = false;
+        record.reset();
+    };
+
+    const removeRecord = (record_id, record = null) => {
+        if (props.modal.mode === 'create') {
+            props.service.records_list.data = props.service.records_list.data.filter((record) => record.id !== record_id);
             return;
         } else {
-            props.service.records_list.data.length = [];
-            record.reset();
+            if (confirm("Você tem certeza que deseja excluir esse registro? (Essa ação não pode ser desfeita)")) {
+                // Certifique-se de usar record.delete como uma função assíncrona
+                record.delete(route('records.destroy', record_id), {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        props.service.records_list.data = props.service.records_list.data.filter((record) => record.id !== record_id);
+                    }
+                });
+                // props.service.records_list.data.find((record) => record.id === record_id).deleted_at = formatDate();
+            }
         }
+    };
+
+    const close = () => {
+        emit('close')
     }
-    props.service.records_list.enable_records = !props.service.records_list.enable_records;
-};
 
-const addRecord = () => {
-    if (!record.amount || record.amount > remaining_amount.value) {
-        record.errors.amount = `O valor do registro deve ser maior que R$ 0,00 e menor que ${toMoney(remaining_amount.value)}`;
-        return;
+    const submit = () => {
+        emit('submit')
     }
-    record.errors.amount = "";
-
-    if (!record.register_date || new Date(record.register_date) > new Date()) {
-        record.errors.date = `A data do registro deve ser menor ou igual a ${formatDate()}`;
-        return;
-    }
-    record.errors.date = "";
-
-    if (!insert_file.value) record.filepath = null;
-
-    props.service.records_list.data.push({ ...record });
-    insert_file.value = false;
-    record.reset();
-};
-
-const removeRecord = (record_id, record = null) => {
-    if (props.modal.mode === 'create') {
-        props.service.records_list.data = props.service.records_list.data.filter((record) => record.id !== record_id);
-        return;
-    } else {
-        if (confirm("Você tem certeza que deseja excluir esse registro? (Essa ação não pode ser desfeita)")) {
-            // Certifique-se de usar record.delete como uma função assíncrona
-            record.delete(route('records.destroy', record_id), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    props.service.records_list.data = props.service.records_list.data.filter((record) => record.id !== record_id);
-                }
-            });
-            // props.service.records_list.data.find((record) => record.id === record_id).deleted_at = formatDate();
-        }
-    }
-};
-
-const close = () => {
-    emit('close')
-}
-
-const submit = () => {
-    emit('submit')
-}
 </script>
 <template>
     <CreateUpdateModal :show="modal.show" @close="close">
@@ -154,7 +166,7 @@ const submit = () => {
                                         placeholder="Título da título" :disabled="disable_services_inputs"
                                         v-model="service.title" required>
                                     <p v-if="service.errors.title" class="text-red-500 text-sm">{{
-        service.errors.title }}</p>
+                                        service.errors.title }}</p>
                                 </div>
                             </div>
 
@@ -166,7 +178,7 @@ const submit = () => {
                                         class="simple-input disabled:bg-gray-200" placeholder="Nome do cliente"
                                         :disabled="disable_services_inputs" v-model="service.client" required>
                                     <p v-if="service.errors.client" class="text-red-500 text-sm">{{
-        service.errors.client }}</p>
+                                        service.errors.client }}</p>
                                 </div>
                             </div>
 
@@ -180,7 +192,7 @@ const submit = () => {
                                         placeholder="Valor total inicial da título" :disabled="disable_services_inputs"
                                         v-model="service.total_value" required>
                                     <p v-if="service.errors.total_value" class="text-red-500 text-sm">{{
-        service.errors.total_value }}</p>
+                                        service.errors.total_value }}</p>
                                 </div>
                             </div>
 
@@ -192,9 +204,24 @@ const submit = () => {
                                     <input type="date" name="service-deadline" id="service-deadline" autocomplete="on"
                                         class="simple-input disabled:bg-gray-200" autofocus="true"
                                         placeholder="Prazo para conclusão" :min="formatDate()"
-                                        :disabled="disable_services_inputs" v-model="service.deadline" required>
+                                        :disabled="disable_services_inputs || modal.mode !== 'create'"
+                                        v-model="service.deadline" required>
                                     <p v-if="service.errors.deadline" class="text-red-500 text-sm">{{
-        service.errors.deadline }}</p>
+                                        service.errors.deadline }}</p>
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-6"
+                                v-if="modal.mode !== 'create' && calcDeadlineDays(service.deadline) < 4">
+                                <label for="service-delay-reason"
+                                    class="block text-sm font-medium leading-6 text-gray-900">Motivo do Atraso</label>
+                                <div class="mt-2">
+                                    <textarea type="text" name="service-delay-reason" id="service-delay-reason"
+                                        autocomplete="on" class="simple-input disabled:bg-gray-200"
+                                        placeholder="Descreva o motivo do atraso do serviço"
+                                        :disabled="disable_services_inputs" v-model="service.delay_reason"></textarea>
+                                    <p v-if="service.errors.delay_reason" class="text-red-500 text-sm">{{
+                                        service.errors.delay_reason }}</p>
                                 </div>
                             </div>
 
@@ -202,14 +229,30 @@ const submit = () => {
                                 <label for="service-observations"
                                     class="block text-sm font-medium leading-6 text-gray-900">Observações</label>
                                 <div class="mt-2">
-                                    <textarea type="text" observations="service-observations" id="service-observations"
+                                    <textarea type="text" name="service-observations" id="service-observations"
                                         autocomplete="on" class="simple-input disabled:bg-gray-200"
                                         placeholder="Descreva a título mais detalhadamente ou insira informações adicionais"
                                         :disabled="disable_services_inputs" v-model="service.observations"></textarea>
                                     <p v-if="service.errors.observations" class="text-red-500 text-sm">{{
-        service.errors.observations }}</p>
+                                        service.errors.observations }}</p>
                                 </div>
                             </div>
+
+                            <div class="sm:col-span-6">
+                                <label for="service-sell"
+                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Venda
+                                    relacionada</label>
+                                <div class="mt-2">
+                                    <SelectSearchSell :options="sells_list"
+                                        @update:modelValue="service.previous_id = $event"
+                                        :disable_services_inputs="disable_services_inputs"
+                                        :initialValue="service.previous_id" />
+                                    <p v-if="service.errors.previous_id" class="text-red-500 text-sm">{{
+                                        service.errors.previous_id }}</p>
+                                </div>
+                            </div>
+
+
                         </div>
                     </section>
 
@@ -266,7 +309,7 @@ const submit = () => {
 
                         <div v-if="modal.mode !== 'update' && modal.mode !== 'see'"
                             class="mt-10 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-                            <div class="col-span-3">
+                            <div class="col-span-2">
                                 <label for="record-amount"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Valor
                                     (R$)</label>
@@ -276,15 +319,15 @@ const submit = () => {
                                         class="simple-input disabled:bg-gray-200 disabled:opacity-75"
                                         :disabled="remaining_amount == 0" placeholder="Valor do serviço parcial"
                                         v-model="record.amount" />
-                                    <p class="text-gray-400 text-xs py-1">Valor Restante:y {{ toMoney(remaining_amount)
-                                        }}
+                                    <p class="text-gray-400 text-xs py-1">Valor Restante: {{ toMoney(remaining_amount)
+                                    }}
                                     </p>
                                     <p v-if="record.errors.amount" class="text-red-500 text-sm">{{
-        record.errors.amount }}</p>
+                                        record.errors.amount }}</p>
                                 </div>
                             </div>
 
-                            <div class="sm:col-span-3">
+                            <div class="sm:col-span-2">
                                 <label for="record-date"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Data
                                     do
@@ -295,8 +338,26 @@ const submit = () => {
                                         :disabled="remaining_amount == 0" placeholder="Data de serviço do valor parcial"
                                         v-model="record.register_date" />
                                     <p class="text-gray-400 text-xs py-1">Não aceita datas no futuro</p>
-                                    <p v-if="record.errors.date" class="text-red-500 text-sm">{{
-        record.errors.date }}</p>
+                                    <p v-if="record.errors.register_date" class="text-red-500 text-sm">{{
+                                        record.errors.register_date }}</p>
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label for="record-date"
+                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Forma
+                                    de Pagamento</label>
+                                <div class="mt-2">
+                                    <select name="payment_method" class="simple-input" v-model="record.payment_method">
+                                        <option value="pix">PIX</option>
+                                        <option value="dinheiro">Dinheiro</option>
+                                        <option value="cartao_credito">Cartão de Crédito</option>
+                                        <option value="cartao_debito">Cartão de Débito</option>
+                                        <option value="ted">TED</option>
+                                        <option value="cheque">Cheque</option>
+                                    </select>
+                                    <p v-if="record.errors.payment_method" class="text-red-500 text-sm">{{
+                                        record.errors.payment_method }}</p>
                                 </div>
                             </div>
                             <!-- UPLOAD FILE
@@ -359,7 +420,7 @@ const submit = () => {
                             class="w-full py-5 flex justify-end">
                             <button type="button"
                                 class="w-full px-4 py-2 bg-blue-600 border border-gray-300 rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-blue-700 focus:outline-none focus:border-blue-300 focus:ring focus:ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition"
-                                :disabled="!record.amount || !record.register_date || record.amount > remaining_amount"
+                                :disabled="!record.amount || !record.register_date || !record.payment_method || record.amount > remaining_amount"
                                 @click=" addRecord()">
                                 Inserir registro
                             </button>
@@ -374,42 +435,66 @@ const submit = () => {
                                                 <tr>
                                                     <th scope="col" class="px-6 py-4 text-center">Valor</th>
                                                     <th scope="col" class="px-6 py-4 text-center">Data</th>
+                                                    <th scope="col" class="px-6 py-4 text-center">Método de Pagamento
+                                                    </th>
                                                     <!-- FILE CONTROL
                                                     <th scope="col" class="px-6 py-4 text-center">Arquivo</th>
                                                     -->
+                                                    <th v-if="modal.mode !== 'create'" scope="col"
+                                                        class="px-6 py-4 text-center">Usuário</th>
                                                     <th v-if="modal.mode !== 'pay' && modal.mode !== 'see'" scope="col"
                                                         class="px-6 py-4 text-center">Excluir</th>
+
                                                 </tr>
                                             </thead>
                                             <tbody>
 
-                                                <tr v-for=" record_item in records_list" class="border-b bg-white ">
-                                                    <td class="whitespace-nowrap px-6  text-center">
+                                                <tr v-for="record_item in records_list" class="border-b bg-white ">
+                                                    <td class="whitespace-nowrap px-1  text-center">
                                                         <div v-if="modal.mode !== 'update' && !record_item.past"
                                                             class="w-full relative flex flex-wrap items-stretch">
                                                             <span
-                                                                class="w-1/4 select-none flex items-center whitespace-nowrap rounded-l border border-r-0 border-solid border-neutral-300 px-3 py-[0.25rem] text-center text-xs font-normal leading-[1.6] text-neutral-700 "
+                                                                class="w-1/4 select-none flex items-center whitespace-nowrap rounded-l border border-r-0 border-solid border-neutral-300 px-1 py-[0.25rem] text-center text-xs font-normal leading-[1.6] text-neutral-700 "
                                                                 id="basic-addon1">R$</span>
                                                             <input id="record_item-amount-edit"
                                                                 name="record_item-amount-edit" type="number" step="0.01"
                                                                 min="0" :max="remaining_amount" autocomplete="off"
-                                                                class="relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-3 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
+                                                                class="relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-1 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
                                                                 placeholder="Editar serviço parcial"
                                                                 v-model="record_item.amount" />
                                                         </div>
                                                         <p v-else>{{ toMoney(record_item.amount) }}</p>
                                                     </td>
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center">
+                                                    <td class="whitespace-nowrap px-1 py-4 text-center">
                                                         <div v-if="modal.mode !== 'update' && !record_item.past"
                                                             class="w-full relative flex flex-wrap items-stretch">
                                                             <input id="record-date" name="record-date" type="date"
                                                                 :max="formatDate()" autocomplete="off"
-                                                                class="w-3/4 relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-3 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
+                                                                class="w-full relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-1 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
                                                                 placeholder="Data de serviço do valor parcial"
                                                                 v-model="record_item.register_date" />
 
                                                         </div>
                                                         <p v-else>{{ formatDate(record_item.register_date, true) }}</p>
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-1 py-4 text-center">
+                                                        <div v-if="modal.mode !== 'update' && !record_item.past"
+                                                            class="w-full relative flex flex-wrap items-stretch">
+                                                            <select name="payment_method"
+                                                                class="w-full relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-1 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
+                                                                v-model="record_item.payment_method">
+                                                                <option value="pix">PIX</option>
+                                                                <option value="dinheiro">Dinheiro</option>
+                                                                <option value="cartao_credito">Cartão de Crédito
+                                                                </option>
+                                                                <option value="cartao_debito">Cartão de Débito</option>
+                                                                <option value="ted">TED</option>
+                                                                <option value="cheque">Cheque</option>
+                                                            </select>
+
+                                                        </div>
+                                                        <p v-else>{{ getPaymentMethodLabel(record_item.payment_method)
+                                                        }}</p>
                                                     </td>
 
                                                     <!-- FILE CONTROL
@@ -445,6 +530,12 @@ const submit = () => {
                                                     </td>
                                                     -->
 
+                                                    <td v-if="modal.mode !== 'create'"
+                                                        class="whitespace-nowrap px-6 py-4  select-none">
+                                                        {{ record_item?.procedure?.user?.name ||
+                                                            $page.props.auth.user.name || 'Não identificado' }}
+                                                    </td>
+
                                                     <td v-if="modal.mode !== 'pay' && modal.mode !== 'see'"
                                                         class="whitespace-nowrap px-6 py-4  select-none">
                                                         <XMarkIcon
@@ -453,10 +544,10 @@ const submit = () => {
                                                             title="Remover este registro" />
                                                     </td>
                                                     <p v-if="record_item.errors.amount" class="text-red-500 text-sm">{{
-        record_item.errors.amount }}</p>
+                                                        record_item.errors.amount }}</p>
 
                                                     <p v-if="record_item.errors.date" class="text-red-500 text-sm">{{
-        record_item.errors.date }}</p>
+                                                        record_item.errors.date }}</p>
 
                                                 </tr>
                                             </tbody>
@@ -469,8 +560,8 @@ const submit = () => {
                                         <p v-if="invalid_record_date" class="text-red-500 text-sm py-5 text-center">
                                             Todas as
                                             datas de registro devem ser não nulas e menores ou iguais a {{
-        formatDate(new
-            Date()) }}</p>
+                                                formatDate(new
+                                                    Date()) }}</p>
                                         <p v-if="invalid_record_amount" class="text-red-500 text-sm py-5 text-center">
                                             Todos
                                             os valores devem ser maiores que R$ 0,00</p>
@@ -494,7 +585,7 @@ const submit = () => {
                 :class="{ 'disabled': (service.processing || remaining_amount < 0 || invalid_record_date || invalid_record_amount) }"
                 :disabled="(service.processing || remaining_amount < 0 || invalid_record_date || invalid_record_amount)"
                 @click="modal.mode === 'see' ? close() : submit()">{{
-                modal.primary_button_txt
+                    modal.primary_button_txt
                 }}</PrimaryButton>
         </template>
     </CreateUpdateModal>

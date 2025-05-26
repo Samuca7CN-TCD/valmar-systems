@@ -1,4 +1,5 @@
 export const toMoney = (value) => {
+    if (!value) return;
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).toString()
 }
 
@@ -24,17 +25,18 @@ export const formatDate = (date = null, format = null) => {
 
     const currentDate = new Date(date);
 
-    // Adjust for timezone offset to ensure correct date
-    currentDate.setMinutes(currentDate.getMinutes() + currentDate.getTimezoneOffset());
-
     if (format === null || format === 'new_date') {
-        return currentDate.toISOString().substring(0, 10); // Format YYYY-MM-DD
+        return currentDate.toISOString().substring(0, 10); // YYYY-MM-DD
     } else if (format === 'reading') {
+        const months = [
+            'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+            'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+        ];
         const day = currentDate.getDate();
         const month = months[currentDate.getMonth()];
         const year = currentDate.getFullYear();
 
-        return `${day} de ${month} de ${year}`; // Format "31 de Julho de 2024"
+        return `${day} de ${month} de ${year}`;
     } else if (format === 'reading_date_time') {
         const day = String(currentDate.getDate()).padStart(2, '0');
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -43,15 +45,16 @@ export const formatDate = (date = null, format = null) => {
         const minutes = String(currentDate.getMinutes()).padStart(2, '0');
         const seconds = String(currentDate.getSeconds()).padStart(2, '0');
 
-        return `${day}/${month}/${year} às ${hours}:${minutes}:${seconds}`; // Format "31/07/2024 às 14:30:00"
+        return `${day}/${month}/${year} às ${hours}:${minutes}:${seconds}`;
     } else {
         const year = currentDate.getFullYear();
         const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
         const day = currentDate.getDate().toString().padStart(2, '0');
 
-        return `${day}/${month}/${year}`; // Format DD/MM/YYYY
+        return `${day}/${month}/${year}`;
     }
 };
+
 
 
 
@@ -177,4 +180,16 @@ export const absolute = (value) => {
 
 export const printList = () => {
     window.print()
+}
+
+export const getPaymentMethodLabel = (method) => {
+    const map = {
+        pix: 'Pix',
+        dinheiro: 'Dinheiro',
+        cartao_credito: 'Cartão de Crédito',
+        cartao_debito: 'Cartão de Débito',
+        ted: 'TED',
+        cheque: 'Cheque',
+    };
+    return map[method] || method;
 }

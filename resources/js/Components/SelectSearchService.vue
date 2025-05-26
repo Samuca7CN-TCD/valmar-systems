@@ -1,61 +1,59 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+    import { ref, computed, onMounted, onUnmounted } from "vue";
 
-const props = defineProps({
-    options: {
-        type: Array,
-        required: true,
-        default: () => [],
-    },
-});
+    const props = defineProps({
+        options: {
+            type: Array,
+            required: true,
+            default: () => [],
+        },
+    });
 
-const emit = defineEmits(['update:modelValue']); // Define o evento personalizado
+    const emit = defineEmits(['update:modelValue']); // Define o evento personalizado
 
-const search = ref("");
-const dropdownOpen = ref(false);
+    const search = ref("");
+    const dropdownOpen = ref(false);
 
-const openDropdown = () => {
-    dropdownOpen.value = true;
-};
+    const openDropdown = () => {
+        dropdownOpen.value = true;
+    };
 
-const closeDropdown = () => {
-    dropdownOpen.value = false;
-};
+    const closeDropdown = () => {
+        dropdownOpen.value = false;
+    };
 
-const selectOption = (option) => {
-    console.log("OPTIONS: ", option)
-    if (typeof option === "string") {
-        search.value = option;
-    } else {
-        search.value = `${option.motive} (${option.entity_name})`;
-        closeDropdown();
-    }
-    console.log("sdlzfjk: ", search.value)
-    emit('update:modelValue', search.value); // Emite o evento com o valor selecionado
-};
+    const selectOption = (option) => {
+        if (typeof option === "string") {
+            search.value = option;
+        } else {
+            search.value = `${option.motive} (${option.entity_name})`;
+            closeDropdown();
+        }
+        emit('update:modelValue', search.value); // Emite o evento com o valor selecionado
+    };
 
-const filteredOptions = computed(() => {
-    return props.options.filter(
-        (option) =>
-            option.motive.toLowerCase().includes(search.value.toLowerCase()) ||
-            option.entity_name.toLowerCase().includes(search.value.toLowerCase())
-    );
-});
+    const filteredOptions = computed(() => {
+        return props.options.filter(
+            (option) =>
+                option.motive.toLowerCase().includes(search.value.toLowerCase()) ||
+                option.entity_name.toLowerCase().includes(search.value.toLowerCase())
+        );
+    });
 
-const handleClickOutside = (event) => {
-    const dropdownElement = event.target.closest('.dropdown-container');
-    if (!dropdownElement) {
-        closeDropdown();
-    }
-};
+    const handleClickOutside = (event) => {
+        const dropdownElement = event.target.closest('.dropdown-container');
+        if (!dropdownElement) {
+            closeDropdown();
+        }
+    };
 
-onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
-});
+    onMounted(() => {
+        document.addEventListener('click', handleClickOutside);
+    });
 
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
-});
+    onUnmounted(() => {
+        document.removeEventListener('click', handleClickOutside);
+    });
 
 </script>
 

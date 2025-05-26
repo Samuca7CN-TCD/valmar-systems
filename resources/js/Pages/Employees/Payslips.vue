@@ -119,9 +119,7 @@
             value: isIncome ? data.value : -data.value
         })).post(route('payslip.store'), {
             preserveScroll: true,
-            onSuccess: (response) => {
-                // Adicione o novo payslip à lista de payslips
-                console.log("RESPONSE: ", response)
+            onSuccess: () => {
                 //payslips.value.push(response.props.payslip);
                 form.reset();
                 $toast.success("Registro cadastrado com sucesso!")

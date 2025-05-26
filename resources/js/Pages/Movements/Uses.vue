@@ -1,183 +1,175 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue'
-import CreateUpdateUsesModal from '@/Components/Movements/CreateUpdateUsesModal.vue'
-import FloatButton from '@/Components/FloatButton.vue'
-import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
-import { Head, useForm } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
-import { ChevronDownIcon, ChevronUpIcon, InformationCircleIcon, EyeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
-import { useToast } from 'vue-toast-notification';
-import 'vue-toast-notification/dist/theme-sugar.css';
-// =============================================
-// Informações exteriores
-const props = defineProps({
-    page: Object,
-    page_options: {
-        type: Array,
-        default: null,
-    },
-    uses_list: Object,
-    employees_list: Array,
-    items: Object,
-    parameters: Object,
-    services_list: Array,
-})
+    import AppLayout from '@/Layouts/AppLayout.vue'
+    import CreateUpdateUsesModal from '@/Components/Movements/CreateUpdateUsesModal.vue'
+    import FloatButton from '@/Components/FloatButton.vue'
+    import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
+    import { Head, useForm } from '@inertiajs/vue3'
+    import { computed, ref } from 'vue'
+    import { ChevronDownIcon, ChevronUpIcon, InformationCircleIcon, EyeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+    import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
+    import { useToast } from 'vue-toast-notification';
+    import 'vue-toast-notification/dist/theme-sugar.css';
+    // =============================================
+    // Informações exteriores
+    const props = defineProps({
+        page: Object,
+        page_options: {
+            type: Array,
+            default: null,
+        },
+        uses_list: Object,
+        employees_list: Array,
+        items: Object,
+        parameters: Object,
+        services_list: Array,
+    })
 
 
-// =============================================
-// Informações do OBJETO
-const use_data = useForm({
-    'id': null,
-    'employee': '',
-    'employee_id': null,
-    'motive': '',
-    'date': formatDate(),
-    'total_value': 0,
-    'observations': '',
-    'items_list': [],
-})
+    // =============================================
+    // Informações do OBJETO
+    const use_data = useForm({
+        'id': null,
+        'employee': '',
+        'employee_id': null,
+        'motive': '',
+        'date': formatDate(),
+        'total_value': 0,
+        'observations': '',
+        'items_list': [],
+    })
 
-const use_filter_toggle = ref(!props.parameters.default)
-const use_filter = useForm({
-    employee_id: props.parameters.employee_id,
-    motive: props.parameters.motive,
-    start_date: props.parameters.start_date,
-    end_date: props.parameters.end_date,
-})
+    const use_filter_toggle = ref(!props.parameters.default)
+    const use_filter = useForm({
+        employee_id: props.parameters.employee_id,
+        motive: props.parameters.motive,
+        start_date: props.parameters.start_date,
+        end_date: props.parameters.end_date,
+    })
 
-const $toast = useToast();
-const search_term = ref("")
+    const $toast = useToast();
+    const search_term = ref("")
 
-const filtered_uses_list = computed(() => {
-    const searchTermLower = search_term.value.toLowerCase();
-    return props.uses_list.filter(el => {
-        const { id, entity_name, motive, observations, date, items } = el;
-        const fieldsToCheck = [
-            id.toString(),
-            entity_name?.toLowerCase() ?? "",
-            motive?.toLowerCase() ?? "",
-            observations?.toLowerCase() ?? "",
-            date?.toLowerCase() ?? "",
-        ];
-        for (let field of fieldsToCheck) {
-            if (field.includes(searchTermLower)) {
-                return true;
+    const filtered_uses_list = computed(() => {
+        const searchTermLower = search_term.value.toLowerCase();
+        return props.uses_list.filter(el => {
+            const { id, entity_name, motive, observations, date, items } = el;
+            const fieldsToCheck = [
+                id.toString(),
+                entity_name?.toLowerCase() ?? "",
+                motive?.toLowerCase() ?? "",
+                observations?.toLowerCase() ?? "",
+                date?.toLowerCase() ?? "",
+            ];
+            for (let field of fieldsToCheck) {
+                if (field.includes(searchTermLower)) {
+                    return true;
+                }
+            }
+            return items.some(item => item.name.toLowerCase().includes(searchTermLower));
+        });
+    });
+
+
+    const total_uses_amount = computed(() => {
+        return props.uses_list.reduce((accumulator, use) => {
+            return accumulator + use.accounting.partial_value;
+        }, 0);
+    });
+    // =============================================
+    // Controle de Modal
+    const modal = ref({
+        mode: 'create',
+        show: false,
+        get title() {
+            switch (this.mode) {
+                case 'create': return "Criar uso"
+                case 'update': return "Editar uso"
+                case 'see': return "Ver informações da uso"
+            }
+        },
+        get primary_button_txt() {
+            switch (this.mode) {
+                case 'create': return "Cadastrar"
+                case 'update': return "Atualizar"
+                case 'see': return "Fechar"
             }
         }
-        return items.some(item => item.name.toLowerCase().includes(searchTermLower));
-    });
-});
-
-
-const total_uses_amount = computed(() => {
-    return props.uses_list.reduce((accumulator, use) => {
-        return accumulator + use.accounting.partial_value;
-    }, 0);
-});
-// =============================================
-// Controle de Modal
-const modal = ref({
-    mode: 'create',
-    show: false,
-    get title() {
-        switch (this.mode) {
-            case 'create': return "Criar uso"
-            case 'update': return "Editar uso"
-            case 'see': return "Ver informações da uso"
-        }
-    },
-    get primary_button_txt() {
-        switch (this.mode) {
-            case 'create': return "Cadastrar"
-            case 'update': return "Atualizar"
-            case 'see': return "Fechar"
-        }
-    }
-})
-
-const openModal = (mode, use_id = null) => {
-    const isUpdateOrSeeMode = ['update', 'see'].includes(mode);
-    if (use_id !== null && isUpdateOrSeeMode) {
-        const use = props.uses_list.find(use => use.id === use_id);
-        if (use) {
-            const { id, entity_name, employee_id, date, motive, observations, accounting, items } = use;
-
-            use_data.id = id;
-            use_data.employee = entity_name;
-            use_data.date = date;
-            use_data.motive = motive
-            use_data.estimated_value = accounting.estimated_value;
-            use_data.total_value = accounting.total_value;
-            use_data.partial_value = accounting.partial_value;
-            use_data.observations = observations;
-            use_data.items_list = items
-            use_data.employee_id = employee_id
-        }
-    }
-    modal.value.mode = mode;
-    modal.value.show = true;
-};
-
-
-const closeModal = () => {
-    use_data.reset()
-    modal.value.show = false
-}
-
-
-// =============================================
-// Métodos de CRUD
-const createUse = () => {
-    use_data.post(route('uses.store'), {
-        preserveScroll: true,
-        onSuccess: () => closeModal(),
-        onError: (error) => { console.log(error) }
     })
-}
 
-const get_filtered_data = () => {
-    use_filter.post(route('uses.filter'), {
-        preserveScroll: true,
-        /*onSuccess: (data) => {
-            console.log("SUCESSO: ", data);
-            $toast.success("Dados filtrados com sucesso!");
-        },
-        onError: (error) => {
-            $toast.error("Erro ao filtrar dados.");
-            console.error(error);
-        }*/
-    });
-};
+    const openModal = (mode, use_id = null) => {
+        const isUpdateOrSeeMode = ['update', 'see'].includes(mode);
+        if (use_id !== null && isUpdateOrSeeMode) {
+            const use = props.uses_list.find(use => use.id === use_id);
+            if (use) {
+                const { id, entity_name, employee_id, date, motive, observations, accounting, items } = use;
 
-
-
-
-const updateUse = () => {
-    use_data.put(route('uses.update', use_data.id), {
-        preserveScroll: true,
-        onSuccess: () => closeModal()
-    })
-}
+                use_data.id = id;
+                use_data.employee = entity_name;
+                use_data.date = date;
+                use_data.motive = motive
+                use_data.estimated_value = accounting.estimated_value;
+                use_data.total_value = accounting.total_value;
+                use_data.partial_value = accounting.partial_value;
+                use_data.observations = observations;
+                use_data.items_list = items
+                use_data.employee_id = employee_id
+            }
+        }
+        modal.value.mode = mode;
+        modal.value.show = true;
+    };
 
 
-const deleteUse = (use_id, use_name) => {
-    if (confirm(`Você tem certeza que deseja excluir a uso de material para "${use_name}"? Todos os materiais comprados voltarão para o estoque! Esta ação não poderá ser desfeita!`)) {
-        use_data.delete(route('uses.destroy', use_id), {
+    const closeModal = () => {
+        use_data.reset()
+        modal.value.show = false
+    }
+
+
+    // =============================================
+    // Métodos de CRUD
+    const createUse = () => {
+        use_data.post(route('uses.store'), {
             preserveScroll: true,
-            onSuccess: () => $toast.success('Uso deletado com sucesso!')
+            onSuccess: () => closeModal(),
+            onError: (error) => { console.log(error) }
         })
     }
-}
 
-const submit = () => {
-    switch (modal.value.mode) {
-        case 'create': return createUse()
-        case 'update': return updateUse()
-        case 'see': return closeModal()
-        default: $toast.error('Método desconhecido. Informar o Técnico.')
+    const get_filtered_data = () => {
+        use_filter.post(route('uses.filter'), {
+            preserveScroll: true,
+        });
+    };
+
+
+
+
+    const updateUse = () => {
+        use_data.put(route('uses.update', use_data.id), {
+            preserveScroll: true,
+            onSuccess: () => closeModal()
+        })
     }
-}
+
+
+    const deleteUse = (use_id, use_name) => {
+        if (confirm(`Você tem certeza que deseja excluir a uso de material para "${use_name}"? Todos os materiais comprados voltarão para o estoque! Esta ação não poderá ser desfeita!`)) {
+            use_data.delete(route('uses.destroy', use_id), {
+                preserveScroll: true,
+                onSuccess: () => $toast.success('Uso deletado com sucesso!')
+            })
+        }
+    }
+
+    const submit = () => {
+        switch (modal.value.mode) {
+            case 'create': return createUse()
+            case 'update': return updateUse()
+            case 'see': return closeModal()
+            default: $toast.error('Método desconhecido. Informar o Técnico.')
+        }
+    }
 </script>
 
 <template>
@@ -228,7 +220,7 @@ const submit = () => {
                                     </option>
                                 </select>
                                 <p v-if="use_filter.errors.employee_id" class="text-red-500 text-sm">{{
-        use_filter.errors.employee_id }}</p>
+                                    use_filter.errors.employee_id }}</p>
                             </div>
                         </div>
 
@@ -240,7 +232,7 @@ const submit = () => {
                                     class="simple-input disabled:bg-gray-200" placeholder="Filtrar por motivo"
                                     v-model="use_filter.motive" @input="get_filtered_data" required>
                                 <p v-if="use_filter.errors.motive" class="text-red-500 text-sm">{{
-        use_filter.errors.motive }}</p>
+                                    use_filter.errors.motive }}</p>
                             </div>
                         </div>
 
@@ -253,7 +245,7 @@ const submit = () => {
                                     class="simple-input disabled:bg-gray-200" placeholder="Filtrar por período (início)"
                                     v-model="use_filter.start_date" @input="get_filtered_data" required>
                                 <p v-if="use_filter.errors.start_date" class="text-red-500 text-sm">{{
-        use_filter.errors.start_date }}</p>
+                                    use_filter.errors.start_date }}</p>
                             </div>
                         </div>
 
@@ -266,7 +258,7 @@ const submit = () => {
                                     class="simple-input disabled:bg-gray-200" placeholder="Filtrar por período (fim)"
                                     v-model="use_filter.end_date" @input="get_filtered_data" required>
                                 <p v-if="use_filter.errors.end_date" class="text-red-500 text-sm">{{
-        use_filter.errors.end_date }}</p>
+                                    use_filter.errors.end_date }}</p>
                             </div>
 
                         </div>
@@ -315,15 +307,15 @@ const submit = () => {
                                                 <tr v-if="filtered_uses_list.length" v-for="use in filtered_uses_list"
                                                     class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
-        use.id }}
+                                                        use.id }}
                                                     </td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
-        toMoney(use.motive) }}
+                                                        toMoney(use.motive) }}
                                                         <span v-if="use.observations" :title="use.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
-        formatDate(use.date, true) }}</td>
+                                                        formatDate(use.date, true) }}</td>
                                                     <!--
                                                         <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-yellow-700 active:text-yellow-900 select-none print:hidden"
                                                         :title="'EDITAR: Compra de ' + use.entity_name"

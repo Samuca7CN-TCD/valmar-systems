@@ -31,7 +31,7 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('home');
-    Route::resource('/dashboard', DashboardController::class);
+    Route::resource('dashboard', DashboardController::class);
 
     Route::get('/warehouse', [ItemController::class, 'index'])->name('warehouse.index');
     Route::post('/warehouse', [ItemController::class, 'store'])->name('warehouse.store');

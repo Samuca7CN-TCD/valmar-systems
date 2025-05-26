@@ -1,168 +1,168 @@
 <script setup>
-import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
-import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import { ref, computed, reactive } from 'vue';
-import { formatDate, toMoney } from '@/general.js';
-import { useForm } from '@inertiajs/vue3';
-import SelectSearchItem from '@/Components/SelectSearchItem.vue'
+    import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
+    import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import SecondaryButton from '@/Components/SecondaryButton.vue';
+    import { ref, computed, reactive } from 'vue';
+    import { formatDate, toMoney } from '@/general.js';
+    import { useForm } from '@inertiajs/vue3';
+    import SelectSearchItem from '@/Components/SelectSearchItem.vue'
 
-const emit = defineEmits(['close', 'submit']);
-const props = defineProps({
-    modal: Object,
-    sell: {
-        type: Object,
-        default: null,
-    },
-    items: Array,
-});
-
-const items_list = ref(JSON.parse(JSON.stringify(props.items)))
-const pay_all = ref(false);
-
-const dateRegex = /^\d{4}-\d{2}-\d{2}$/
-const canAddItems = computed(() => {
-    const { client, date } = props.sell;
-
-    if (!client || !client.length) return false;
-    const isDateValid = date && dateRegex.test(date);
-
-    return isDateValid;
-});
-
-const enableSubmit = computed(() => {
-    const { client, date, estimated_value, total_value, entry_value, items_list } = props.sell;
-
-    if (!client || !client.length) return false;
-    if (!date || !dateRegex.test(date)) return false;
-
-    const areValuesValid = estimated_value > 0 && total_value > 0 && entry_value <= total_value;
-    if (!areValuesValid) return false;
-
-    const items_okay = items_list.every(item => {
-        return item.quantity > 0 && item.movement_quantity <= item.quantity;
+    const emit = defineEmits(['close', 'submit']);
+    const props = defineProps({
+        modal: Object,
+        sell: {
+            type: Object,
+            default: null,
+        },
+        items: Array,
     });
 
-    return items_okay; // Early return based on item checks
-});
+    const items_list = ref(JSON.parse(JSON.stringify(props.items)))
+    const pay_all = ref(false);
 
-const partialValue = computed(() => {
-    return props.sell.total_value - props.sell.entry_value
-})
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+    const canAddItems = computed(() => {
+        const { client, date } = props.sell;
 
-const see_disabled = computed(() => {
-    return props.modal.mode === 'see'
-})
+        if (!client || !client.length) return false;
+        const isDateValid = date && dateRegex.test(date);
 
+        return isDateValid;
+    });
 
-const searchTerm = ref("");
-const showResults = ref(false);
+    const enableSubmit = computed(() => {
+        const { client, date, estimated_value, total_value, entry_value, items_list } = props.sell;
 
-const filteredItems = computed(() => {
-    return items_list.value.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.value.toLowerCase())
-    );
-});
+        if (!client || !client.length) return false;
+        if (!date || !dateRegex.test(date)) return false;
 
-const handleInput = (type) => {
-    if (type === 'in') showResults.value = true;
-    if (type === 'out') showResults.value = false;
-}
+        const areValuesValid = estimated_value > 0 && total_value > 0 && entry_value <= total_value;
+        if (!areValuesValid) return false;
 
-const updateEstimatedValue = () => {
-    props.sell.estimated_value = props.sell.items_list.reduce((total, item) => total + (item.price * item.movement_quantity), 0);
-    calc_final_values('estimated_value')
-}
+        const items_okay = items_list.every(item => {
+            return item.quantity > 0 && item.movement_quantity <= item.quantity;
+        });
 
-const selectItem = (item) => {
-    props.sell.items_list.push({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        max_quantity: item.max_quantity,
-        min_quantity: item.min_quantity,
-        movement_quantity: 1,
-        measurement_unit: item.measurement_unit.abbreviation,
-        price: item.price,
-        amount: item.price,
+        return items_okay; // Early return based on item checks
+    });
+
+    const partialValue = computed(() => {
+        return props.sell.total_value - props.sell.entry_value
     })
-    reloadItemsList()
-    searchTerm.value = "";
-    showResults.value = false;
-    updateEstimatedValue()
-}
 
-const removeSelectedItem = (index) => {
-    props.sell.items_list = props.sell.items_list.filter((item) => item.id !== index)
-    reloadItemsList()
-    updateEstimatedValue()
-}
-
-const reloadItemsList = () => {
-    items_list.value = props.items.filter(item =>
-        !props.sell.items_list.some(sellItem => sellItem.id === item.id)
-    );
-}
+    const see_disabled = computed(() => {
+        return props.modal.mode === 'see'
+    })
 
 
-const handleInputValue = (e, input) => {
-    props.sell[input] = e.target.value
-    calc_final_values(input)
-}
+    const searchTerm = ref("");
+    const showResults = ref(false);
 
-const decimal_format = (number, exp) => {
-    const potencia = 10 ** exp
-    return Math.floor(number * potencia) / potencia
-}
+    const filteredItems = computed(() => {
+        return items_list.value.filter((item) =>
+            item.name.toLowerCase().includes(searchTerm.value.toLowerCase())
+        );
+    });
 
-const calc_final_values = (mode) => {
-    let { estimated_value, total_value, discount_percent, discount } = props.sell;
-    switch (mode) {
-        case 'estimated_value':
-        case 'discount_percent':
-            total_value = estimated_value * (1 - (discount_percent / 100));
-            discount = estimated_value - total_value;
-            break;
-        case 'total_value':
-            discount = estimated_value - total_value;
-            discount_percent = (discount / estimated_value) * 100;
-            break;
-        case 'discount':
-            discount_percent = (discount / estimated_value) * 100;
-            total_value = estimated_value - discount;
-            break;
+    const handleInput = (type) => {
+        if (type === 'in') showResults.value = true;
+        if (type === 'out') showResults.value = false;
     }
-    Object.assign(props.sell, { estimated_value, total_value, discount_percent, discount });
-}
 
-const payAll = () => {
-    if (pay_all.value) {
-        props.sell.entry_value = props.sell.total_value;
-    } else {
-        props.sell.entry_value = 0
+    const updateEstimatedValue = () => {
+        props.sell.estimated_value = props.sell.items_list.reduce((total, item) => total + (item.price * item.movement_quantity), 0);
+        calc_final_values('estimated_value')
     }
-}
 
-const verifyPayAll = () => {
-    if (props.sell.partialValue === 0) {
-        pay_all.value = true
-    } else {
-        pay_all.value = false
+    const selectItem = (item) => {
+        props.sell.items_list.push({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            max_quantity: item.max_quantity,
+            min_quantity: item.min_quantity,
+            movement_quantity: 1,
+            measurement_unit: item.measurement_unit.abbreviation,
+            price: item.price,
+            amount: item.price,
+        })
+        reloadItemsList()
+        searchTerm.value = "";
+        showResults.value = false;
+        updateEstimatedValue()
     }
-}
 
-const updateItem = (newItem) => {
-    selectItem(newItem)
-}
+    const removeSelectedItem = (index) => {
+        props.sell.items_list = props.sell.items_list.filter((item) => item.id !== index)
+        reloadItemsList()
+        updateEstimatedValue()
+    }
 
-const close = () => {
-    emit('close')
-}
+    const reloadItemsList = () => {
+        items_list.value = props.items.filter(item =>
+            !props.sell.items_list.some(sellItem => sellItem.id === item.id)
+        );
+    }
 
-const submit = () => {
-    emit('submit')
-}
+
+    const handleInputValue = (e, input) => {
+        props.sell[input] = e.target.value
+        calc_final_values(input)
+    }
+
+    const decimal_format = (number, exp) => {
+        const potencia = 10 ** exp
+        return Math.floor(number * potencia) / potencia
+    }
+
+    const calc_final_values = (mode) => {
+        let { estimated_value, total_value, discount_percent, discount } = props.sell;
+        switch (mode) {
+            case 'estimated_value':
+            case 'discount_percent':
+                total_value = estimated_value * (1 - (discount_percent / 100));
+                discount = estimated_value - total_value;
+                break;
+            case 'total_value':
+                discount = estimated_value - total_value;
+                discount_percent = (discount / estimated_value) * 100;
+                break;
+            case 'discount':
+                discount_percent = (discount / estimated_value) * 100;
+                total_value = estimated_value - discount;
+                break;
+        }
+        Object.assign(props.sell, { estimated_value, total_value, discount_percent, discount });
+    }
+
+    const payAll = () => {
+        if (pay_all.value) {
+            props.sell.entry_value = props.sell.total_value;
+        } else {
+            props.sell.entry_value = 0
+        }
+    }
+
+    const verifyPayAll = () => {
+        if (props.sell.partialValue === 0) {
+            pay_all.value = true
+        } else {
+            pay_all.value = false
+        }
+    }
+
+    const updateItem = (newItem) => {
+        selectItem(newItem)
+    }
+
+    const close = () => {
+        emit('close')
+    }
+
+    const submit = () => {
+        emit('submit')
+    }
 </script>
 <template>
     <CreateUpdateModal :show="modal.show" :maxWidth="(canAddItems || see_disabled) ? '6xl' : '2xl'" @close="close">
@@ -200,7 +200,7 @@ const submit = () => {
                                         class="simple-input disabled:bg-gray-200" :disabled="see_disabled"
                                         placeholder="Nome do cliente" v-model="sell.client" required>
                                     <p v-if="sell.errors.client" class="text-red-500 text-sm">{{
-        sell.errors.client }}</p>
+                                        sell.errors.client }}</p>
                                 </div>
                             </div>
 
@@ -215,7 +215,7 @@ const submit = () => {
                                         autofocus="true" placeholder="Data da Venda" :max="formatDate()"
                                         v-model="sell.date" required>
                                     <p v-if="sell.errors.date" class="text-red-500 text-sm">{{
-        sell.errors.date }}</p>
+                                        sell.errors.date }}</p>
                                 </div>
                             </div>
 
@@ -229,7 +229,7 @@ const submit = () => {
                                         placeholder="Descreva a título mais detalhadamente ou insira informações adicionais"
                                         v-model="sell.observations"></textarea>
                                     <p v-if="sell.errors.observations" class="text-red-500 text-sm">{{
-        sell.errors.observations }}</p>
+                                        sell.errors.observations }}</p>
                                 </div>
                             </div>
                         </div>
@@ -292,7 +292,7 @@ const submit = () => {
                                         :disabled="!sell.items_list.length || see_disabled"
                                         v-model="sell.estimated_value" required>
                                     <p v-if="sell.errors.estimated_value" class="text-red-500 text-sm">{{
-        sell.errors.estimated_value }}</p>
+                                        sell.errors.estimated_value }}</p>
                                 </div>
                             </div>
 
@@ -311,7 +311,7 @@ const submit = () => {
                                         :value="decimal_format(sell.total_value, 2)"
                                         @input="e => handleInputValue(e, 'total_value')" required>
                                     <p v-if="sell.errors.total_value" class="text-red-500 text-sm">{{
-        sell.errors.total_value }}</p>
+                                        sell.errors.total_value }}</p>
                                 </div>
                             </div>
 
@@ -332,7 +332,7 @@ const submit = () => {
                                         <span class="text-gray-500 sm:text-sm">%</span>
                                     </div>
                                     <p v-if="sell.errors.discount_percent" class="text-red-500 text-sm">{{
-        sell.errors.discount_percent }}</p>
+                                        sell.errors.discount_percent }}</p>
                                 </div>
                             </div>
 
@@ -351,7 +351,7 @@ const submit = () => {
                                         :value="decimal_format(sell.discount, 2)"
                                         @input="e => handleInputValue(e, 'discount')" required>
                                     <p v-if="sell.errors.discount" class="text-red-500 text-sm">{{
-        sell.errors.discount }}</p>
+                                        sell.errors.discount }}</p>
                                 </div>
                             </div>
 
@@ -385,11 +385,11 @@ const submit = () => {
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{ item.name }}
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium" :class="{
-        'text-blue-500': item.quantity != 0 && item.quantity >= item.max_quantity,
-        'text-green-500': item.quantity < item.max_quantity && item.quantity >= item.min_quantity,
-        'text-yellow-500': item.quantity < item.min_quantity && item.quantity > 0,
-        'text-red-500': item.quantity == 0,
-    }"> {{ item.quantity }}
+                                                'text-blue-500': item.quantity != 0 && item.quantity >= item.max_quantity,
+                                                'text-green-500': item.quantity < item.max_quantity && item.quantity >= item.min_quantity,
+                                                'text-yellow-500': item.quantity < item.min_quantity && item.quantity > 0,
+                                                'text-red-500': item.quantity == 0,
+                                            }"> {{ item.quantity }}
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium flex
                                                 justify-center">
@@ -400,11 +400,11 @@ const submit = () => {
                                                     :disabled="modal.mode !== 'create'">
                                             </td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{
-        item.measurement_unit }}</td>
+                                                item.measurement_unit }}</td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{
-        toMoney(item.price) }}</td>
+                                                toMoney(item.price) }}</td>
                                             <td class="whitespace-nowrap py-4 text-center font-medium">{{
-        toMoney(item.amount ? item.amount : 10) }}</td>
+                                                toMoney(item.amount ? item.amount : 10) }}</td>
                                             <!-- Substitua 1 pela quantidade real -->
                                             <td v-if="modal.mode !== 'see'"
                                                 class="whitespace-nowrap py-4 text-center font-mono text-2xl"><button
@@ -434,20 +434,20 @@ const submit = () => {
 
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Valor estimado: <span
                                     class="font-extrabold text-green-500">{{
-        toMoney(sell.estimated_value) }}</span>
+                                        toMoney(sell.estimated_value) }}</span>
                             </div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Valor final: <span
                                     class="font-extrabold text-green-500">{{
-        toMoney(sell.total_value)
-    }}</span></div>
+                                    toMoney(sell.total_value)
+                                    }}</span></div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Desconto (%): <span
                                     class="font-extrabold text-green-500">{{
-            decimal_format(sell.discount_percent,
-                3) }}%</span></div>
+                                        decimal_format(sell.discount_percent,
+                                    3) }}%</span></div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Desconto (R$): <span
                                     class="font-extrabold text-green-500">{{
-        toMoney(sell.discount)
-    }}</span></div>
+                                    toMoney(sell.discount)
+                                    }}</span></div>
 
                             <div class="sm:col-span-2">
                                 <label for="sell-entry-value"
@@ -463,7 +463,7 @@ const submit = () => {
                                         :disabled="!sell.items_list.length || see_disabled" v-model="sell.entry_value"
                                         @input="verifyPayAll()" required>
                                     <p v-if="sell.errors.entry_value" class="text-red-500 text-sm">{{
-        sell.errors.entry_value }}</p>
+                                        sell.errors.entry_value }}</p>
                                 </div>
                                 <div class="relative mt-2 rounded-md shadow-sm">
                                     <input type="checkbox" id="pay-all"
@@ -489,7 +489,7 @@ const submit = () => {
                                         placeholder="Valor restante para pagamento posterior" :disabled="true"
                                         :value="decimal_format(partialValue, 2)" readonly required>
                                     <p v-if="sell.errors.partial_value" class="text-red-500 text-sm">{{
-        sell.errors.partial_value }}</p>
+                                        sell.errors.partial_value }}</p>
                                 </div>
                             </div>
 
@@ -505,7 +505,7 @@ const submit = () => {
             </SecondaryButton>
             <PrimaryButton :class="{ 'disabled': (sell.processing || !enableSubmit) }"
                 :disabled="(sell.processing || !enableSubmit)" @click="submit()">{{
-        modal.primary_button_txt
+                    modal.primary_button_txt
                 }}</PrimaryButton>
         </template>
     </CreateUpdateModal>

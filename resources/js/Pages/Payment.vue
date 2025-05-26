@@ -1,161 +1,162 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue'
-import CreateUpdatePayModal from '@/Components/Payments/CreateUpdatePayModal.vue'
-import FloatButton from '@/Components/FloatButton.vue'
-import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
-import { Head, useForm } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
-import { BanknotesIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { toMoney } from '@/general.js'
-import { useToast } from 'vue-toast-notification';
-import 'vue-toast-notification/dist/theme-sugar.css';
-// =============================================
-// Informações exteriores
-const props = defineProps({
-    page: Object,
-    page_options: {
-        type: Array,
-        default: null,
-    },
-    payments_list: Object,
-})
-
-const $toast = useToast();
-// =============================================
-// Informações do OBJETO
-const payment_data = useForm({
-    'id': null,
-    'debt': '',
-    'debtor': '',
-    'total_value': 0,
-    'partial_value': 0,
-    'observations': '',
-    'records_list': {
-        'enable_records': false,
-        'data': [],
-    }
-})
-
-const search_term = ref("")
-const show_services = ref(true)
-
-const filtered_payments_list = computed(() => {
-    const searchTermLower = search_term.value.toLowerCase();
-
-    return props.payments_list.filter(el =>
-        (el.motive.toLowerCase().includes(searchTermLower)) ||
-        (el.entity_name.toLowerCase().includes(searchTermLower)) ||
-        (toMoney(el.accounting.total_value).toString().toLowerCase().includes(searchTermLower)) ||
-        (toMoney(el.accounting.partial_value).toString().toLowerCase().includes(searchTermLower))
-    );
-});
-
-const total_payments_amount = computed(() => {
-    return props.payments_list.reduce((accumulator, payment) => {
-        return accumulator + payment.accounting.partial_value;
-    }, 0);
-});
-
-const total_payments_amount_without_services = computed(() => {
-    return props.payments_list.filter(el => el.type !== 1).reduce((accumulator, payment) => {
-        return accumulator + payment.accounting.partial_value;
-    }, 0);
-});
-
-// =============================================
-// Controle de Modal
-const modal = ref({
-    mode: 'create',
-    show: false,
-    get title() {
-        switch (this.mode) {
-            case 'create': return "Criar pagamento"
-            case 'update': return "Editar pagamento"
-            case 'pay': return "Pagar pagamento"
-        }
-    },
-    get primary_button_txt() {
-        switch (this.mode) {
-            case 'create': return "Cadastrar"
-            case 'update': return "Atualizar"
-            case 'pay': return "Pagar"
-        }
-    }
-})
-
-const openModal = (mode, payment_id = null) => {
-    const isUpdateOrPayMode = ['update', 'pay'].includes(mode);
-
-    if (payment_id !== null && isUpdateOrPayMode) {
-        const payment = props.payments_list.find(payment => payment.id === payment_id);
-
-        if (payment) {
-            const { id, type, motive, entity_name, observations, records, accounting } = payment;
-            payment_data.id = id;
-            payment_data.type = type;
-            payment_data.debt = motive;
-            payment_data.debtor = entity_name;
-            payment_data.total_value = accounting.total_value;
-            payment_data.partial_value = accounting.partial_value;
-            payment_data.observations = observations;
-            payment_data.records_list.enable_records = Boolean(records.length);
-            payment_data.records_list.data = records.map((record) => { return useForm(record) })
-        }
-    }
-
-    modal.value.mode = mode;
-    modal.value.show = true;
-};
-
-
-const closeModal = () => {
-    payment_data.reset()
-    modal.value.show = false
-}
-
-
-
-// =============================================
-// Métodos de CRUD
-const createPayment = () => {
-    payment_data.post(route('payments.store'), {
-        preserveScroll: true,
-        onSuccess: () => closeModal(),
-        onError: (error) => { console.log(error) }
+    import AppLayout from '@/Layouts/AppLayout.vue'
+    import CreateUpdatePayModal from '@/Components/Payments/CreateUpdatePayModal.vue'
+    import FloatButton from '@/Components/FloatButton.vue'
+    import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
+    import { Head, useForm } from '@inertiajs/vue3'
+    import { computed, ref } from 'vue'
+    import { BanknotesIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+    import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
+    import { useToast } from 'vue-toast-notification';
+    import 'vue-toast-notification/dist/theme-sugar.css';
+    // =============================================
+    // Informações exteriores
+    const props = defineProps({
+        page: Object,
+        page_options: {
+            type: Array,
+            default: null,
+        },
+        payments_list: Object,
     })
-}
 
-const updatePayment = () => {
-    payment_data.put(route('payments.update', payment_data.id), {
-        preserveScroll: true,
-        onSuccess: () => closeModal()
+    const $toast = useToast();
+    // =============================================
+    // Informações do OBJETO
+    const payment_data = useForm({
+        'id': null,
+        'debt': '',
+        'debtor': '',
+        'total_value': 0,
+        'partial_value': 0,
+        'observations': '',
+        'records_list': {
+            'enable_records': false,
+            'data': [],
+        }
     })
-}
 
-const payPayment = () => {
-    payment_data.put(route('payments.pay', payment_data.id), {
-        preserveScroll: true,
-        onSuccess: () => closeModal()
+    const search_term = ref("")
+    const show_services = ref(true)
+    const show_user_data = ref(false);
+
+    const filtered_payments_list = computed(() => {
+        const searchTermLower = search_term.value.toLowerCase();
+
+        return props.payments_list.filter(el =>
+            (el.motive.toLowerCase().includes(searchTermLower)) ||
+            (el.entity_name.toLowerCase().includes(searchTermLower)) ||
+            (toMoney(el.accounting.total_value).toString().toLowerCase().includes(searchTermLower)) ||
+            (toMoney(el.accounting.partial_value).toString().toLowerCase().includes(searchTermLower))
+        );
+    });
+
+    const total_payments_amount = computed(() => {
+        return props.payments_list.reduce((accumulator, payment) => {
+            return accumulator + payment.accounting.partial_value;
+        }, 0);
+    });
+
+    const total_payments_amount_without_services = computed(() => {
+        return props.payments_list.filter(el => el.type !== 1).reduce((accumulator, payment) => {
+            return accumulator + payment.accounting.partial_value;
+        }, 0);
+    });
+
+    // =============================================
+    // Controle de Modal
+    const modal = ref({
+        mode: 'create',
+        show: false,
+        get title() {
+            switch (this.mode) {
+                case 'create': return "Criar pagamento"
+                case 'update': return "Editar pagamento"
+                case 'pay': return "Pagar pagamento"
+            }
+        },
+        get primary_button_txt() {
+            switch (this.mode) {
+                case 'create': return "Cadastrar"
+                case 'update': return "Atualizar"
+                case 'pay': return "Pagar"
+            }
+        }
     })
-}
 
-const deletePayment = (payment_id, payment_name) => {
-    if (confirm(`Você tem certeza que deseja excluir o pagamento "${payment_name}"? Esta ação não poderá ser desfeita!`)) {
-        payment_data.delete(route('payments.destroy', payment_id), {
+    const openModal = (mode, payment_id = null) => {
+        const isUpdateOrPayMode = ['update', 'pay'].includes(mode);
+
+        if (payment_id !== null && isUpdateOrPayMode) {
+            const payment = props.payments_list.find(payment => payment.id === payment_id);
+
+            if (payment) {
+                const { id, type, motive, entity_name, observations, records, accounting } = payment;
+                payment_data.id = id;
+                payment_data.type = type;
+                payment_data.debt = motive;
+                payment_data.debtor = entity_name;
+                payment_data.total_value = accounting.total_value;
+                payment_data.partial_value = accounting.partial_value;
+                payment_data.observations = observations;
+                payment_data.records_list.enable_records = Boolean(records.length);
+                payment_data.records_list.data = records.map((record) => { return useForm(record) })
+            }
+        }
+
+        modal.value.mode = mode;
+        modal.value.show = true;
+    };
+
+
+    const closeModal = () => {
+        payment_data.reset()
+        modal.value.show = false
+    }
+
+
+
+    // =============================================
+    // Métodos de CRUD
+    const createPayment = () => {
+        payment_data.post(route('payments.store'), {
             preserveScroll: true,
-            onSuccess: () => $toast.success('Pagamento deletado com sucesso!')
+            onSuccess: () => closeModal(),
+            onError: (error) => { console.log(error) }
         })
     }
-}
 
-const submit = () => {
-    switch (modal.value.mode) {
-        case 'create': return createPayment()
-        case 'update': return updatePayment()
-        case 'pay': return payPayment()
-        default: $toast.error('Método desconhecido. Informar o Técnico.')
+    const updatePayment = () => {
+        payment_data.put(route('payments.update', payment_data.id), {
+            preserveScroll: true,
+            onSuccess: () => closeModal()
+        })
     }
-}
+
+    const payPayment = () => {
+        payment_data.put(route('payments.pay', payment_data.id), {
+            preserveScroll: true,
+            onSuccess: () => closeModal()
+        })
+    }
+
+    const deletePayment = (payment_id, payment_name) => {
+        if (confirm(`Você tem certeza que deseja excluir o pagamento "${payment_name}"? Esta ação não poderá ser desfeita!`)) {
+            payment_data.delete(route('payments.destroy', payment_id), {
+                preserveScroll: true,
+                onSuccess: () => $toast.success('Pagamento deletado com sucesso!')
+            })
+        }
+    }
+
+    const submit = () => {
+        switch (modal.value.mode) {
+            case 'create': return createPayment()
+            case 'update': return updatePayment()
+            case 'pay': return payPayment()
+            default: $toast.error('Método desconhecido. Informar o Técnico.')
+        }
+    }
 </script>
 
 <template>
@@ -165,10 +166,10 @@ const submit = () => {
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{
-        toMoney(total_payments_amount_without_services)
-    }}</span><span v-if="$page.props.auth.user.hierarchy < 2" class="text-neutral-400"> | {{
-        toMoney(total_payments_amount)
-    }} <span class="text-xs"> (pagamentos + serviços)</span></span>
+                    toMoney(total_payments_amount_without_services)
+                }}</span><span v-if="$page.props.auth.user.hierarchy < 2" class="text-neutral-400"> | {{
+                        toMoney(total_payments_amount)
+                    }} <span class="text-xs"> (pagamentos + serviços)</span></span>
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Payment" class="print:hidden" />
         </template>
@@ -194,6 +195,14 @@ const submit = () => {
 
         <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
+                <div class="w-full flex justify-end pb-3">
+                    <button v-if="!show_user_data" class="text-blue-500 text-xs justify-end"
+                        @click="show_user_data = !show_user_data">Mostrar
+                        dados de
+                        usuário</button>
+                    <button v-if="show_user_data" class="text-red-500 text-xs justify-end"
+                        @click="show_user_data = !show_user_data">Esconder dados de usuário</button>
+                </div>
                 <div class="px-0 print:px-0">
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg print:shadow-none">
                         <div class="flex flex-col">
@@ -214,6 +223,19 @@ const submit = () => {
                                                     </th>
                                                     <th scope="col" class="px-6 py-4 text-center print:hidden">Excluir
                                                     </th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">Criado
+                                                        em</th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">Criado
+                                                        por</th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        Modificado em</th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        Modificado por
+                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -222,19 +244,19 @@ const submit = () => {
                                                     class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid"
                                                     :class="{ 'hidden': payment.type === 1 && show_services === false }">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
-        payment.id }}
+                                                        payment.id }}
                                                     </td>
                                                     <td class="break-words px-6 py-4 text-center">{{
-        payment.motive }}
+                                                        payment.motive }}
                                                         <span v-if="payment.observations" :title="payment.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
                                                     <td class="whitespace-normal px-6 py-4 text-center">{{
-        payment.entity_name }}</td>
+                                                        payment.entity_name }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
-        toMoney(payment.accounting.partial_value) }}</td>
+                                                        toMoney(payment.accounting.partial_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
-        toMoney(payment.accounting.total_value) }}</td>
+                                                        toMoney(payment.accounting.total_value) }}</td>
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-green-700 active:text-green-900 select-none print:hidden"
                                                         :title="'PAGAR: ' + payment.motive + '(' + payment.entity_name + ')'"
                                                         @click="openModal('pay', payment.id)">
@@ -254,6 +276,26 @@ const submit = () => {
                                                     <td v-else
                                                         class="whitespace-nowrap px-4 py-4 text-center select-none print:hidden">
                                                         Venda
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        {{
+                                                            formatDate(payment.created_at, 'reading_date_time') }}
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        {{
+                                                            payment.procedures[0].user.name }}
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        {{
+                                                            formatDate(payment.updated_at, 'reading_date_time') }}
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        {{
+                                                            payment.procedures[payment.procedures?.length - 1].user.name }}
                                                     </td>
                                                 </tr>
                                                 <tr v-else

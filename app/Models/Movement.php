@@ -21,7 +21,16 @@ class Movement extends Model
         'deadline',
         'observations',
         'date',
+        'delay_reason',
+        'completion_date',
+        'delayed',
+        'previous_id',
     ];
+
+    public function sell()
+    {
+        return $this->hasOne(Movement::class);
+    }
 
     public function accounting()
     {
@@ -31,5 +40,10 @@ class Movement extends Model
     public function procedures()
     {
         return $this->hasMany(Procedure::class);
+    }
+
+    public function motivosAtrasos()
+    {
+        return $this->hasMany(MotivoAtraso::class);
     }
 }

@@ -1,179 +1,218 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue'
-import CreateUpdatePayModal from '@/Components/Services/CreateUpdatePayModal.vue'
-import FloatButton from '@/Components/FloatButton.vue'
-import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
-import { Head, useForm } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
-import { BanknotesIcon, CheckBadgeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
-import { useToast } from 'vue-toast-notification';
-import 'vue-toast-notification/dist/theme-sugar.css';
-// =============================================
-// Informações exteriores
-const props = defineProps({
-    page: Object,
-    page_options: {
-        type: Array,
-        default: null,
-    },
-    services_list: Object,
-})
+    import AppLayout from '@/Layouts/AppLayout.vue'
+    import CreateUpdatePayModal from '@/Components/Services/CreateUpdatePayModal.vue'
+    import FloatButton from '@/Components/FloatButton.vue'
+    import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
+    import { Head, useForm } from '@inertiajs/vue3'
+    import { computed, ref } from 'vue'
+    import { BanknotesIcon, CheckBadgeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+    import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
+    import { useToast } from 'vue-toast-notification';
+    import 'vue-toast-notification/dist/theme-sugar.css';
+    import MotivoAtrasoModal from '@/Components/Services/MotivoAtrasoModal.vue'
+    // =============================================
+    // Informações exteriores
+    const props = defineProps({
+        page: Object,
+        page_options: {
+            type: Array,
+            default: null,
+        },
+        services_list: Object,
+        sells_list: {
+            type: Array,
+            default: [],
+        },
+    })
 
-const $toast = useToast();
-// =============================================
-// Informações do OBJETO
-const service_data = useForm({
-    'id': null,
-    'title': '',
-    'client': '',
-    'total_value': 0,
-    'partial_value': 0,
-    'observations': '',
-    'deadline': formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date'),
-    'records_list': {
-        'enable_records': false,
-        'data': [],
-    }
-})
-
-const search_term = ref("")
-
-const filtered_services_list = computed(() => {
-    const searchTermLower = search_term.value.toLowerCase()
-    return props.services_list.filter(el =>
-        (el.motive.toLowerCase().includes(searchTermLower)) ||
-        (el.entity_name.toLowerCase().includes(searchTermLower)) ||
-        (el.observations?.toLowerCase().includes(searchTermLower)) ||
-        (toMoney(el.accounting.total_value).toString().toLowerCase().includes(searchTermLower)) ||
-        (toMoney(el.accounting.partial_value).toString().toLowerCase().includes(searchTermLower)) ||
-        (el.deadline.includes(searchTermLower))
-    );
-});
-
-const total_services_amount = computed(() => {
-    return props.services_list.reduce((accumulator, service) => {
-        return accumulator + service.accounting.partial_value;
-    }, 0);
-});
-
-const deadlineClass = (deadline) => {
-    const days = calcDeadlineDays(deadline);
-
-    if (days === 0) return 'text-red-500';
-    if (days > 0 && days < 8) return 'text-orange-500';
-    if (days > 7 && days < 15) return 'text-yellow-500';
-    if (days > 14 && days < 30) return 'text-green-500';
-    return 'text-blue-500';
-}
-
-// =============================================
-// Controle de Modal
-const modal = ref({
-    mode: 'create',
-    show: false,
-    get title() {
-        switch (this.mode) {
-            case 'create': return "Criar serviço"
-            case 'update': return "Editar serviço"
-            case 'pay': return "Pagar serviço"
-            case 'see': return "Ver informações do serviço"
+    const $toast = useToast();
+    // =============================================
+    // Informações do OBJETO
+    const service_data = useForm({
+        'id': null,
+        'previous_id': null,
+        'title': '',
+        'client': '',
+        'total_value': 0,
+        'partial_value': 0,
+        'deadline': formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date'),
+        'observations': '',
+        'delay_reason': '',
+        'delayed': false,
+        'completion_date': formatDate(new Date(), 'new_date'),
+        'records_list': {
+            'enable_records': false,
+            'data': [],
         }
-    },
-    get primary_button_txt() {
-        switch (this.mode) {
-            case 'create': return "Cadastrar"
-            case 'update': return "Atualizar"
-            case 'pay': return "Pagar"
-            case 'see': return "Fechar"
-        }
+    })
+
+    const search_term = ref("")
+    const show_user_data = ref(false);
+
+    const filtered_services_list = computed(() => {
+        const searchTermLower = search_term.value.toLowerCase()
+        return props.services_list.filter(el =>
+            (el.motive.toLowerCase().includes(searchTermLower)) ||
+            (el.entity_name.toLowerCase().includes(searchTermLower)) ||
+            (el.observations?.toLowerCase().includes(searchTermLower)) ||
+            (toMoney(el.accounting.total_value).toString().toLowerCase().includes(searchTermLower)) ||
+            (toMoney(el.accounting.partial_value).toString().toLowerCase().includes(searchTermLower)) ||
+            (el.deadline.includes(searchTermLower))
+        );
+    });
+
+    const total_services_amount = computed(() => {
+        return props.services_list.reduce((accumulator, service) => {
+            return accumulator + service.accounting.partial_value;
+        }, 0);
+    });
+
+    const deadlineClass = (deadline) => {
+        const days = calcDeadlineDays(deadline);
+
+        if (days === 0) return 'text-red-500';
+        if (days > 0 && days < 8) return 'text-orange-500';
+        if (days > 7 && days < 15) return 'text-yellow-500';
+        if (days > 14 && days < 30) return 'text-green-500';
+        return 'text-blue-500';
     }
-})
 
-const openModal = (mode, service_id = null) => {
-    const isUpdateOrPayMode = ['update', 'pay'].includes(mode);
+    // =============================================
+    // Controle de Modal
+    const modal = ref({
+        mode: 'create',
+        show: false,
+        get title() {
+            switch (this.mode) {
+                case 'create': return "Criar serviço"
+                case 'update': return "Editar serviço"
+                case 'pay': return "Pagar serviço"
+                case 'see': return "Ver informações do serviço"
+            }
+        },
+        get primary_button_txt() {
+            switch (this.mode) {
+                case 'create': return "Cadastrar"
+                case 'update': return "Atualizar"
+                case 'pay': return "Pagar"
+                case 'see': return "Fechar"
+            }
+        }
+    })
 
-    if (service_id !== null && isUpdateOrPayMode) {
+
+    const setServiceData = (service_id) => {
         const service = props.services_list.find(service => service.id === service_id);
 
         if (service) {
-            const { id, motive, entity_name, observations, records, accounting } = service;
+            const { id, previous_id, motive, entity_name, deadline, observations, delay_reason, delayed, completion_date, records, accounting } = service;
 
             service_data.id = id;
+            service_data.previous_id = previous_id;
             service_data.title = motive;
             service_data.client = entity_name;
             service_data.total_value = accounting.total_value;
             service_data.partial_value = accounting.partial_value;
+            service_data.deadline = deadline;
             service_data.observations = observations;
+            service_data.delay_reason = delay_reason;
+            service_data.completion_date = formatDate(new Date(), 'new_date');
+            service_data.delayed = delayed;
             service_data.records_list.enable_records = Boolean(records.length);
             service_data.records_list.data = records.map((record) => { return useForm(record) })
         }
     }
 
-    modal.value.mode = mode;
-    modal.value.show = true;
-};
+    const openModal = (mode, service_id = null) => {
+        const isUpdateOrPayMode = ['update', 'pay'].includes(mode);
 
+        if (service_id !== null && isUpdateOrPayMode) {
+            setServiceData(service_id);
+        }
 
-const closeModal = () => {
-    service_data.reset()
-    modal.value.show = false
-}
+        modal.value.mode = mode;
+        modal.value.show = true;
+    };
 
+    const showMotivoAtrasoModal = ref(false);
 
+    const opencompletionModal = (service_id, service_partial_value) => {
+        if (service_partial_value !== 0) {
+            if (!confirm("O serviço será considerado como concluído e será listado apenas na página de pagamentos")) return
+        } else {
+            if (!confirm("O serviço será considerado concluído e pago!")) return
+        }
 
-// =============================================
-// Métodos de CRUD
-const createService = () => {
-    service_data.post(route('services.store'), {
-        preserveScroll: true,
-        onSuccess: () => closeModal(),
-        onError: (error) => { console.log(error) }
-    })
-}
+        setServiceData(service_id);
 
-const updateService = () => {
-    service_data.put(route('services.update', service_data.id), {
-        preserveScroll: true,
-        onSuccess: () => closeModal()
-    })
-}
+        modal.value.mode = 'conclude';
+        showMotivoAtrasoModal.value = true
+    };
 
-const payService = () => {
-    service_data.put(route('services.pay', service_data.id), {
-        preserveScroll: true,
-        onSuccess: () => closeModal()
-    })
-}
-
-const concludeService = (service_id, service_partial_value) => {
-    if (service_partial_value !== 0) {
-        if (!confirm("O serviço será considerado como concluído e será listado apenas na página de pagamentos")) return
-    } else {
-        if (!confirm("O serviço será considerado concluído e pago!")) return
+    const closeModal = () => {
+        service_data.reset();
+        modal.value.show = false;
+        showMotivoAtrasoModal.value = false;
     }
-    service_data.put(route('services.conclude', service_id), {
-        preserveScroll: true,
-    })
-}
 
-const deleteService = (service_id, service_name) => {
-    if (confirm(`Você tem certeza que deseja excluir o serviço "${service_name}"? Esta ação não poderá ser desfeita!`)) {
-        service_data.delete(route('services.destroy', service_id), {
+
+
+    // =============================================
+    // Métodos de CRUD
+    const createService = () => {
+        service_data.post(route('services.store'), {
             preserveScroll: true,
-            onSuccess: () => $toast.success('Serviço deletado com sucesso!')
+            onSuccess: () => closeModal(),
+            onError: (error) => { console.log(error) }
         })
     }
-}
 
-const submit = () => {
-    switch (modal.value.mode) {
-        case 'create': return createService()
-        case 'update': return updateService()
-        case 'pay': return payService()
-        default: $toast.error('Método desconhecido. Informar o Técnico.')
+    const updateService = () => {
+        service_data.put(route('services.update', service_data.id), {
+            preserveScroll: true,
+            onSuccess: () => closeModal()
+        })
     }
-}
+
+    const payService = () => {
+        service_data.put(route('services.pay', service_data.id), {
+            preserveScroll: true,
+            onSuccess: () => closeModal()
+        })
+    }
+
+    const concludeService = () => {
+        service_data.put(route('services.update', service_data.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                service_data.put(route('services.conclude', service_data.id), {
+                    preserveScroll: true,
+                    onSuccess: () => closeModal()
+                });
+                closeModal();
+            }
+        })
+
+    }
+
+    const deleteService = (service_id, service_name) => {
+        if (confirm(`Você tem certeza que deseja excluir o serviço "${service_name}"? Esta ação não poderá ser desfeita!`)) {
+            service_data.delete(route('services.destroy', service_id), {
+                preserveScroll: true,
+                onSuccess: () => $toast.success('Serviço deletado com sucesso!')
+            })
+        }
+    }
+
+    const submit = () => {
+        switch (modal.value.mode) {
+            case 'create': return createService()
+            case 'update': return updateService()
+            case 'pay': return payService()
+            case 'conclude': return concludeService()
+            default: $toast.error('Método desconhecido. Informar o Técnico.')
+        }
+    }
 </script>
 
 <template>
@@ -183,7 +222,7 @@ const submit = () => {
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{
-        toMoney(total_services_amount) }}</span>
+                    toMoney(total_services_amount) }}</span>
             </h2>
             <FloatButton :icon="'plus'" @click="openModal('create')" title="Cadastrar Service" class="print:hidden" />
         </template>
@@ -202,7 +241,16 @@ const submit = () => {
 
         <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
+                <div class="w-full flex justify-end pb-3">
+                    <button v-if="!show_user_data" class="text-blue-500 text-xs justify-end"
+                        @click="show_user_data = !show_user_data">Mostrar
+                        dados de
+                        usuário</button>
+                    <button v-if="show_user_data" class="text-red-500 text-xs justify-end"
+                        @click="show_user_data = !show_user_data">Esconder dados de usuário</button>
+                </div>
                 <div class="px-0 print:px-0">
+
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg print:shadow-none">
                         <div class="flex flex-col">
                             <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -222,6 +270,19 @@ const submit = () => {
                                                     <th scope="col" class="px-6 py-4 text-center print:hidden"
                                                         colspan="4">Ações
                                                     </th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">Criado
+                                                        em</th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">Criado
+                                                        por</th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        Modificado em</th>
+                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        Modificado por
+                                                    </th>
                                                     <!--
                                                     <th scope="col" class="px-6 py-4 text-center print:hidden">Concluir</th>
                                                     <th scope="col" class="px-6 py-4 text-center print:hidden">Pagar</th>
@@ -235,28 +296,28 @@ const submit = () => {
                                                     v-for="service in filtered_services_list"
                                                     class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
-        service.id }}
+                                                        service.id }}
                                                     </td>
                                                     <td class="whitespace-nowrap py-4 text-center font-medium"
                                                         :class="deadlineClass(service.deadline)">
                                                         {{ calcDeadlineDays(service.deadline) }} dias
                                                     </td>
                                                     <td class="whitespace-normal px-6 py-4 text-center trim">{{
-        service.motive }}
+                                                        service.motive }}
                                                         <span v-if="service.observations" :title="service.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
                                                     <td class="whitespace-normal px-6 py-4 text-center">{{
-        service.entity_name }}</td>
+                                                        service.entity_name }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
-        toMoney(service.accounting.partial_value) }}</td>
+                                                        toMoney(service.accounting.partial_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
-        toMoney(service.accounting.total_value) }}</td>
+                                                        toMoney(service.accounting.total_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">{{
-        formatDate(service.deadline, true) }}</td>
+                                                        formatDate(service.deadline, true) }}</td>
                                                     <td class="whitespace-nowrap px-4 py-4 pl-10 text-center cursor-pointer hover:text-blue-700 active:text-blue-900 select-none print:hidden"
                                                         :title="'CONCLUIR: ' + service.motive + '(' + service.entity_name + ')'"
-                                                        @click="concludeService(service.id, service.accounting.partial_value)">
+                                                        @click="opencompletionModal(service.id, service.accounting.partial_value)">
                                                         <CheckBadgeIcon class="w-4 h-4 m-auto" />
                                                     </td>
                                                     <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-green-700 active:text-green-900 select-none print:hidden"
@@ -277,6 +338,26 @@ const submit = () => {
                                                         @click="deleteService(service.id, service.name)">
                                                         <XMarkIcon class="w-4 h-4 m-auto" />
                                                     </td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        {{
+                                                            formatDate(service.created_at, 'reading_date_time') }}
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        {{
+                                                            service.procedures[0].user.name }}
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        {{
+                                                            formatDate(service.updated_at, 'reading_date_time') }}
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
+                                                        v-if="show_user_data">
+                                                        {{
+                                                            service.procedures[service.procedures?.length - 1].user.name }}
+                                                    </td>
                                                 </tr>
                                                 <tr v-else
                                                     class="transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
@@ -295,8 +376,10 @@ const submit = () => {
             </div>
         </div>
 
-        <CreateUpdatePayModal :show="modal.show" :modal="modal" :service="service_data" @submit="submit"
-            @close="closeModal" />
+        <CreateUpdatePayModal :show="modal.show" :modal="modal" :service="service_data" :sells_list="sells_list"
+            @submit="submit" @close="closeModal" />
+
+        <MotivoAtrasoModal :show="showMotivoAtrasoModal" :service="service_data" @submit="submit" @close="closeModal" />
 
         <ExtraOptionsButton :mode="['rollup', 'print_page', 'link']" :link_type="['previous']"
             :link="[route('services.previous')]" />

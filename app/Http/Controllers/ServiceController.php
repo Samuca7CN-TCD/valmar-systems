@@ -30,7 +30,7 @@ class ServiceController extends Controller
     {
         $page = Department::find(8);
 
-        $services = Movement::where('type', 1)->where('ready', false)->orderBy('deadline')->with(['accounting', 'procedures.records'])->get()
+        $services = Movement::where('type', 1)->where('ready', false)->orderBy('deadline')->with(['accounting', 'procedures.records.procedure.user', 'procedures.user'])->get()
             ->map(function ($movement) {
                 $records = $movement->procedures->flatMap(function ($procedure) {
                     return $procedure->records;
@@ -39,9 +39,12 @@ class ServiceController extends Controller
                 return $movement;
             });
 
+        $sells = Movement::with('accounting')->where('type', 2)->get();
+
         return Inertia::render('Service', [
             'page' => $page,
             'services_list' => $services,
+            'sells_list' => $sells,
         ]);
     }
 
@@ -49,7 +52,7 @@ class ServiceController extends Controller
     {
         $page = Department::find(8);
 
-        $services = Movement::where('type', 1)->where('ready', true)->orderBy('deadline')->with(['accounting', 'procedures.records'])
+        $services = Movement::where('type', 1)->where('ready', true)->orderBy('deadline')->with(['accounting', 'procedures.records.procedure.user', 'procedures.user'])
             ->whereHas('accounting', function ($query) {
                 $query->where('partial_value', 0);
             })
@@ -62,9 +65,12 @@ class ServiceController extends Controller
                 return $movement;
             });
 
+            $sells = Movement::with('accounting')->where('type', 2)->get();
+
         return Inertia::render('Services/Previous', [
             'page' => $page,
             'services_list' => $services,
+            'sells_list' => $sells,
         ]);
     }
 
@@ -90,10 +96,12 @@ class ServiceController extends Controller
                 'total_value' => ['required', 'numeric'],
                 'deadline' => ['required', 'date_format:Y-m-d'],
                 'observations' => ['nullable', 'string'],
+                'previous_id' => ['nullable', 'numeric'],
                 'records_list' => ['required', 'array'],
                 'records_list.enable_records' => ['required', 'boolean'],
                 'records_list.data' => ['nullable', 'array'],
                 'records_list.data.*.amount' => ['required', 'numeric'],
+                'records_list.data.*payment_method' => ['required', 'string'],
                 'records_list.data.*.register_date' => ['required', 'date_format:Y-m-d'],
                 'records_list.data.*.filepath' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
             ]);
@@ -111,6 +119,7 @@ class ServiceController extends Controller
                 'deadline' => $validated['deadline'],
                 'entity_name' => $validated['client'],
                 'observations' => $validated['observations'],
+                'previous_id' => $validated['previous_id'],
                 'date' => now()->format('Y-m-d'),
             ]);
 
@@ -129,6 +138,7 @@ class ServiceController extends Controller
                     return Record::create([
                         'procedure_id' => $procedure->id,
                         'amount' => $payRecord['amount'],
+                        'payment_method' => $payRecord['payment_method'],
                         'past' => true,
                         'register_date' => $payRecord['register_date'],
                     ]);
@@ -186,7 +196,11 @@ class ServiceController extends Controller
                 'client' => 'required|string',
                 'total_value' => 'required|numeric',
                 'deadline' => 'required|date_format:Y-m-d',
+                'previous_id' => 'nullable|numeric',
                 'observations' => 'nullable|string',
+                'delay_reason' => 'nullable|string',
+                'delayed' => 'nullable|boolean',
+                'completion_date' => 'nullable|date_format:Y-m-d',
                 'records_list' => 'required|array',
                 'records_list.enable_records' => 'required|boolean',
                 'records_list.data' => 'nullable|array',
@@ -207,6 +221,7 @@ class ServiceController extends Controller
 
             // Garante que o movimento exista antes de atualizar
             $movement = $accounting->movement;
+            $old_movement = $movement;
             if ($movement)
             {
                 $movement->update([
@@ -214,6 +229,10 @@ class ServiceController extends Controller
                     'entity_name' => $validated['client'],
                     'observations' => $validated['observations'],
                     'deadline' => $validated['deadline'],
+                    'previous_id' => $validated['previous_id'],
+                    'delay_reason' => $validated['delay_reason'],
+                    'delayed' => $validated['delay_reason'] && !$validated['delayed'] ? true : false,
+                    'completion_date' => $validated['completion_date']
                 ]);
 
                 // Cria um novo procedimento para registrar a ação de atualização
@@ -222,6 +241,8 @@ class ServiceController extends Controller
                     'action_id' => 2, // Ajuste conforme necessário
                     'department_id' => 7, // Ajuste conforme necessário
                     'movement_id' => $movement->id,
+                    //'old_movement' => json_encode($old_movement),
+                    //'new_movement' => json_encode($movement)
                 ]);
             }
 
@@ -265,10 +286,12 @@ class ServiceController extends Controller
                 'records_list.data' => 'nullable|array',
                 'records_list.data.*.id' => 'required|numeric',
                 'records_list.data.*.amount' => 'required|numeric',
+                'records_list.data.*.payment_method' => 'required|string',
                 'records_list.data.*.past' => 'required|boolean',
                 'records_list.data.*.register_date' => 'required|date_format:Y-m-d',
                 'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
             ]);
+            
             // Recupera o recurso existente pelo ID
             $accounting = Accounting::findOrFail($id);
 
@@ -288,6 +311,7 @@ class ServiceController extends Controller
                     return Record::create([
                         'procedure_id' => $procedure->id,
                         'amount' => $payRecord['amount'],
+                        'payment_method' => $payRecord['payment_method'],
                         'register_date' => $payRecord['register_date'],
                     ]);
                 });

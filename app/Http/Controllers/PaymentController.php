@@ -30,7 +30,7 @@ class PaymentController extends Controller
     {
         $page = Department::find(7);
 
-        $payments = Movement::where('type', '>', -1)->where('type', '<', 3)->with(['accounting', 'procedures.records'])
+        $payments = Movement::where('type', '>', -1)->where('type', '<', 3)->with(['accounting', 'procedures.records.procedure.user', 'procedures.user'])
             ->whereHas('accounting', function ($query) {
                 $query->where('partial_value', '>', 0.009);
             })
@@ -55,7 +55,7 @@ class PaymentController extends Controller
     {
         $page = Department::find(7);
 
-        $payments = Movement::where('type', 0)->with(['accounting', 'procedures.records'])
+        $payments = Movement::where('type', 0)->with(['accounting', 'procedures.records.procedure.user', 'procedures.user'])
             ->whereHas('accounting', function ($query) {
                 $query->where('partial_value', 0);
             })
@@ -100,6 +100,7 @@ class PaymentController extends Controller
                 'records_list.enable_records' => ['required', 'boolean'],
                 'records_list.data' => ['nullable', 'array'],
                 'records_list.data.*.amount' => ['required', 'numeric'],
+                'records_list.data.*payment_method' => ['required', 'string'],
                 'records_list.data.*.register_date' => ['required', 'date_format:Y-m-d'],
                 'records_list.data.*.filepath' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
             ]);
@@ -134,6 +135,7 @@ class PaymentController extends Controller
                     return Record::create([
                         'procedure_id' => $procedure->id,
                         'amount' => $payRecord['amount'],
+                        'payment_method' => $payRecord['payment_method'],
                         'past' => true,
                         'register_date' => $payRecord['register_date'],
                     ]);
@@ -270,6 +272,7 @@ class PaymentController extends Controller
                 'records_list.data' => 'nullable|array',
                 'records_list.data.*.id' => 'required|numeric',
                 'records_list.data.*.amount' => 'required|numeric',
+                'records_list.data.*.payment_method' => 'required|string',
                 'records_list.data.*.past' => 'required|boolean',
                 'records_list.data.*.register_date' => 'required|date_format:Y-m-d',
                 'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
@@ -293,6 +296,7 @@ class PaymentController extends Controller
                     return Record::create([
                         'procedure_id' => $procedure->id,
                         'amount' => $payRecord['amount'],
+                        'payment_method' => $payRecord['payment_method'],
                         'register_date' => $payRecord['register_date'],
                     ]);
                 });
