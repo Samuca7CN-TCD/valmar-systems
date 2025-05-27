@@ -52,12 +52,12 @@
     const filtered_services_list = computed(() => {
         const searchTermLower = search_term.value.toLowerCase()
         return props.services_list.filter(el =>
-            (el.motive.toLowerCase().includes(searchTermLower)) ||
-            (el.entity_name.toLowerCase().includes(searchTermLower)) ||
+            (el.motive?.toLowerCase().includes(searchTermLower)) ||
+            (el.entity_name?.toLowerCase().includes(searchTermLower)) ||
             (el.observations?.toLowerCase().includes(searchTermLower)) ||
-            (toMoney(el.accounting.total_value).toString().toLowerCase().includes(searchTermLower)) ||
-            (toMoney(el.accounting.partial_value).toString().toLowerCase().includes(searchTermLower)) ||
-            (el.deadline.includes(searchTermLower))
+            (toMoney(el.accounting.total_value || 0)?.toString().toLowerCase().includes(searchTermLower)) ||
+            (toMoney(el.accounting.partial_value || 0)?.toString().toLowerCase().includes(searchTermLower)) ||
+            (el.deadline?.includes(searchTermLower))
         );
     });
 
