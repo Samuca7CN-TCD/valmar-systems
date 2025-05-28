@@ -39,7 +39,9 @@ class ServiceController extends Controller
                 return $movement;
             });
 
-        $sells = Movement::with('accounting')->where('type', 2)->get();
+        $sells = Movement::with(['accounting:id,movement_id,total_value'])
+            ->where('type', 2)
+            ->get(['id', 'entity_name', 'date']);     
 
         return Inertia::render('Service', [
             'page' => $page,
@@ -65,7 +67,10 @@ class ServiceController extends Controller
                 return $movement;
             });
 
-            $sells = Movement::with('accounting')->where('type', 2)->get();
+        $sells = Movement::with(['accounting:id,movement_id,total_value'])
+            ->where('type', 2)
+            ->get(['id', 'entity_name', 'date']);
+
 
         return Inertia::render('Services/Previous', [
             'page' => $page,
@@ -204,7 +209,7 @@ class ServiceController extends Controller
                 'records_list.enable_records' => 'required|boolean',
                 'records_list.data' => 'nullable|array',
                 'records_list.data.*.amount' => 'required|numeric',
-                'records_list.data.*.payment_method' => 'required|string',
+                'records_list.data.*.payment_method' => 'nullable|string',
                 'records_list.data.*.register_date' => 'required|date_format:Y-m-d',
                 'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
             ]);
@@ -251,13 +256,12 @@ class ServiceController extends Controller
     {
         return DB::transaction(function () use ($id, $request) {
             $validated = $request->validate([
-                'id' => 'required|numeric',
                 'records_list' => 'required|array',
                 'records_list.enable_records' => 'required|boolean',
                 'records_list.data' => 'nullable|array',
                 'records_list.data.*.id' => 'nullable|numeric',
                 'records_list.data.*.amount' => 'required|numeric',
-                'records_list.data.*.payment_method' => 'required|string',
+                'records_list.data.*.payment_method' => 'nullable|string',
                 'records_list.data.*.past' => 'required|boolean',
                 'records_list.data.*.register_date' => 'required|date_format:Y-m-d',
                 // 'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',

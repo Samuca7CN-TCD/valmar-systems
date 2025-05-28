@@ -44,8 +44,8 @@
 
     // Refatoramos a lógica de preenchimento para ser reutilizável
     const fillInputWithSale = (option) => {
-        if (option) {
-            search.value = `#${option.id} ${option.entity_name || 'N/A'} | R$ ${option.value ? option.value.toFixed(2) : '0.00'} (${option.date ? new Date(option.date).toLocaleDateString() : 'N/A'})`;
+        if (option && option.id !== null) {
+            search.value = `#${option.id} ${option.entity_name || 'N/A'} | R$ ${option.accounting?.total_value?.toFixed(2) || '0.00'} (${option.date ? new Date(option.date).toLocaleDateString() : 'N/A'})`;
             selectedSaleId.value = option.id;
         } else {
             search.value = "";
@@ -55,25 +55,36 @@
 
     const selectOption = (option) => {
         if (typeof option === "string") {
-            // Se for uma digitação livre, limpa o ID selecionado
             search.value = option;
             selectedSaleId.value = null;
         } else {
-            // Se for uma opção do dropdown, preenche com os dados da venda
-            fillInputWithSale(option);
+            fillInputWithSale(option?.id ? option : null);
             closeDropdown();
         }
         emit('update:modelValue', selectedSaleId.value);
     };
 
+
     const filteredOptions = computed(() => {
-        return props.options.filter(
+        const filtered = props.options.filter(
             (option) =>
                 (option.motive && option.motive.toLowerCase().includes(search.value.toLowerCase())) ||
                 (option.entity_name && option.entity_name.toLowerCase().includes(search.value.toLowerCase())) ||
                 String(option.id).includes(search.value)
         );
+
+        return [
+            {
+                id: null,
+                entity_name: "Nenhuma venda relacionada",
+                motive: null,
+                date: null,
+                accounting: { total_value: 0 }
+            },
+            ...filtered
+        ];
     });
+
 
     const handleClickOutside = (event) => {
         const dropdownElement = event.target.closest('.dropdown-container');
@@ -129,17 +140,25 @@
             class="absolute w-full mt-2 bg-white border rounded shadow-md max-h-40 overflow-y-auto z-10">
             <li v-for="(option, index) in filteredOptions" :key="index" @click="selectOption(option)"
                 class="px-4 py-2 space-y-1 cursor-pointer hover:bg-gray-200 text-sm">
-                <div class="flex gap-2 justify-between">
-                    <div class="flex gap-2">
-                        <div class="font-bold text-gray-800">#{{ option.id }}</div>
-                        <div class="text-gray-600">{{ option.entity_name || 'N/A' }}</div>
+                <div v-if="option.id !== null">
+                    <div class="flex gap-2 justify-between">
+                        <div class="flex gap-2">
+                            <div class="font-bold text-gray-800">#{{ option.id }}</div>
+                            <div class="text-gray-600">{{ option.entity_name || 'N/A' }}</div>
+                        </div>
+                        <div class="text-gray-600 justify-end">{{ option.date ? new
+                            Date(option.date).toLocaleDateString() : 'N/A'
+                            }}
+                        </div>
                     </div>
-                    <div class="text-gray-600 justify-end">{{ option.date ? new
-                        Date(option.date).toLocaleDateString() : 'N/A'
-                    }}
+                    <div class="text-gray-600">R${{ option.accounting ? option.accounting.total_value.toFixed(2) :
+                        '0.00' }}
                     </div>
                 </div>
-                <div class="text-gray-600">R${{ option.accounting ? option.accounting.total_value.toFixed(2) : '0.00' }}
+                <div v-else>
+                    <div class="flex gap-2">
+                        <div class="text-gray-600">Nenhuma venda relacionada</div>
+                    </div>
                 </div>
             </li>
             <li v-if="filteredOptions.length === 0" class="px-4 py-2 text-gray-500">

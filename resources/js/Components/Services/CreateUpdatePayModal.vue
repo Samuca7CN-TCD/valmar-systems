@@ -237,10 +237,9 @@
                                         service.errors.observations }}</p>
                                 </div>
                             </div>
-
                             <div class="sm:col-span-6">
                                 <label for="service-sell"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Venda
+                                    class="block text-sm font-medium leading-6 text-gray-900">Venda
                                     relacionada</label>
                                 <div class="mt-2">
                                     <SelectSearchSell :options="sells_list"
@@ -320,7 +319,7 @@
                                         :disabled="remaining_amount == 0" placeholder="Valor do serviço parcial"
                                         v-model="record.amount" />
                                     <p class="text-gray-400 text-xs py-1">Valor Restante: {{ toMoney(remaining_amount)
-                                    }}
+                                        }}
                                     </p>
                                     <p v-if="record.errors.amount" class="text-red-500 text-sm">{{
                                         record.errors.amount }}</p>
@@ -494,7 +493,7 @@
 
                                                         </div>
                                                         <p v-else>{{ getPaymentMethodLabel(record_item.payment_method)
-                                                        }}</p>
+                                                            }}</p>
                                                     </td>
 
                                                     <!-- FILE CONTROL

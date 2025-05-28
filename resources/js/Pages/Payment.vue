@@ -136,7 +136,8 @@
     const payPayment = () => {
         payment_data.put(route('payments.pay', payment_data.id), {
             preserveScroll: true,
-            onSuccess: () => closeModal()
+            onSuccess: () => closeModal(),
+            onError: (error) => { console.log(error) }
         })
     }
 
@@ -167,7 +168,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{
                     toMoney(total_payments_amount_without_services)
-                }}</span><span v-if="$page.props.auth.user.hierarchy < 2" class="text-neutral-400"> | {{
+                    }}</span><span v-if="$page.props.auth.user.hierarchy < 2" class="text-neutral-400"> | {{
                         toMoney(total_payments_amount)
                     }} <span class="text-xs"> (pagamentos + serviços)</span></span>
             </h2>
