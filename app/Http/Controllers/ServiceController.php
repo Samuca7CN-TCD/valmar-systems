@@ -101,7 +101,7 @@ class ServiceController extends Controller
                 'records_list.enable_records' => ['required', 'boolean'],
                 'records_list.data' => ['nullable', 'array'],
                 'records_list.data.*.amount' => ['required', 'numeric'],
-                'records_list.data.*payment_method' => ['required', 'string'],
+                'records_list.data.*.payment_method' => ['required', 'string'],
                 'records_list.data.*.register_date' => ['required', 'date_format:Y-m-d'],
                 'records_list.data.*.filepath' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
             ]);
@@ -191,7 +191,6 @@ class ServiceController extends Controller
     {
         return DB::transaction(function () use ($id, $request) {
             $validated = $request->validate([
-                'id' => 'required|numeric',
                 'title' => 'required|string',
                 'client' => 'required|string',
                 'total_value' => 'required|numeric',
@@ -204,9 +203,8 @@ class ServiceController extends Controller
                 'records_list' => 'required|array',
                 'records_list.enable_records' => 'required|boolean',
                 'records_list.data' => 'nullable|array',
-                'records_list.data.*.id' => 'required|numeric',
                 'records_list.data.*.amount' => 'required|numeric',
-                'records_list.data.*.past' => 'required|boolean',
+                'records_list.data.*.payment_method' => 'required|string',
                 'records_list.data.*.register_date' => 'required|date_format:Y-m-d',
                 'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
             ]);
@@ -231,7 +229,7 @@ class ServiceController extends Controller
                     'deadline' => $validated['deadline'],
                     'previous_id' => $validated['previous_id'],
                     'delay_reason' => $validated['delay_reason'],
-                    'delayed' => $validated['delay_reason'] && !$validated['delayed'] ? true : false,
+                    'delayed' => !empty($validated['delay_reason']) && empty($validated['delayed']),
                     'completion_date' => $validated['completion_date']
                 ]);
 
@@ -245,33 +243,6 @@ class ServiceController extends Controller
                     //'new_movement' => json_encode($movement)
                 ]);
             }
-
-            // Atualiza os registros
-            /*
-            $recordsToDelete = array_filter($validated['records_list']['data'], function ($recordData) {
-                return $recordData['deleted_at'] !== null;
-            });
-            
-            $recordIds = array_column($recordsToDelete, 'id');
-            
-            if (!empty($recordIds)) {
-                // Carregar todos os registros a serem excluídos em uma única consulta
-                $records = Record::whereIn('id', $recordIds)->get();
-            
-                foreach ($records as $record) {
-                    $accounting->update([
-                        'partial_value' => $accounting->partial_value + $record->amount,
-                    ]);
-            
-                    $record->update([
-                        'procedure_id' => $procedure->id,
-                    ]);
-            
-                    $record->delete();
-                }
-            }
-            */
-
             return back();
         });
     }
@@ -284,12 +255,12 @@ class ServiceController extends Controller
                 'records_list' => 'required|array',
                 'records_list.enable_records' => 'required|boolean',
                 'records_list.data' => 'nullable|array',
-                'records_list.data.*.id' => 'required|numeric',
+                'records_list.data.*.id' => 'nullable|numeric',
                 'records_list.data.*.amount' => 'required|numeric',
                 'records_list.data.*.payment_method' => 'required|string',
                 'records_list.data.*.past' => 'required|boolean',
                 'records_list.data.*.register_date' => 'required|date_format:Y-m-d',
-                'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
+                // 'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
             ]);
             
             // Recupera o recurso existente pelo ID
@@ -300,7 +271,7 @@ class ServiceController extends Controller
                 'user_id' => Auth::id(),
                 'action_id' => 4, // Ajuste conforme necessário
                 'department_id' => 8, // Ajuste conforme necessário
-                'movement_id' => $accounting->movement->id,
+                'movement_id' => $accounting->movement ? $accounting->movement->id : null,
             ]);
 
             $records = collect($validated['records_list']['data'])
