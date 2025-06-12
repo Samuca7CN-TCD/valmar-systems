@@ -171,11 +171,11 @@
 
 <template>
 
-    <Head :title="page.name" />
+    <Head :title="page?.name" />
     <AppLayout :page="page">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }}
+                {{ page?.name }}
             </h2>
 
             <Link :href="route('budgets.create')">
@@ -213,7 +213,7 @@
 
 
         <div class="py-12 print:py-0">
-            <div class="max-w-fit mx-auto print:max-w-full">
+            <div class="min-w-7xl max-w-fit mx-auto print:max-w-full">
                 <div class="w-full flex justify-end pb-3 print:hidden px-6 sm:px-0">
                     <button v-if="!show_user_data" class="text-blue-500 text-xs"
                         @click="show_user_data = !show_user_data">Mostrar
@@ -251,50 +251,50 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-if="budgets_list.data.length" v-for="budget in budgets_list.data"
-                                                    :key="budget.id"
+                                                <tr v-if="budgets_list?.data?.length"
+                                                    v-for="budget in budgets_list.data" :key="budget?.id"
                                                     class="border-b transition duration-300 ease-in-out hover:bg-neutral-100">
                                                     <td class="whitespace-nowrap px-6 py-4 text-center font-medium">{{
-                                                        budget.id }}
+                                                        budget?.id }}
                                                     </td>
                                                     <td class="whitespace-nowrap px-6 py-4 text-left">{{
-                                                        budget.title
+                                                        budget?.title
                                                         }}</td>
                                                     <td class="whitespace-nowrap px-6 py-4 text-left">{{
-                                                        budget.client_name
+                                                        budget?.client_name
                                                         }}</td>
                                                     <td class="whitespace-nowrap px-6 py-4 text-left"
-                                                        :title="budget.items.map(item => item.item_name).join('; ')">
+                                                        :title="budget?.items?.map(item => item.item_name).join('; ')">
                                                         <div class="max-w-xs truncate">
-                                                            {{budget.items.map(item => item.item_name).join('; ')}}
+                                                            {{budget?.items?.map(item => item.item_name).join('; ')}}
                                                         </div>
                                                     </td>
                                                     <td class="whitespace-nowrap px-6 py-4 text-center">{{
-                                                        toMoney(budget.total_value) }}</td>
+                                                        toMoney(budget?.total_value) }}</td>
                                                     <td class="whitespace-nowrap px-6 py-4 text-center">{{
-                                                        formatDate(budget.budget_date, true) }}</td>
+                                                        formatDate(budget?.budget_date, true) }}</td>
                                                     <td class="whitespace-nowrap px-6 py-4 text-center">
                                                         <span class="px-2.5 py-0.5 rounded-full text-xs font-medium"
                                                             :class="{
-                                                                'bg-gray-100 text-gray-800': budget.status === 'Rascunho',
-                                                                'bg-blue-100 text-blue-800': budget.status === 'Enviado',
-                                                                'bg-green-100 text-green-800': budget.status === 'Aprovado',
-                                                                'bg-orange-100 text-orange-800': budget.status === 'Rejeitado',
-                                                                'bg-red-100 text-red-800': budget.status === 'Cancelado',
+                                                                'bg-gray-100 text-gray-800': budget?.status === 'Rascunho',
+                                                                'bg-blue-100 text-blue-800': budget?.status === 'Enviado',
+                                                                'bg-green-100 text-green-800': budget?.status === 'Aprovado',
+                                                                'bg-orange-100 text-orange-800': budget?.status === 'Rejeitado',
+                                                                'bg-red-100 text-red-800': budget?.status === 'Cancelado',
                                                             }">
-                                                            {{ budget.status }}
+                                                            {{ budget?.status }}
                                                         </span>
                                                     </td>
                                                     <td class="whitespace-nowrap px-6 py-4 text-center print:hidden">
                                                         <div class="flex justify-center items-center space-x-5">
-                                                            <Link :href="route('budgets.show', budget.id)"
+                                                            <Link :href="route('budgets.show', budget?.id)"
                                                                 class="hover:text-blue-700" title="Ver Orçamento">
                                                             <EyeIcon class="w-4 h-4" />
                                                             </Link>
 
                                                             <template
-                                                                v-if="['Rascunho'].includes(budget.status) && !budget.generated_service_id">
-                                                                <Link :href="route('budgets.edit', budget.id)"
+                                                                v-if="['Rascunho'].includes(budget?.status) && !budget?.generated_service_id">
+                                                                <Link :href="route('budgets.edit', budget?.id)"
                                                                     class="hover:text-yellow-700"
                                                                     title="Editar Orçamento">
                                                                 <PencilIcon class="w-4 h-4" />
@@ -326,15 +326,15 @@
                                                                 -->
                                                             </template>
 
-                                                            <button @click="duplicateBudget(budget.id)"
+                                                            <button @click="duplicateBudget(budget?.id)"
                                                                 class="hover:text-purple-700"
                                                                 title="Duplicar Orçamento">
                                                                 <DocumentDuplicateIcon class="w-4 h-4" />
                                                             </button>
 
                                                             <button
-                                                                v-if="!['Aprovado', 'Rejeitado', 'Cancelado'].includes(budget.status) && $page.props.auth.user.hierarchy < 2"
-                                                                @click="openActionModal(budget.id, 'cancel')"
+                                                                v-if="!['Aprovado', 'Rejeitado', 'Cancelado'].includes(budget?.status) && $page.props.auth.user?.hierarchy < 2"
+                                                                @click="openActionModal(budget?.id, 'cancel')"
                                                                 class="hover:text-red-700" title="Cancelar Orçamento">
                                                                 <XMarkIcon class="w-4 h-4" />
                                                             </button>

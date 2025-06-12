@@ -16,16 +16,19 @@ return new class extends Migration
             $table->integer('validity')->default(20)->after('title');
             $table->string('client_cpf_cnpj')->nullable()->after('client_email');
             $table->string('client_cep')->nullable()->after('client_address');
-            $table->text('contracted_responsibility')->default('Fornecer todo material de fabricação e consumo')->after('description');
+            // Remove default for TEXT column
+            $table->text('contracted_responsibility')->after('description');
             $table->text('contractor_responsibility')->nullable()->after('contracted_responsibility');
-            $table->text('payment_method_description')->default('50% entrada' . PHP_EOL . '50% no ato da entrega do serviço')->after('contractor_responsibility'); // Usar PHP_EOL para quebra de linha
-            $bank_info_default = 'BANCO DO BRASIL' . PHP_EOL . 'AG: 3175-5 | C/C: 20.439-0' . PHP_EOL . 'PIX: (73) 9 8855-9571';
-            $table->text('bank_info_description')->default($bank_info_default)->after('payment_method_description');
+            // Remove default for TEXT column
+            $table->text('payment_method_description')->after('contractor_responsibility');
+            // Remove default for TEXT column
+            $table->text('bank_info_description')->after('payment_method_description');
             $table->enum('budget_type', ['Original', 'Correção'])->default('Original')->after('status');
             $table->unsignedBigInteger('original_budget_id')->nullable()->after('budget_type');
             $table->foreign('original_budget_id')->references('id')->on('budgets')->onDelete('set null');
             $table->integer('deadline')->default(20)->after('bank_info_description');
-            $table->string('deadline_start_description')->default('a partir do pagamento de entrada')->after('deadline'); // Assumindo 'deadline' já existe
+            // Remove default for TEXT column
+            $table->string('deadline_start_description')->after('deadline');
             $table->enum('deadline_type', ['dias úteis', 'dias corridos'])->default('dias úteis')->after('deadline_start_description');
         });
     }
