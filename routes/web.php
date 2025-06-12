@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\MovementEntryController;
 use App\Http\Controllers\MovementUseController;
 use App\Http\Controllers\MovementSellController;
@@ -32,6 +33,11 @@ Route::middleware([
 ])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('home');
     Route::resource('dashboard', DashboardController::class);
+    Route::get('/dashboard/data/general', [DashboardController::class, 'getGeneralData'])->name('dashboard.data.general');
+    Route::get('/dashboard/data/warehouse', [DashboardController::class, 'getWarehouseData'])->name('dashboard.data.warehouse');
+    Route::get('/dashboard/data/financeiro', [DashboardController::class, 'getFinanceiroData'])->name('dashboard.data.financeiro');
+    Route::get('/dashboard/data/services-budgets', [DashboardController::class, 'getServicesAndBudgetsReports'])->name('dashboard.data.services_budgets');
+    Route::get('/dashboard/data/unpaid-completed-services', [DashboardController::class, 'getUnpaidCompletedServices'])->name('dashboard.data.unpaid_completed_services');
 
     Route::get('/warehouse', [ItemController::class, 'index'])->name('warehouse.index');
     Route::post('/warehouse', [ItemController::class, 'store'])->name('warehouse.store');
@@ -61,7 +67,18 @@ Route::middleware([
     Route::resource('/services', ServiceController::class);
     Route::put('/services/pay/{service}', [ServiceController::class, 'pay'])->where('service', '[0-9]+')->name('services.pay');
     Route::put('/services/conclude/{service}', [ServiceController::class, 'conclude'])->where('service', '[0-9]+')->name('services.conclude');
+    Route::put('/services/cancel/{service}', [ServiceController::class, 'cancel'])->where('service', '[0-9]+')->name('services.cancel');
+    Route::put('/services/change-status/{service}', [ServiceController::class, 'changeStatus'])->where('service', '[0-9]+')->name('services.change-status');
     Route::get('/previous/services', [ServiceController::class, 'previous'])->name('services.previous');
+
+    Route::resource('budgets', BudgetController::class);
+    Route::post('/budgets/{budget}/cancel', [BudgetController::class, 'cancel'])->name('budgets.cancel');
+    Route::post('/budgets/{budget}/approve', [BudgetController::class, 'approve'])->name('budgets.approve');
+    Route::post('/budgets/{budget}/reject', [BudgetController::class, 'reject'])->name('budgets.reject');
+    Route::post('/budgets/{budget}/duplicate', [BudgetController::class, 'duplicate'])->name('budgets.duplicate');
+    Route::post('/budgets/{budget}/recreate', [BudgetController::class, 'recreate'])->name('budgets.recreate');
+    Route::get('/budgets/{budget}/print', [BudgetController::class, 'print'])->name('budgets.print');
+    Route::post('/budgets/{budget}/send', [BudgetController::class, 'send'])->name('budgets.send');
 
     Route::resource('/employees', EmployeeController::class);
     Route::delete('/employees/fire/{id}', [EmployeeController::class, 'fire'])->name('employees.fire');

@@ -3,13 +3,16 @@
     import CreateUpdatePayModal from '@/Components/Services/CreateUpdatePayModal.vue'
     import FloatButton from '@/Components/FloatButton.vue'
     import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
-    import { Head, useForm } from '@inertiajs/vue3'
-    import { computed, ref } from 'vue'
-    import { BanknotesIcon, CheckBadgeIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+    import { Head, useForm, router, Link } from '@inertiajs/vue3' // Adicionado 'router'
+    import { computed, onMounted, ref } from 'vue'
+    import { BanknotesIcon, CheckBadgeIcon, DocumentTextIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
     import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
     import { useToast } from 'vue-toast-notification';
     import 'vue-toast-notification/dist/theme-sugar.css';
     import MotivoAtrasoModal from '@/Components/Services/MotivoAtrasoModal.vue'
+    import MotivoCancelamentoModal from '@/Components/Services/MotivoCancelamentoModal.vue'
+
+
     // =============================================
     // Informações exteriores
     const props = defineProps({
@@ -18,10 +21,14 @@
             type: Array,
             default: null,
         },
-        services_list: Object,
+        services_list: Object, // Certifique-se que este é um objeto Inercia Page Props e não um array simples
         sells_list: {
             type: Array,
             default: [],
+        },
+        show_service_id: {
+            type: [String, Number], // Pode ser string se o ID for UUID
+            default: null,
         },
     })
 
@@ -37,6 +44,8 @@
         'partial_value': 0,
         'deadline': formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date'),
         'observations': '',
+        'service_status': 'Não Iniciado', // Já correto para novos serviços
+        'cancellation_reason': null,
         'delay_reason': '',
         'delayed': false,
         'completion_date': formatDate(new Date(), 'new_date'),
@@ -52,12 +61,14 @@
     const filtered_services_list = computed(() => {
         const searchTermLower = search_term.value.toLowerCase()
         return props.services_list.filter(el =>
+            (el.id?.toString().includes(searchTermLower)) ||
             (el.motive?.toLowerCase().includes(searchTermLower)) ||
             (el.entity_name?.toLowerCase().includes(searchTermLower)) ||
             (el.observations?.toLowerCase().includes(searchTermLower)) ||
             (toMoney(el.accounting.total_value || 0)?.toString().toLowerCase().includes(searchTermLower)) ||
             (toMoney(el.accounting.partial_value || 0)?.toString().toLowerCase().includes(searchTermLower)) ||
-            (el.deadline?.includes(searchTermLower))
+            (el.deadline?.includes(searchTermLower)) ||
+            (el.service_status?.toLowerCase().includes(searchTermLower))
         );
     });
 
@@ -102,10 +113,10 @@
 
 
     const setServiceData = (service_id) => {
-        const service = props.services_list.find(service => service.id === service_id);
+        const service = props.services_list.find(service => service.id === parseInt(service_id));
 
         if (service) {
-            const { id, previous_id, motive, entity_name, deadline, observations, delay_reason, delayed, completion_date, records, accounting } = service;
+            const { id, previous_id, motive, entity_name, deadline, observations, cancellation_reason, delay_reason, delayed, completion_date, records, accounting, service_status } = service;
 
             service_data.id = id;
             service_data.previous_id = previous_id;
@@ -115,6 +126,8 @@
             service_data.partial_value = accounting.partial_value;
             service_data.deadline = deadline;
             service_data.observations = observations;
+            service_data.service_status = service_status;
+            service_data.cancellation_reason = cancellation_reason;
             service_data.delay_reason = delay_reason;
             service_data.completion_date = formatDate(new Date(), 'new_date');
             service_data.delayed = delayed;
@@ -128,6 +141,12 @@
 
         if (service_id !== null && isUpdateOrPayMode) {
             setServiceData(service_id);
+        } else {
+            // Resetar o formulário se não for um modo de edição/pagamento com ID
+            service_data.reset();
+            // Reatribuir o valor default do deadline se resetar
+            service_data.deadline = formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date');
+            service_data.service_status = 'Não Iniciado'; // Garante o status inicial
         }
 
         modal.value.mode = mode;
@@ -149,20 +168,42 @@
         showMotivoAtrasoModal.value = true
     };
 
+    const showMotivoCancelamentoModal = ref(false);
+
+    const opencancelModal = (service_id) => {
+        setServiceData(service_id);
+        modal.value.mode = 'cancel';
+        showMotivoCancelamentoModal.value = true
+    };
+
     const closeModal = () => {
         service_data.reset();
         modal.value.show = false;
         showMotivoAtrasoModal.value = false;
+        showMotivoCancelamentoModal.value = false;
+        // Ao fechar o modal, redefinir o deadline para o valor padrão de criação
+        service_data.deadline = formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date');
+        service_data.service_status = 'Não Iniciado'; // Garante o status inicial
     }
 
 
+    onMounted(() => {
+        if (props.show_service_id) {
+            // Encontra o serviço na lista. Para Services/Previous, talvez precise de props.services_list.data
+            openModal('update', props.show_service_id);
+        }
+    });
 
     // =============================================
     // Métodos de CRUD
     const createService = () => {
+        console.log("SERVIÇO: ", service_data)
         service_data.post(route('services.store'), {
             preserveScroll: true,
-            onSuccess: () => closeModal(),
+            onSuccess: () => {
+                $toast.success('Serviço criado com sucesso!')
+                closeModal()
+            },
             onError: (error) => { console.log(error) }
         })
     }
@@ -170,29 +211,32 @@
     const updateService = () => {
         service_data.put(route('services.update', service_data.id), {
             preserveScroll: true,
-            onSuccess: () => closeModal()
+            onSuccess: () => {
+                $toast.success('Serviço alterado com sucesso!')
+                closeModal()
+            }
         })
     }
 
     const payService = () => {
         service_data.put(route('services.pay', service_data.id), {
             preserveScroll: true,
-            onSuccess: () => closeModal()
+            onSuccess: () => {
+                $toast.success('Serviço pago com sucesso!')
+                closeModal()
+            }
         })
     }
 
     const concludeService = () => {
-        service_data.put(route('services.update', service_data.id), {
+        service_data.put(route('services.conclude', service_data.id), { // Apenas uma chamada para 'conclude'
             preserveScroll: true,
             onSuccess: () => {
-                service_data.put(route('services.conclude', service_data.id), {
-                    preserveScroll: true,
-                    onSuccess: () => closeModal()
-                });
-                closeModal();
-            }
-        })
-
+                $toast.success('Serviço concluído com sucesso!')
+                closeModal()
+            },
+            onError: (error) => { console.log(error) } // Adicionar tratamento de erro
+        });
     }
 
     const deleteService = (service_id, service_name) => {
@@ -204,12 +248,38 @@
         }
     }
 
+    const cancelService = () => {
+        service_data.put(route('services.cancel', service_data.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                $toast.success('Serviço cancelado com sucesso!')
+                closeModal()
+            },
+            onError: (error) => { console.log(error) } // Adicionar tratamento de erro
+        });
+    }
+
+    const changeStatusService = (service_id, event) => { // Mudar 'new_status' para 'event'
+        const new_status = event.target.value; // Obter o valor do evento
+        router.put(route('services.change-status', service_id), { service_status: new_status }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                $toast.success('Status alterado com sucesso!');
+                // Forçar uma recarga parcial para atualizar os dados do Inertia
+                // ou atualizar manualmente o item na lista se for viável
+                router.reload({ only: ['services_list'] }); // Recarrega apenas a prop services_list
+            },
+            onError: (error) => { console.log(error); $toast.error('Erro ao alterar status!'); }
+        });
+    }
+
     const submit = () => {
         switch (modal.value.mode) {
             case 'create': return createService()
             case 'update': return updateService()
             case 'pay': return payService()
             case 'conclude': return concludeService()
+            case 'cancel': return cancelService()
             default: $toast.error('Método desconhecido. Informar o Técnico.')
         }
     }
@@ -241,7 +311,7 @@
 
         <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
-                <div class="w-full flex justify-end pb-3">
+                <div class="w-full flex justify-end pb-3 print:hidden">
                     <button v-if="!show_user_data" class="text-blue-500 text-xs justify-end"
                         @click="show_user_data = !show_user_data">Mostrar
                         dados de
@@ -259,41 +329,56 @@
                                         <table class="min-w-full text-left text-sm font-light">
                                             <thead class="border-b font-medium ">
                                                 <tr>
-                                                    <th scope="col" class="px-6 py-4 text-center">#</th>
-                                                    <th scope="col" class="px-6 py-4 text-center">Prazo</th>
-                                                    <th scope="col" class="px-6 py-4 text-center">Título</th>
-                                                    <th scope="col" class="px-6 py-4 text-center">Cliente</th>
-                                                    <th scope="col" class="px-6 py-4 text-center">À pagar</th>
-                                                    <th scope="col" class="px-6 py-4 text-center">Valor total</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden">Entrega
+                                                    <th scope="col" class="px-6 py-4 print:px-3 print:py-2 text-center">
+                                                        #</th>
+                                                    <th scope="col" class="px-6 py-4 print:px-3 print:py-2 text-center">
+                                                        Prazo
                                                     </th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
-                                                        colspan="4">Ações
+                                                    <th scope="col" class="px-6 py-4 print:px-3 print:py-2 text-center">
+                                                        Título
                                                     </th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                    <th scope="col" class="px-6 py-4 print:px-3 print:py-2 text-center">
+                                                        Cliente
+                                                    </th>
+                                                    <th scope="col" class="px-6 py-4 print:px-3 print:py-2 text-center">
+                                                        À pagar
+                                                    </th>
+                                                    <th scope="col" class="px-6 py-4 print:px-3 print:py-2 text-center">
+                                                        Valor
+                                                        total</th>
+                                                    <th scope="col"
+                                                        class="px-6 py-4 print:px-3 print:py-2 text-center print:hidden">
+                                                        Entrega
+                                                    </th>
+                                                    <th scope="col" class="px-6 py-4 print:px-3 print:py-2 text-center">
+                                                        Status
+                                                    </th>
+                                                    <th scope="col"
+                                                        class="px-6 py-4 print:px-3 print:py-2 text-center print:hidden"
+                                                        colspan="5">Ações
+                                                    </th>
+                                                    <th scope="col"
+                                                        class="px-6 py-4 print:px-3 print:py-2 text-center print:hidden"
                                                         v-if="show_user_data">Criado
                                                         em</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                    <th scope="col"
+                                                        class="px-6 py-4 print:px-3 print:py-2 text-center print:hidden"
                                                         v-if="show_user_data">Criado
                                                         por</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                    <th scope="col"
+                                                        class="px-6 py-4 print:px-3 print:py-2 text-center print:hidden"
                                                         v-if="show_user_data">
                                                         Modificado em</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden"
+                                                    <th scope="col"
+                                                        class="px-6 py-4 print:px-3 print:py-2 text-center print:hidden"
                                                         v-if="show_user_data">
                                                         Modificado por
                                                     </th>
-                                                    <!--
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden">Concluir</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden">Pagar</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden">Editar</th>
-                                                    <th scope="col" class="px-6 py-4 text-center print:hidden">Excluir</th>
-                                                    -->
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <tr v-if="filtered_services_list.length"
-                                                    v-for="service in filtered_services_list"
+                                                    v-for="service in filtered_services_list" :key="service.id"
                                                     class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
                                                         service.id }}
@@ -302,19 +387,57 @@
                                                         :class="deadlineClass(service.deadline)">
                                                         {{ calcDeadlineDays(service.deadline) }} dias
                                                     </td>
-                                                    <td class="whitespace-normal px-6 py-4 text-center trim">{{
-                                                        service.motive }}
+                                                    <td
+                                                        class="whitespace-normal px-6 py-4 print:px-3 print:py-2 text-center trim">
+                                                        {{
+                                                            service.motive }}
                                                         <span v-if="service.observations" :title="service.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
-                                                    <td class="whitespace-normal px-6 py-4 text-center">{{
-                                                        service.entity_name }}</td>
+                                                    <td
+                                                        class="whitespace-normal px-6 py-4 print:px-3 print:py-2 text-center">
+                                                        {{
+                                                            service.entity_name }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
                                                         toMoney(service.accounting.partial_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
                                                         toMoney(service.accounting.total_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center print:hidden">{{
                                                         formatDate(service.deadline, true) }}</td>
+                                                    <td class="whitespace-nowrap px-2 py-4 text-center">
+                                                        <select
+                                                            class="print:hidden pl-1 pr-7 py-0.5 rounded-full text-xs"
+                                                            :class="{
+                                                                'text-blue-500 border-blue-500': service.service_status === 'Não Iniciado',
+                                                                'text-yellow-500 border-yellow-500': service.service_status === 'Em Andamento',
+                                                                'text-orange-500 border-orange-500': service.service_status === 'Pausado',
+                                                            }" :value="service.service_status"
+                                                            @change="changeStatusService(service.id, $event)">
+                                                            <option v-show="service.service_status !== 'Não Iniciado'"
+                                                                value="Não Iniciado"
+                                                                :selected="service.service_status === 'Não Iniciado'"
+                                                                class="text-blue-500">
+                                                                Não
+                                                                Iniciado
+                                                            </option>
+                                                            <option v-show="service.service_status !== 'Em Andamento'"
+                                                                value="Em Andamento"
+                                                                :selected="service.service_status === 'Em Andamento'"
+                                                                class="text-yellow-500">Em
+                                                                Andamento
+                                                            </option>
+                                                            <option v-show="service.service_status !== 'Pausado'"
+                                                                value="Pausado"
+                                                                :selected="service.service_status === 'Pausado'"
+                                                                class="text-orange-500">
+                                                                Pausado</option>
+                                                        </select>
+                                                        <label class="hidden print:block" :class="{
+                                                            'text-blue-500': service.service_status === 'Não Iniciado',
+                                                            'text-yellow-500': service.service_status === 'Em Andamento',
+                                                            'text-orange-500': service.service_status === 'Pausado',
+                                                        }">{{ service.service_status }}</label>
+                                                    </td>
                                                     <td class="whitespace-nowrap px-4 py-4 pl-10 text-center cursor-pointer hover:text-blue-700 active:text-blue-900 select-none print:hidden"
                                                         :title="'CONCLUIR: ' + service.motive + '(' + service.entity_name + ')'"
                                                         @click="opencompletionModal(service.id, service.accounting.partial_value)">
@@ -333,9 +456,18 @@
                                                         @click="openModal('update', service.id)">
                                                         <PencilIcon class="w-4 h-4 m-auto" />
                                                     </td>
-                                                    <td class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-red-700 active:text-red-900 select-none print:hidden"
-                                                        :title="'EXCLUIR: ' + service.motive + '(' + service.entity_name + ')'"
-                                                        @click="deleteService(service.id, service.name)">
+                                                    <td :title="'ORÇAMENTO DE ' + service.motive + '(' + service.entity_name + ')'"
+                                                        class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-sky-700 active:text-sky-900 select-none print:hidden">
+                                                        <a v-if="service.budget?.id"
+                                                            :href="route('budgets.show', service.budget.id)"
+                                                            target="_blank" class="">
+                                                            <DocumentTextIcon class="w-4 h-4 m-auto" />
+                                                        </a>
+                                                    </td>
+                                                    <td v-if="$page.props.auth.user.hierarchy < 2"
+                                                        class="whitespace-nowrap px-4 py-4 text-center cursor-pointer hover:text-red-700 active:text-red-900 select-none print:hidden"
+                                                        :title="'CANCELAR: ' + service.motive + '(' + service.entity_name + ')'"
+                                                        @click="opencancelModal(service.id)">
                                                         <XMarkIcon class="w-4 h-4 m-auto" />
                                                     </td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center print:hidden"
@@ -361,7 +493,8 @@
                                                 </tr>
                                                 <tr v-else
                                                     class="transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid">
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center" colspan="9">Não
+                                                    <td class="whitespace-nowrap px-6 py-4 print:px-3 print:py-2 text-center"
+                                                        colspan="9">Não
                                                         há
                                                         serviços cadastrados no momento!</td>
                                                 </tr>
@@ -380,6 +513,9 @@
             @submit="submit" @close="closeModal" />
 
         <MotivoAtrasoModal :show="showMotivoAtrasoModal" :service="service_data" @submit="submit" @close="closeModal" />
+
+        <MotivoCancelamentoModal :show="showMotivoCancelamentoModal" :service="service_data" @submit="submit"
+            @close="closeModal" />
 
         <ExtraOptionsButton :mode="['rollup', 'print_page', 'link']" :link_type="['previous']"
             :link="[route('services.previous')]" />

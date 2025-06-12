@@ -45,7 +45,7 @@
     // Refatoramos a lógica de preenchimento para ser reutilizável
     const fillInputWithSale = (option) => {
         if (option && option.id !== null) {
-            search.value = `#${option.id} ${option.entity_name || 'N/A'} | R$ ${option.accounting?.total_value?.toFixed(2) || '0.00'} (${option.date ? new Date(option.date).toLocaleDateString() : 'N/A'})`;
+            search.value = `#${option.id} ${option.entity_name || '-'} | R$ ${option.accounting?.total_value?.toFixed(2) || '0.00'} (${option.date ? new Date(option.date).toLocaleDateString() : '-'})`;
             selectedSaleId.value = option.id;
         } else {
             search.value = "";
@@ -144,11 +144,11 @@
                     <div class="flex gap-2 justify-between">
                         <div class="flex gap-2">
                             <div class="font-bold text-gray-800">#{{ option.id }}</div>
-                            <div class="text-gray-600">{{ option.entity_name || 'N/A' }}</div>
+                            <div class="text-gray-600">{{ option.entity_name || '-' }}</div>
                         </div>
                         <div class="text-gray-600 justify-end">{{ option.date ? new
-                            Date(option.date).toLocaleDateString() : 'N/A'
-                            }}
+                            Date(option.date).toLocaleDateString() : '-'
+                        }}
                         </div>
                     </div>
                     <div class="text-gray-600">R${{ option.accounting ? option.accounting.total_value.toFixed(2) :

@@ -1,7 +1,29 @@
-export const toMoney = (value) => {
-    if (!value) return;
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).toString()
-}
+export const toMoney = (value, options = {}) => {
+    // 1. Garante que o valor seja um número.
+    // Se não for um número válido (incluindo null, undefined, strings não numéricas),
+    // o padrão será 0.
+    let numericValue = Number(value);
+    if (isNaN(numericValue)) {
+        numericValue = 0;
+    }
+
+    // 2. Opções de Formatação Padrão
+    const defaultOptions = {
+        style: 'currency',
+        currency: 'BRL',
+        // O toLocaleString já lida com o sinal negativo.
+        // Por exemplo: -100.50 -> -R$ 100,50
+        // Para controlar como o sinal é exibido (ex: sempre, exceto zero, etc.),
+        // a propriedade signDisplay pode ser útil, mas o padrão 'auto' geralmente funciona.
+        // signDisplay: 'auto', // Padrão
+    };
+
+    // Mescla as opções padrão com as opções passadas (permitindo customização)
+    const formatOptions = { ...defaultOptions, ...options };
+
+    // 3. Usa o toLocaleString nativo para lidar com positivos, negativos e zero.
+    return numericValue.toLocaleString('pt-BR', formatOptions).toString();
+};
 
 export const measurementUnitResolver = (measurement_units_list, measurement_unit_id, quantity, type = 'geral') => {
     const mu = measurement_units_list.find(mu => mu.id === measurement_unit_id)
@@ -26,7 +48,7 @@ export const formatDate = (date = null, format = null) => {
     const currentDate = new Date(date);
 
     if (format === null || format === 'new_date') {
-        return currentDate.toISOString().substring(0, 10); // YYYY-MM-DD
+        return currentDate.toISOString().substring(0, 10); //YYYY-MM-DD
     } else if (format === 'reading') {
         const months = [
             'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
@@ -132,6 +154,102 @@ export const formatCPF = (cpf) => {
 
     return `${part1}.${part2}.${part3}-${part4}`;
 };
+
+// =============================================
+// FUNÇÕES PARA CNPJ
+
+
+export const validateCNPJ = (cnpj) => {
+    let cleaned = clearFormat(cnpj);
+
+    if (cleaned.length !== 14) {
+        return false;
+    }
+
+    // Elimina CNPJs inválidos conhecidos
+    const invalidCNPJs = [
+        '00000000000000', '11111111111111', '22222222222222', '33333333333333',
+        '44444444444444', '55555555555555', '66666666666666', '77777777777777',
+        '88888888888888', '99999999999999'
+    ];
+    if (invalidCNPJs.includes(cleaned)) {
+        return false;
+    }
+
+    // Valida DVs
+    let length = cleaned.length - 2;
+    let numbers = cleaned.substring(0, length);
+    let digits = cleaned.substring(length);
+    let sum = 0;
+    let pos = length - 7;
+    let multiplier;
+
+    for (let i = length; i >= 1; i--) {
+        sum += parseInt(numbers.charAt(length - i)) * pos--;
+        if (pos < 2) {
+            pos = 9;
+        }
+    }
+    let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    if (result !== parseInt(digits.charAt(0))) {
+        return false;
+    }
+
+    length = length + 1;
+    numbers = cleaned.substring(0, length);
+    sum = 0;
+    pos = length - 7;
+
+    for (let i = length; i >= 1; i--) {
+        sum += parseInt(numbers.charAt(length - i)) * pos--;
+        if (pos < 2) {
+            pos = 9;
+        }
+    }
+    result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    if (result !== parseInt(digits.charAt(1))) {
+        return false;
+    }
+    return true;
+};
+
+export const formatCNPJ = (cnpj) => {
+    let cleaned = clearFormat(cnpj);
+
+    if (cleaned.length !== 14) {
+        return cleaned; // Retorna sem formatar se o tamanho for incorreto
+    }
+
+    // Formata o CNPJ: XX.XXX.XXX/XXXX-XX
+    const part1 = cleaned.substring(0, 2);
+    const part2 = cleaned.substring(2, 5);
+    const part3 = cleaned.substring(5, 8);
+    const part4 = cleaned.substring(8, 12);
+    const part5 = cleaned.substring(12, 14);
+
+    return `${part1}.${part2}.${part3}/${part4}-${part5}`;
+};
+
+
+// =============================================
+// FUNÇÕES PARA CEP
+
+export const formatarCEP = (cep) => {
+    // Remove tudo que não for número
+    let cleaned = String(cep).replace(/\D/g, ''); // Garante que é string e remove não-dígitos
+
+    // Verifica se tem 8 dígitos
+    if (cleaned.length !== 8) {
+        return cleaned; // Retorna o CEP limpo se não tiver 8 dígitos para permitir o usuário continuar digitando
+    }
+
+    // Formata o CEP: XXXXX-XXX
+    return cleaned.substring(0, 5) + '-' + cleaned.substring(5, 8);
+};
+
+
+// =============================================
+// RESTANTE DO GENERAL.JS
 
 export const formatAgency = (agency) => {
     // Remove todos os caracteres que não são números

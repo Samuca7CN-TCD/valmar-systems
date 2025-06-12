@@ -18,6 +18,7 @@ class ActionSeeder extends Seeder
     {
         $now = Carbon::now()->format('Y-m-d H:i:s');
 
+        /*
         DB::table('actions')->insert([
             ['type' => 'create', 'name' => 'criar', 'past' => 'criou', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'update', 'name' => 'atualizar', 'past' => 'atualizou', 'created_at' => $now, 'updated_at' => $now],
@@ -29,6 +30,14 @@ class ActionSeeder extends Seeder
             ['type' => 'refund', 'name' => 'reembolsar', 'past' => 'reembolsou', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'devolution', 'name' => 'devolver', 'past' => 'devolveu', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'save', 'name' => 'salvar', 'past' => 'salvou', 'created_at' => $now, 'updated_at' => $now],
+        ]);
+        */
+
+        DB::table('actions')->insert([
+            ['type' => 'send', 'name' => 'enviar', 'past' => 'enviou', 'created_at' => $now, 'updated_at' => $now],
+            ['type' => 'approve', 'name' => 'aprovar', 'past' => 'aprovou', 'created_at' => $now, 'updated_at' => $now],
+            ['type' => 'reject', 'name' => 'rejeitar', 'past' => 'rejeitou', 'created_at' => $now, 'updated_at' => $now],
+            ['type' => 'cancel', 'name' => 'cancelar', 'past' => 'cancelou', 'created_at' => $now, 'updated_at' => $now],
         ]);
     }
 }

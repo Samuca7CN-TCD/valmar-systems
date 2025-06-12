@@ -25,6 +25,9 @@ class Movement extends Model
         'completion_date',
         'delayed',
         'previous_id',
+        'service_status',
+        'cancellation_reason',
+        'budget_id',
     ];
 
     public function sell()
@@ -45,5 +48,10 @@ class Movement extends Model
     public function motivosAtrasos()
     {
         return $this->hasMany(MotivoAtraso::class);
+    }
+
+    public function budget()
+    {
+        return $this->belongsTo(Budget::class);
     }
 }

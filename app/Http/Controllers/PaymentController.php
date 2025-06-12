@@ -32,7 +32,7 @@ class PaymentController extends Controller
 
         $payments = Movement::where('type', '>', -1)->where('type', '<', 3)->with(['accounting', 'procedures.records.procedure.user', 'procedures.user'])
             ->whereHas('accounting', function ($query) {
-                $query->where('partial_value', '>', 0.009);
+                $query->where('partial_value', '>', 0);
             })
             ->get()
             ->map(function ($movement) {
@@ -202,18 +202,20 @@ class PaymentController extends Controller
                 // 'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
             ]);
 
+            $movement = Movement::findOrFail($id);
+            $accounting = $movement->accounting;
             // Recupera o recurso existente pelo ID
-            $accounting = Accounting::findOrFail($id);
-            $paid_amount = $accounting->total_value - $accounting->partial_value;
-            $accounting->update([
-                'total_value' => $validated['total_value'],
-                'partial_value' => $validated['total_value'] - $paid_amount,
-            ]);
 
-            // Garante que o movimento exista antes de atualizar
-            $movement = $accounting->movement;
-            if ($movement)
+            
+
+            if ($movement && $accounting)
             {
+                $paid_amount = $accounting->total_value - $accounting->partial_value;
+                $accounting->update([
+                    'total_value' => $validated['total_value'],
+                    'partial_value' => $validated['total_value'] - $paid_amount,
+                ]);
+
                 $movement->update([
                     'motive' => $validated['debt'],
                     'entity_name' => $validated['debtor'],
@@ -250,38 +252,42 @@ class PaymentController extends Controller
                 'records_list.data.*.register_date' => 'required|date_format:Y-m-d',
                 // 'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
             ]);
+
+            $movement = Movement::findOrFail($id);
+
             // Recupera o recurso existente pelo ID
-            $accounting = Accounting::findOrFail($id);
+            $accounting = $movement->accounting;
 
-            // Cria um novo procedimento para registrar a ação de pagamento
-            $procedure = Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 4, // Ajuste conforme necessário
-                'department_id' => 7, // Ajuste conforme necessário
-                'movement_id' => $accounting->movement->id,
-            ]);
+            if ($movement && $accounting)
+            {
+                $procedure = Procedure::create([
+                    'user_id' => Auth::id(),
+                    'action_id' => 4, // Ajuste conforme necessário
+                    'department_id' => 7, // Ajuste conforme necessário
+                    'movement_id' => $movement->id,
+                ]);
+            
+                $records = collect($validated['records_list']['data'])
+                    ->filter(function ($payRecord) {
+                        return !$payRecord['past'];
+                    })
+                    ->map(function ($payRecord) use ($procedure) {
+                        return Record::create([
+                            'procedure_id' => $procedure->id,
+                            'amount' => $payRecord['amount'],
+                            'payment_method' => $payRecord['payment_method'],
+                            'register_date' => $payRecord['register_date'],
+                        ]);
+                    });
 
-            $records = collect($validated['records_list']['data'])
-                ->filter(function ($payRecord) {
-                    return !$payRecord['past'];
-                })
-                ->map(function ($payRecord) use ($procedure) {
-                    return Record::create([
-                        'procedure_id' => $procedure->id,
-                        'amount' => $payRecord['amount'],
-                        'payment_method' => $payRecord['payment_method'],
-                        'register_date' => $payRecord['register_date'],
-                    ]);
-                });
+                // Calcula a soma total dos valores dos registros
+                $totalRecordAmount = $records->sum('amount');
 
-            // Calcula a soma total dos valores dos registros
-            $totalRecordAmount = $records->sum('amount');
-
-            // Atualiza o modelo Accounting
-            $accounting->update([
-                'partial_value' => $accounting->partial_value - $totalRecordAmount,
-            ]);
-
+                // Atualiza o modelo Accounting
+                $accounting->update([
+                    'partial_value' => $accounting->partial_value - $totalRecordAmount,
+                ]);
+            }
             return back();
         });
     }

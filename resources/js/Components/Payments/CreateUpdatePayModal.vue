@@ -269,7 +269,7 @@
                                         :disabled="remaining_amount == 0" placeholder="Valor do serviço parcial"
                                         v-model="record.amount" />
                                     <p class="text-gray-400 text-xs py-1">Valor Restante: {{ toMoney(remaining_amount)
-                                    }}
+                                        }}
                                     </p>
                                     <p v-if="record.errors.amount" class="text-red-500 text-sm">{{
                                         record.errors.amount }}</p>
@@ -442,13 +442,13 @@
 
                                                         </div>
                                                         <p v-else>{{ getPaymentMethodLabel(record_item.payment_method)
-                                                        }}</p>
+                                                            }}</p>
                                                     </td>
 
                                                     <td v-if="modal.mode !== 'create'"
                                                         class="whitespace-nowrap px-6 py-4  select-none">
                                                         {{ record_item?.procedure?.user?.name ||
-                                                        $page.props.auth.user.name || 'Não identificado' }}
+                                                            $page.props.auth.user.name || 'Não identificado' }}
                                                     </td>
 
                                                     <td v-if="modal.mode !== 'pay' && modal.mode !== 'see'"

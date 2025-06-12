@@ -18,6 +18,7 @@ class DepartmentSeeder extends Seeder
     {
         $now = Carbon::now()->format('Y-m-d H:i:s');
         DB::table('departments')->insert([
+            /*
             ['type' => 'dashboard', 'name' => 'Dashboard', 'name_plural' => 'Dashboards', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'warehouse', 'name' => 'Almoxarifado', 'name_plural' => 'Almoxarifados', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'movements', 'name' => 'Entrada', 'name_plural' => 'Entradas', 'created_at' => $now, 'updated_at' => $now],
@@ -32,6 +33,8 @@ class DepartmentSeeder extends Seeder
             ['type' => 'payslip', 'name' => 'Holerite', 'name_plural' => 'Holerites', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'pendence', 'name' => 'Pendência', 'name_plural' => 'Pendências', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'config', 'name' => 'Configuração', 'name_plural' => 'Configurações', 'created_at' => $now, 'updated_at' => $now],
+            */
+            ['type' => 'service', 'name' => 'Orçamento', 'name_plural' => 'Orçamentos', 'created_at' => $now, 'updated_at' => $now],
         ]);
     }
 }

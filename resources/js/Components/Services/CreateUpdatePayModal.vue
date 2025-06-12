@@ -1,6 +1,5 @@
 <script setup>
     import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
-    import SelectSearchSell from '@/Components/SelectSearchSell.vue';
     import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -8,7 +7,13 @@
     import { calcDeadlineDays, formatDate, getPaymentMethodLabel, toMoney } from '@/general.js';
     import { useForm } from '@inertiajs/vue3';
 
+    // Importar os novos componentes
+    import ServiceBasicInfoSection from '@/Components/Services/ServiceBasicInfoSection.vue';
+    import ServiceEnableRecordsSection from '@/Components/Services/ServiceEnableRecordsSection.vue';
+    import ServiceRecordsListSection from '@/Components/Services/ServiceRecordsListSection.vue';
+
     const emit = defineEmits(['close', 'submit']);
+
     const props = defineProps({
         modal: Object,
         service: {
@@ -22,10 +27,10 @@
     });
 
     const calc_record = computed(() => props.service.records_list.data.length + 1);
-
     const remaining_amount = computed(() => {
-        return enable_records_inputs && (props.service.total_value - props.service.records_list.data.reduce((sum, record) => sum + record.amount, 0));
-    })
+        // Certifique-se de que `enable_records_inputs` seja acessado com `.value`
+        return enable_records_inputs.value && (props.service.total_value - props.service.records_list.data.reduce((sum, record) => sum + record.amount, 0));
+    });
 
     const invalid_record_date = computed(() => {
         const today = new Date();
@@ -36,10 +41,6 @@
         return props.service.records_list.data.some(data => data.amount <= 0);
     });
 
-    const records_list = computed(() => {
-        return props.service.records_list.data.sort((a, b) => { return new Date(a.date) - new Date(b.date) })
-    })
-
     const disable_services_inputs = computed(() => {
         return props.modal.mode === 'pay' || props.modal.mode === 'see'
     });
@@ -49,18 +50,18 @@
     });
 
     const can_add_record = computed(() =>
-        props.service.title.length && props.service.client.length && props.service.total_value > 0
+        !!(props.service.title.length && props.service.client.length && props.service.total_value > 0)
     );
 
-
+    // O objeto `record` do useForm não deve ter um 'id' se for para criar um novo.
+    // O ID deve ser gerado pelo backend.
     const record = useForm({
-        id: calc_record,
         amount: 0,
         past: false,
         register_date: formatDate(),
         payment_method: 'cartao_credito',
         filepath: null,
-    })
+    });
 
     const insert_file = ref(false);
 
@@ -69,7 +70,7 @@
             if (!confirm('Tem certeza que deseja desmarcar? Todos os registros serão excluídos!')) {
                 return;
             } else {
-                props.service.records_list.data.length = [];
+                props.service.records_list.data.length = 0;
                 record.reset();
             }
         }
@@ -97,25 +98,47 @@
 
         if (!insert_file.value) record.filepath = null;
 
-        props.service.records_list.data.push({ ...record });
+        // Ao adicionar um novo registro à lista 'data', adicionamos o 'id' temporário para o frontend
+        // mas este 'id' não faz parte do objeto `record` do useForm que é enviado ao backend.
+        props.service.records_list.data.push({
+            id: calc_record.value, // Adiciona o ID temporário apenas para o v-for no frontend
+            amount: record.amount,
+            past: record.past,
+            register_date: record.register_date,
+            payment_method: record.payment_method,
+            filepath: record.filepath,
+        });
+
         insert_file.value = false;
         record.reset();
     };
 
-    const removeRecord = (record_id, record = null) => {
+    const removeRecord = (record_id, record_item = null) => {
         if (props.modal.mode === 'create') {
-            props.service.records_list.data = props.service.records_list.data.filter((record) => record.id !== record_id);
+            // Em modo 'create', o ID é temporário, apenas remove do array local
+            props.service.records_list.data = props.service.records_list.data.filter((r) => r.id !== record_id);
             return;
         } else {
             if (confirm("Você tem certeza que deseja excluir esse registro? (Essa ação não pode ser desfeita)")) {
-                // Certifique-se de usar record.delete como uma função assíncrona
-                record.delete(route('records.destroy', record_id), {
+                // Em outros modos, o ID é do banco de dados, então chama o backend
+                // Certifique-se que record_item é um objeto Inertia.js Form ou tem o método delete
+                // Se record_item for um objeto Inertia.js Form, use ele. Caso contrário, use o 'service' principal se ele for um Form
+                // ou ajuste para fazer um request Inertia.js diretamente.
+                // Vou assumir que 'service' é um Form.
+                // A linha abaixo estava incorreta na última resposta, vou corrigi-la para usar `useForm` ou uma requisição Inertia.js.
+                // Se o 'record_item' é um item simples de um array, você precisa criar um novo Form para deletá-lo.
+                useForm({}).delete(route('records.destroy', record_id), {
                     preserveScroll: true,
                     onSuccess: () => {
-                        props.service.records_list.data = props.service.records_list.data.filter((record) => record.id !== record_id);
+                        // Após a deleção bem-sucedida, atualiza a lista de registros no frontend.
+                        // Certifique-se que `data` é o array correto.
+                        props.service.records_list.data = props.service.records_list.data.filter((r) => r.id !== record_id);
+                    },
+                    onError: (errors) => {
+                        console.error('Erro ao deletar registro:', errors);
+                        alert('Erro ao deletar registro. Verifique o console para mais detalhes.');
                     }
                 });
-                // props.service.records_list.data.find((record) => record.id === record_id).deleted_at = formatDate();
             }
         }
     };
@@ -128,6 +151,7 @@
         emit('submit')
     }
 </script>
+
 <template>
     <CreateUpdateModal :show="modal.show" @close="close">
         <template #icon>
@@ -148,430 +172,17 @@
             <form @submit.prevent="submit">
                 <div class="pb-12 space-y-12 divide-y-2">
 
-                    <!-- SEÇÃO DE INFORMAÇÕES DE PAGAMENTOS -->
-                    <section class="py-4">
-                        <h2 class="text-base font-semibold leading-7 text-gray-900">Informações Básicas</h2>
-                        <p class="mt-1 text-sm leading-6 text-gray-600">Informações sobre o serviço como título do
-                            serviço,
-                            nome do cliente, valores de pagamento e prazo para conclusão</p>
+                    <ServiceBasicInfoSection :service="service" :sells_list="sells_list"
+                        :disable_services_inputs="disable_services_inputs" :modal_mode="modal.mode" />
 
-                        <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                    <ServiceEnableRecordsSection :modal_mode="modal.mode" :can_add_record="can_add_record"
+                        :enable_records="service.records_list.enable_records"
+                        @toggle-enable-records="toggle_enable_records" />
 
-                            <div class="sm:col-span-6">
-                                <label for="service-title"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Título</label>
-                                <div class="mt-2">
-                                    <input type="text" name="service-title" id="service-title" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" autofocus="true"
-                                        placeholder="Título da título" :disabled="disable_services_inputs"
-                                        v-model="service.title" required>
-                                    <p v-if="service.errors.title" class="text-red-500 text-sm">{{
-                                        service.errors.title }}</p>
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-3">
-                                <label for="service-client"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Cliente</label>
-                                <div class="mt-2">
-                                    <input type="text" name="service-client" id="service-client" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" placeholder="Nome do cliente"
-                                        :disabled="disable_services_inputs" v-model="service.client" required>
-                                    <p v-if="service.errors.client" class="text-red-500 text-sm">{{
-                                        service.errors.client }}</p>
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-3">
-                                <label for="service-total-amount"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Valor
-                                    total</label>
-                                <div class="mt-2">
-                                    <input id="service-total-amount" name="service-total-amount" type="number"
-                                        step="0.01" min="0" autocomplete="off" class="simple-input disabled:bg-gray-200"
-                                        placeholder="Valor total inicial da título" :disabled="disable_services_inputs"
-                                        v-model="service.total_value" required>
-                                    <p v-if="service.errors.total_value" class="text-red-500 text-sm">{{
-                                        service.errors.total_value }}</p>
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-6">
-                                <label for="service-deadline"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Prazo
-                                    para conclusão</label>
-                                <div class="mt-2">
-                                    <input type="date" name="service-deadline" id="service-deadline" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" autofocus="true"
-                                        placeholder="Prazo para conclusão" :min="formatDate()"
-                                        :disabled="disable_services_inputs || modal.mode !== 'create'"
-                                        v-model="service.deadline" required>
-                                    <p v-if="service.errors.deadline" class="text-red-500 text-sm">{{
-                                        service.errors.deadline }}</p>
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-6"
-                                v-if="modal.mode !== 'create' && calcDeadlineDays(service.deadline) < 4">
-                                <label for="service-delay-reason"
-                                    class="block text-sm font-medium leading-6 text-gray-900">Motivo do Atraso</label>
-                                <div class="mt-2">
-                                    <textarea type="text" name="service-delay-reason" id="service-delay-reason"
-                                        autocomplete="on" class="simple-input disabled:bg-gray-200"
-                                        placeholder="Descreva o motivo do atraso do serviço"
-                                        :disabled="disable_services_inputs" v-model="service.delay_reason"></textarea>
-                                    <p v-if="service.errors.delay_reason" class="text-red-500 text-sm">{{
-                                        service.errors.delay_reason }}</p>
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-6">
-                                <label for="service-observations"
-                                    class="block text-sm font-medium leading-6 text-gray-900">Observações</label>
-                                <div class="mt-2">
-                                    <textarea type="text" name="service-observations" id="service-observations"
-                                        autocomplete="on" class="simple-input disabled:bg-gray-200"
-                                        placeholder="Descreva a título mais detalhadamente ou insira informações adicionais"
-                                        :disabled="disable_services_inputs" v-model="service.observations"></textarea>
-                                    <p v-if="service.errors.observations" class="text-red-500 text-sm">{{
-                                        service.errors.observations }}</p>
-                                </div>
-                            </div>
-                            <div class="sm:col-span-6">
-                                <label for="service-sell"
-                                    class="block text-sm font-medium leading-6 text-gray-900">Venda
-                                    relacionada</label>
-                                <div class="mt-2">
-                                    <SelectSearchSell :options="sells_list"
-                                        @update:modelValue="service.previous_id = $event"
-                                        :disable_services_inputs="disable_services_inputs"
-                                        :initialValue="service.previous_id" />
-                                    <p v-if="service.errors.previous_id" class="text-red-500 text-sm">{{
-                                        service.errors.previous_id }}</p>
-                                </div>
-                            </div>
-
-
-                        </div>
-                    </section>
-
-                    <!-- SEÇÃO DE HABILITAÇÃO DE REGISTRO DE PAGAMENTOS -->
-                    <section v-if="modal.mode === 'create'" class="py-4">
-                        <div class="sm:col-span-6">
-                            <div class="mt-2 relative flex gap-x-3"
-                                :title="!can_add_record ? 'Preencha ao menos a título, o cliente e o valor total.' : ''">
-                                <div class="flex h-6 items-center">
-                                    <input id="service-enable-records" name="service-enable-records" type="checkbox"
-                                        @change="toggle_enable_records()" :disabled="!can_add_record"
-                                        class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-600 disabled:border-gray-100 disabled:text-green-200 disabled:bg-gray-300" />
-                                </div>
-                                <div class="text-sm leading-6">
-                                    <label for="service-enable-records"
-                                        class="font-medium text-gray-900 select-none cursor-pointer"
-                                        :class="{ 'text-gray-300': !can_add_record, 'cursor-not-allowed': !can_add_record }">Adicionar
-                                        pagamentos
-                                        concluídos</label>
-                                </div>
-                            </div>
-                        </div>
-
-                    </section>
-
-                    <!-- SEÇÃO DE REGISTRO DE PAGAMENTOS -->
-                    <section class="py-4" v-if="enable_records_inputs">
-                        <div v-if="modal.mode === 'create'">
-                            <h2 class="text-base font-semibold leading-7 text-gray-900">Pagamentos concluídos</h2>
-                            <p class="mt-1 text-sm leading-6 text-gray-600">Insira o adiantamento ou os serviços
-                                parciais
-                                já
-                                realizando desta título</p>
-                        </div>
-                        <div v-if="modal.mode === 'update'">
-                            <h2 class="text-base font-semibold leading-7 text-gray-900">Lista de pagamentos concluídos
-                            </h2>
-                            <p class="mt-1 text-sm leading-6 text-gray-600">Abaixo está listado os registros de serviços
-                                realizados. Para adicionar novos serviços, ou remover algum serviço existente, entre na
-                                seção de serviço.</p>
-                        </div>
-                        <div v-if="modal.mode === 'pay'">
-                            <h2 class="text-base font-semibold leading-7 text-gray-900">Realize um novo pagamento</h2>
-                            <p class="mt-1 text-sm leading-6 text-gray-600">Adicione um serviço ou remova um serviço
-                                existente.</p>
-                        </div>
-                        <div v-if="modal.mode === 'see'">
-                            <h2 class="text-base font-semibold leading-7 text-gray-900">Veja a lista de pagamentos
-                                realizados</h2>
-                            <p class="mt-1 text-sm leading-6 text-gray-600">Abaixo segue a lista dos pagamentos
-                                concluídos
-                                deste serviço</p>
-                        </div>
-
-                        <div v-if="modal.mode !== 'update' && modal.mode !== 'see'"
-                            class="mt-10 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-                            <div class="col-span-2">
-                                <label for="record-amount"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Valor
-                                    (R$)</label>
-                                <div class="mt-2">
-                                    <input id="record-amount" name="record-amount" type="number" step="0.01" min="0"
-                                        :max="remaining_amount" autocomplete="off"
-                                        class="simple-input disabled:bg-gray-200 disabled:opacity-75"
-                                        :disabled="remaining_amount == 0" placeholder="Valor do serviço parcial"
-                                        v-model="record.amount" />
-                                    <p class="text-gray-400 text-xs py-1">Valor Restante: {{ toMoney(remaining_amount)
-                                        }}
-                                    </p>
-                                    <p v-if="record.errors.amount" class="text-red-500 text-sm">{{
-                                        record.errors.amount }}</p>
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-2">
-                                <label for="record-date"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Data
-                                    do
-                                    serviço</label>
-                                <div class="mt-2">
-                                    <input id="record-date" name="record-date" type="date" :max="formatDate()"
-                                        autocomplete="off" class="simple-input disabled:bg-gray-200"
-                                        :disabled="remaining_amount == 0" placeholder="Data de serviço do valor parcial"
-                                        v-model="record.register_date" />
-                                    <p class="text-gray-400 text-xs py-1">Não aceita datas no futuro</p>
-                                    <p v-if="record.errors.register_date" class="text-red-500 text-sm">{{
-                                        record.errors.register_date }}</p>
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-2">
-                                <label for="record-date"
-                                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Forma
-                                    de Pagamento</label>
-                                <div class="mt-2">
-                                    <select name="payment_method" class="simple-input" v-model="record.payment_method">
-                                        <option value="pix">PIX</option>
-                                        <option value="dinheiro">Dinheiro</option>
-                                        <option value="cartao_credito">Cartão de Crédito</option>
-                                        <option value="cartao_debito">Cartão de Débito</option>
-                                        <option value="ted">TED</option>
-                                        <option value="cheque">Cheque</option>
-                                    </select>
-                                    <p v-if="record.errors.payment_method" class="text-red-500 text-sm">{{
-                                        record.errors.payment_method }}</p>
-                                </div>
-                            </div>
-                            <!-- UPLOAD FILE
-                            <div class="sm:col-span-6">
-                                <div class="mt-2 relative flex gap-x-3">
-                                    <div class="flex h-6 items-center">
-                                        <input id="enable-record-file" name="enable-record-file" type="checkbox"
-                                            v-model="insert_file"
-                                            class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-600" />
-                                    </div>
-                                    <div class="text-sm leading-6">
-                                        <label for="enable-record-file"
-                                            class="font-medium text-gray-900 select-none cursor-pointer">Anexar comprovante
-                                            de serviço (PDF).</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="insert_file" class="sm:col-span-6">
-                                <div class="mt-2">
-
-                                    <div class="col-span-full">
-                                        <label for="cover-photo"
-                                            class="block text-sm font-medium leading-6 text-gray-900">Comprovante de
-                                            serviço</label>
-                                        <div v-if="!record.filepath"
-                                            class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                                            <div class="text-center select-none">
-                                                <PhotoIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
-                                                <div class="mt-4 flex text-sm leading-6 text-gray-600">
-                                                    <label for="record-file"
-                                                        class="relative cursor-pointer rounded-md bg-white font-semibold text-green-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-green-600 focus-within:ring-offset-2 hover:text-green-500">
-                                                        <span>Faça Upload do comprovante</span>
-                                                        <input id="record-file" name="record-file" type="file"
-                                                            accept="application/pdf" maxSize="2MB" class="sr-only"
-                                                            @input="setRecordFile" />
-                                                    </label>
-                                                    <p class="pl-1">ou arraste-o e solte-o aqui.</p>
-                                                </div>
-                                                <p class="text-xs leading-5 text-gray-500">Arquivos PDF até 2MB</p>
-                                            </div>
-                                        </div>
-                                        <p v-if="record.filepath" class="text-gray-700 text-sm py-1 truncate"
-                                            :title="record.filepath.name">>> {{
-                                                record.filepath.name
-                                            }}</p>
-                                        <button v-if="record.filepath" type="button" class="m-0 p-0 text-green-500"
-                                            @click="record.filepath = null">Trocar comprovante</button>
-                                    </div>
-                                </div>
-
-                                <p v-if="record.errors.file" class="w-full text-center text-red-500 text-sm py-2">{{
-                                    record.errors.file }}</p>
-                            </div>
-                        -->
-                        </div>
-
-
-                        <div v-if="modal.mode !== 'update' && modal.mode !== 'see'"
-                            class="w-full py-5 flex justify-end">
-                            <button type="button"
-                                class="w-full px-4 py-2 bg-blue-600 border border-gray-300 rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-blue-700 focus:outline-none focus:border-blue-300 focus:ring focus:ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition"
-                                :disabled="!record.amount || !record.register_date || !record.payment_method || record.amount > remaining_amount"
-                                @click=" addRecord()">
-                                Inserir registro
-                            </button>
-                        </div>
-
-                        <div v-if="service.records_list.data.length" class="flex flex-col">
-                            <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
-                                <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-                                    <div class="overflow-hidden">
-                                        <table class="min-w-full text-left text-sm font-light">
-                                            <thead class="border-b bg-white font-medium ">
-                                                <tr>
-                                                    <th scope="col" class="px-6 py-4 text-center">Valor</th>
-                                                    <th scope="col" class="px-6 py-4 text-center">Data</th>
-                                                    <th scope="col" class="px-6 py-4 text-center">Método de Pagamento
-                                                    </th>
-                                                    <!-- FILE CONTROL
-                                                    <th scope="col" class="px-6 py-4 text-center">Arquivo</th>
-                                                    -->
-                                                    <th v-if="modal.mode !== 'create'" scope="col"
-                                                        class="px-6 py-4 text-center">Usuário</th>
-                                                    <th v-if="modal.mode !== 'pay' && modal.mode !== 'see'" scope="col"
-                                                        class="px-6 py-4 text-center">Excluir</th>
-
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-
-                                                <tr v-for="record_item in records_list" class="border-b bg-white ">
-                                                    <td class="whitespace-nowrap px-1  text-center">
-                                                        <div v-if="modal.mode !== 'update' && !record_item.past"
-                                                            class="w-full relative flex flex-wrap items-stretch">
-                                                            <span
-                                                                class="w-1/4 select-none flex items-center whitespace-nowrap rounded-l border border-r-0 border-solid border-neutral-300 px-1 py-[0.25rem] text-center text-xs font-normal leading-[1.6] text-neutral-700 "
-                                                                id="basic-addon1">R$</span>
-                                                            <input id="record_item-amount-edit"
-                                                                name="record_item-amount-edit" type="number" step="0.01"
-                                                                min="0" :max="remaining_amount" autocomplete="off"
-                                                                class="relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-1 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
-                                                                placeholder="Editar serviço parcial"
-                                                                v-model="record_item.amount" />
-                                                        </div>
-                                                        <p v-else>{{ toMoney(record_item.amount) }}</p>
-                                                    </td>
-                                                    <td class="whitespace-nowrap px-1 py-4 text-center">
-                                                        <div v-if="modal.mode !== 'update' && !record_item.past"
-                                                            class="w-full relative flex flex-wrap items-stretch">
-                                                            <input id="record-date" name="record-date" type="date"
-                                                                :max="formatDate()" autocomplete="off"
-                                                                class="w-full relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-1 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
-                                                                placeholder="Data de serviço do valor parcial"
-                                                                v-model="record_item.register_date" />
-
-                                                        </div>
-                                                        <p v-else>{{ formatDate(record_item.register_date, true) }}</p>
-                                                    </td>
-                                                    <td class="whitespace-nowrap px-1 py-4 text-center">
-                                                        <div v-if="modal.mode !== 'update' && !record_item.past"
-                                                            class="w-full relative flex flex-wrap items-stretch">
-                                                            <select name="payment_method"
-                                                                class="w-full relative m-0 block min-w-0 flex-auto rounded-r border border-solid border-neutral-300 bg-transparent bg-clip-padding px-1 py-[0.25rem] text-xs font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none disabled:bg-gray-200"
-                                                                v-model="record_item.payment_method">
-                                                                <option value="pix">PIX</option>
-                                                                <option value="dinheiro">Dinheiro</option>
-                                                                <option value="cartao_credito">Cartão de Crédito
-                                                                </option>
-                                                                <option value="cartao_debito">Cartão de Débito</option>
-                                                                <option value="ted">TED</option>
-                                                                <option value="cheque">Cheque</option>
-                                                            </select>
-
-                                                        </div>
-                                                        <p v-else>{{ getPaymentMethodLabel(record_item.payment_method)
-                                                            }}</p>
-                                                    </td>
-
-                                                    <!-- FILE CONTROL
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center select-none">
-                                                        <div v-if="record_item.file"
-                                                            class="flex flex-row space-x-2 items-center align-middle justify-center">
-                                                            <span
-                                                                class="cursor-pointer m-auto text-gray-700 hover:text-blue-500 active:text-blue-700"
-                                                                @click="seeRecord(record_item.file)"
-                                                                :title="'Ver arquivo ' + record_item.file.name">
-                                                                <EyeIcon class="w-5 h-5" />
-                                                            </span>
-                                                            <span
-                                                                class="cursor-pointer m-auto text-gray-700 hover:text-orange-500 active:text-orange-700"
-                                                                @click="record_item.file = null"
-                                                                :title="'Remover arquivo ' + record_item.file.name">
-                                                                <DocumentMinusIcon class="w-5 h-5" />
-                                                            </span>
-
-                                                        </div>
-                                                        <div v-else
-                                                            class="flex flex-row space-x-2 items-center align-middle justify-center">
-                                                            <label :for="'record-file-' + record_item.id"
-                                                                class="cursor-pointer m-auto text-gray-700 hover:text-blue-500 active:text-blue-700"
-                                                                title="Adicionar arquivo">
-                                                                <input :id="'record-file-' + record_item.id"
-                                                                    :name="'record-file-' + record_item.id" type="file"
-                                                                    accept="application/pdf" maxSize="2MB" class="sr-only"
-                                                                    @input.prevent="($event) => setRecordFile($event, record_item)" />
-                                                                <DocumentArrowUpIcon class="w-5 h-5" />
-                                                            </label>
-                                                        </div>
-                                                    </td>
-                                                    -->
-
-                                                    <td v-if="modal.mode !== 'create'"
-                                                        class="whitespace-nowrap px-6 py-4  select-none">
-                                                        {{ record_item?.procedure?.user?.name ||
-                                                            $page.props.auth.user.name || 'Não identificado' }}
-                                                    </td>
-
-                                                    <td v-if="modal.mode !== 'pay' && modal.mode !== 'see'"
-                                                        class="whitespace-nowrap px-6 py-4  select-none">
-                                                        <XMarkIcon
-                                                            class="w-5 h-5 cursor-pointer m-auto text-gray-700 hover:text-red-500 active:text-red-700"
-                                                            @click="removeRecord(record_item.id, record_item)"
-                                                            title="Remover este registro" />
-                                                    </td>
-                                                    <p v-if="record_item.errors.amount" class="text-red-500 text-sm">{{
-                                                        record_item.errors.amount }}</p>
-
-                                                    <p v-if="record_item.errors.date" class="text-red-500 text-sm">{{
-                                                        record_item.errors.date }}</p>
-
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                        <p v-if="remaining_amount < 0" class="text-red-500 text-sm py-5 text-center">A
-                                            soma
-                                            dos
-                                            serviços
-                                            não pode ser maior que {{ toMoney(service.total_value) }}</p>
-                                        <p v-if="invalid_record_date" class="text-red-500 text-sm py-5 text-center">
-                                            Todas as
-                                            datas de registro devem ser não nulas e menores ou iguais a {{
-                                                formatDate(new
-                                                    Date()) }}</p>
-                                        <p v-if="invalid_record_amount" class="text-red-500 text-sm py-5 text-center">
-                                            Todos
-                                            os valores devem ser maiores que R$ 0,00</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-else class="py-5 text-gray-400 text-center">Não há registro de pagamento no momento.
-                        </div>
-                    </section>
-
+                    <ServiceRecordsListSection v-if="enable_records_inputs" :modal_mode="modal.mode" :service="service"
+                        :record_form="record" :remaining_amount="remaining_amount"
+                        :invalid_record_date="invalid_record_date" :invalid_record_amount="invalid_record_amount"
+                        @add-record="addRecord" @remove-record="removeRecord" />
                 </div>
             </form>
         </template>
@@ -583,9 +194,7 @@
             <PrimaryButton
                 :class="{ 'disabled': (service.processing || remaining_amount < 0 || invalid_record_date || invalid_record_amount) }"
                 :disabled="(service.processing || remaining_amount < 0 || invalid_record_date || invalid_record_amount)"
-                @click="modal.mode === 'see' ? close() : submit()">{{
-                    modal.primary_button_txt
-                }}</PrimaryButton>
+                @click="modal.mode === 'see' ? close() : submit()">{{ modal.primary_button_txt }}</PrimaryButton>
         </template>
     </CreateUpdateModal>
 </template>

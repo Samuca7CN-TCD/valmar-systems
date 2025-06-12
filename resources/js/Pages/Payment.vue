@@ -168,7 +168,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ page.name }} <span v-if="$page.props.auth.user.hierarchy < 2">| {{
                     toMoney(total_payments_amount_without_services)
-                    }}</span><span v-if="$page.props.auth.user.hierarchy < 2" class="text-neutral-400"> | {{
+                }}</span><span v-if="$page.props.auth.user.hierarchy < 2" class="text-neutral-400"> | {{
                         toMoney(total_payments_amount)
                     }} <span class="text-xs"> (pagamentos + serviços)</span></span>
             </h2>
@@ -196,7 +196,7 @@
 
         <div class="py-12 print:py-0">
             <div class="max-w-7xl mx-auto print:max-w-full">
-                <div class="w-full flex justify-end pb-3">
+                <div class="w-full flex justify-end pb-3 print:hidden">
                     <button v-if="!show_user_data" class="text-blue-500 text-xs justify-end"
                         @click="show_user_data = !show_user_data">Mostrar
                         dados de

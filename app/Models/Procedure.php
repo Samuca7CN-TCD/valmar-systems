@@ -15,6 +15,7 @@ class Procedure extends Model
         'action_id',
         'department_id',
         'movement_id',
+        'budget_id',
         'previous_id',
         'remaked',
     ];
@@ -37,6 +38,11 @@ class Procedure extends Model
     public function movement()
     {
         return $this->belongsTo(Movement::class);
+    }
+
+    public function budget()
+    {
+        return $this->belongsTo(Budget::class);
     }
 
     public function records()

@@ -1,11 +1,10 @@
     <script setup>
         import CreateUpdateModal from '@/Components/CreateUpdateModal.vue';
-        import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon, CheckBadgeIcon } from '@heroicons/vue/24/outline';
+        import { CheckBadgeIcon } from '@heroicons/vue/24/outline';
         import PrimaryButton from '@/Components/PrimaryButton.vue';
         import SecondaryButton from '@/Components/SecondaryButton.vue';
-        import { ref, computed } from 'vue';
-        import { calcDeadlineDays, formatDate, toMoney } from '@/general.js';
-        import { useForm } from '@inertiajs/vue3';
+        import { computed } from 'vue';
+        import { formatDate } from '@/general.js';
 
         const emit = defineEmits(['close', 'submit']);
         const props = defineProps({

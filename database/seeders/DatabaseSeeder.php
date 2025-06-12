@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);*/
 
-        $files = Storage::files('public/img/items');
+        /*$files = Storage::files('public/img/items');
         foreach ($files as $file)
         {
             Storage::delete($file);
@@ -32,19 +32,20 @@ class DatabaseSeeder extends Seeder
         foreach ($files as $file)
         {
             Storage::delete($file);
-        }
+        }*/
 
         $this->call([
-            UserSeeder::class,
-            MeasurementUnitSeeder::class,
-            CategorySeeder::class,
+            // UserSeeder::class,
+            // MeasurementUnitSeeder::class,
+            // CategorySeeder::class,
             ActionSeeder::class,
-            DepartmentSeeder::class,
-            PaymentMethodSeeder::class,
-            AccountTypeSeeder::class,
-            BankSeeder::class,
-            ItemSeeder::class,
-            EmployeeSeeder::class,
+            // DepartmentSeeder::class,
+            // PaymentMethodSeeder::class,
+            // AccountTypeSeeder::class,
+            // BankSeeder::class,
+            // ItemSeeder::class,
+            // EmployeeSeeder::class,
+            UpdateMovementStatusSeeder::class,
         ]);
     }
 }
