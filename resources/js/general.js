@@ -43,36 +43,45 @@ const months = [
 ];
 
 export const formatDate = (date = null, format = null) => {
-    if (!date) date = new Date();
+    let currentDate;
 
-    const currentDate = new Date(date);
+    // 1. Verificamos o tipo do parâmetro 'date' para criar um objeto Date válido.
+    if (typeof date === 'string') {
+        // Se for uma string, fazemos o replace e criamos a data.
+        currentDate = new Date(date.replace(' ', 'T'));
+    } else if (date instanceof Date) {
+        // Se já for um objeto Date, apenas o utilizamos.
+        currentDate = date;
+    } else {
+        // Se for null ou qualquer outra coisa, criamos uma data com o momento atual.
+        currentDate = new Date();
+    }
 
+    // 2. A partir daqui, o resto da função funciona como antes,
+    // pois 'currentDate' será sempre um objeto Date válido.
     if (format === null || format === 'new_date') {
-        return currentDate.toISOString().substring(0, 10); //YYYY-MM-DD
+        return currentDate.toISOString().substring(0, 10);
     } else if (format === 'reading') {
         const months = [
             'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
             'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
         ];
-        const day = currentDate.getDate();
-        const month = months[currentDate.getMonth()];
-        const year = currentDate.getFullYear();
-
+        const day = currentDate.getUTCDate();
+        const month = months[currentDate.getUTCMonth()];
+        const year = currentDate.getUTCFullYear();
         return `${day} de ${month} de ${year}`;
     } else if (format === 'reading_date_time') {
-        const day = String(currentDate.getDate()).padStart(2, '0');
-        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-        const year = currentDate.getFullYear();
-        const hours = String(currentDate.getHours()).padStart(2, '0');
-        const minutes = String(currentDate.getMinutes()).padStart(2, '0');
-        const seconds = String(currentDate.getSeconds()).padStart(2, '0');
-
+        const day = String(currentDate.getUTCDate()).padStart(2, '0');
+        const month = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
+        const year = currentDate.getUTCFullYear();
+        const hours = String(currentDate.getUTCHours()).padStart(2, '0');
+        const minutes = String(currentDate.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(currentDate.getUTCSeconds()).padStart(2, '0');
         return `${day}/${month}/${year} às ${hours}:${minutes}:${seconds}`;
     } else {
-        const year = currentDate.getFullYear();
-        const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
-        const day = currentDate.getDate().toString().padStart(2, '0');
-
+        const year = currentDate.getUTCFullYear();
+        const month = (currentDate.getUTCMonth() + 1).toString().padStart(2, '0');
+        const day = currentDate.getUTCDate().toString().padStart(2, '0');
         return `${day}/${month}/${year}`;
     }
 };

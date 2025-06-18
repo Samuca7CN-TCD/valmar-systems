@@ -41,6 +41,7 @@
         'title': '',
         'client': '',
         'total_value': 0,
+        'service_value': 0,
         'partial_value': 0,
         'deadline': formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date'),
         'observations': '',
@@ -117,6 +118,11 @@
 
         if (service) {
             const { id, previous_id, motive, entity_name, deadline, observations, cancellation_reason, delay_reason, delayed, completion_date, records, accounting, service_status } = service;
+
+            const related_sell = props.sells_list.find(s => s.id === previous_id);
+            const sell_value = related_sell ? parseFloat(related_sell.total_value) : 0;
+
+            service_data.service_value = parseFloat(accounting.total_value) - sell_value;
 
             service_data.id = id;
             service_data.previous_id = previous_id;

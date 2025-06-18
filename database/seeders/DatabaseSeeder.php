@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
             // MeasurementUnitSeeder::class,
             // CategorySeeder::class,
             ActionSeeder::class,
-            // DepartmentSeeder::class,
+            DepartmentSeeder::class,
             // PaymentMethodSeeder::class,
             // AccountTypeSeeder::class,
             // BankSeeder::class,

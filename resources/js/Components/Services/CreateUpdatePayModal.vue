@@ -3,8 +3,8 @@
     import { PlusIcon, PencilIcon, XMarkIcon, BanknotesIcon, EyeIcon } from '@heroicons/vue/24/outline';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import SecondaryButton from '@/Components/SecondaryButton.vue';
-    import { ref, computed } from 'vue';
-    import { calcDeadlineDays, formatDate, getPaymentMethodLabel, toMoney } from '@/general.js';
+    import { ref, computed, watch } from 'vue';
+    import { formatDate, toMoney } from '@/general.js';
     import { useForm } from '@inertiajs/vue3';
 
     // Importar os novos componentes
@@ -51,6 +51,24 @@
 
     const can_add_record = computed(() =>
         !!(props.service.title.length && props.service.client.length && props.service.total_value > 0)
+    );
+
+    watch(
+        () => [props.service.service_value, props.service.previous_id],
+        ([newServiceValue, newSellId]) => {
+            // Garante que o valor do serviço seja um número
+            const serviceValue = parseFloat(newServiceValue) || 0;
+
+            // Encontra a venda selecionada e pega seu valor
+            const selectedSell = props.sells_list.find(sell => sell.id === newSellId);
+            const sellValue = selectedSell ? parseFloat(selectedSell.accounting.total_value) : 0;
+
+            // Soma os valores e atualiza o 'total_value' do formulário
+            props.service.total_value = serviceValue + sellValue;
+        },
+        {
+            immediate: true // 'immediate' faz com que a lógica rode assim que o modal é montado
+        }
     );
 
     // O objeto `record` do useForm não deve ter um 'id' se for para criar um novo.

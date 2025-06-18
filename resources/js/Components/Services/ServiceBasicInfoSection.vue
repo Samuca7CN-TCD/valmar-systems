@@ -1,6 +1,6 @@
 <script setup>
     import SelectSearchSell from '@/Components/SelectSearchSell.vue'; //	
-    import { calcDeadlineDays, formatDate } from '@/general.js'; //	
+    import { calcDeadlineDays, formatDate, toMoney } from '@/general.js';
 
     const props = defineProps({
         service: Object,
@@ -28,7 +28,7 @@
                 </div>
             </div>
 
-            <div class="sm:col-span-3">
+            <div class="sm:col-span-6">
                 <label for="service-client"
                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Cliente</label>
 
@@ -41,14 +41,36 @@
             </div>
 
             <div class="sm:col-span-3">
-                <label for="service-total-amount"
-                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Valor total</label>
+                <label for="service-value"
+                    class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Valor do
+                    Serviço (Ex: Mão de Obra)</label>
 
                 <div class="mt-2">
-                    <input id="service-total-amount" name="service-total-amount" type="number" step="0.01" min="0"
-                        autocomplete="off" class="simple-input disabled:bg-gray-200"
-                        placeholder="Valor total inicial da título" :disabled="disable_services_inputs"
-                        v-model="service.total_value" required>
+                    <input id="service-value" name="service-value" type="number" step="0.01" min="0" autocomplete="off"
+                        class="simple-input disabled:bg-gray-200" placeholder="Valor da mão de obra"
+                        :disabled="disable_services_inputs" v-model="service.service_value" required>
+                </div>
+            </div>
+
+            <div class="sm:col-span-3">
+                <label for="service-sell" class="block text-sm font-medium leading-6 text-gray-900">Venda
+                    relacionada</label>
+                <div class="mt-2">
+                    <SelectSearchSell :options="sells_list" @update:modelValue="service.previous_id = $event"
+                        :disable_services_inputs="disable_services_inputs" :initialValue="service.previous_id" />
+                    <p v-if="service.errors.previous_id" class="text-red-500 text-sm">{{ service.errors.previous_id }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="sm:col-span-6">
+                <label for="service-total-amount" class="block text-sm font-medium leading-6 text-gray-900">Valor
+                    Total</label>
+
+                <div class="mt-2">
+                    <input id="service-total-amount" name="service-total-amount" type="text"
+                        :value="toMoney(service.total_value)" class="simple-input bg-gray-100 cursor-not-allowed"
+                        readonly>
                     <p v-if="service.errors.total_value" class="text-red-500 text-sm">{{ service.errors.total_value }}
                     </p>
                 </div>
@@ -89,16 +111,6 @@
                         placeholder="Descreva a título mais detalhadamente ou insira informações adicionais"
                         :disabled="disable_services_inputs" v-model="service.observations"></textarea>
                     <p v-if="service.errors.observations" class="text-red-500 text-sm">{{ service.errors.observations }}
-                    </p>
-                </div>
-            </div>
-            <div class="sm:col-span-6">
-                <label for="service-sell" class="block text-sm font-medium leading-6 text-gray-900">Venda
-                    relacionada</label>
-                <div class="mt-2">
-                    <SelectSearchSell :options="sells_list" @update:modelValue="service.previous_id = $event"
-                        :disable_services_inputs="disable_services_inputs" :initialValue="service.previous_id" />
-                    <p v-if="service.errors.previous_id" class="text-red-500 text-sm">{{ service.errors.previous_id }}
                     </p>
                 </div>
             </div>

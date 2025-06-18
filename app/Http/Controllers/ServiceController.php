@@ -30,7 +30,7 @@ class ServiceController extends Controller
     {
         $page = Department::find(8);
 
-        $services = Movement::where('type', 1)->where('ready', false)->where('ready', false)->orderBy('deadline')->with(['accounting', 'procedures.records.procedure.user', 'procedures.user', 'budget'])->get()
+        $services = Movement::where('type', 1)->where('ready', false)->where('ready', false)->orderBy('deadline')->with(['accounting', 'procedures.records', 'procedures.records.procedure.user', 'procedures.user', 'budget'])->get()
             ->map(function ($movement) {
                 $records = $movement->procedures->flatMap(function ($procedure) {
                     return $procedure->records;
@@ -39,9 +39,10 @@ class ServiceController extends Controller
                 return $movement;
             });
 
-        $sells = Movement::with(['accounting:id,movement_id,total_value'])
+        $sells = Movement::with(['accounting:id,total_value'])
             ->where('type', 2)
-            ->get(['id', 'entity_name', 'date']);     
+            ->get(['id', 'entity_name', 'date', 'accounting_id']); 
+        
 
         return Inertia::render('Service', [
             'page' => $page,

@@ -69,7 +69,7 @@
 
         </template>
         <div class="py-12">
-            <div class="min-w-7xl max-w-fit mx-auto sm:px-6 lg:px-8">
+            <div class="min-w-[90vw] max-w-fit mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-5">
                     <div class="hidden md:flex border-b border-gray-200 mb-6">
                         <button @click="activeTab = 'geral'"

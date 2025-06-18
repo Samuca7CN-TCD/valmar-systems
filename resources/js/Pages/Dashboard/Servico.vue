@@ -386,9 +386,9 @@
                         <tr v-for="service in unpaidServices" :key="service.id">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{{
                                 service.id
-                            }}</td>
+                                }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700">{{ service.entity_name
-                            }}
+                                }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700">{{ service.motive }}
                             </td>
@@ -473,13 +473,13 @@
                             <tr v-for="service in services" :key="service.id">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{{
                                     service.id
-                                }}</td>
+                                    }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700">{{
                                     service.entity_name
-                                }}</td>
+                                    }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700">{{
                                     service.service_status
-                                }}</td>
+                                    }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700">
                                     {{ toMoney(service.accounting?.partial_value) }}
                                 </td>
@@ -558,7 +558,7 @@
                             <tr v-for="budget in budgets" :key="budget.id">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{{
                                     budget.id
-                                }}</td>
+                                    }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700">{{ budget.title }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700">{{ budget.status }}

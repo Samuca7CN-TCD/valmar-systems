@@ -174,7 +174,7 @@
                                     <td v-if="modal_mode !== 'create'" class="whitespace-nowrap px-6 py-4 select-none">
                                         {{ record_item?.procedure?.user?.name
                                             || $page.props.auth.user.name
-                                        || "Não identificado" }}
+                                            || "Não identificado" }}
                                     </td>
                                     <td v-if="modal_mode !== 'pay' && modal_mode !== 'see'"
                                         class="whitespace-nowrap px-6 py-4 select-none">
