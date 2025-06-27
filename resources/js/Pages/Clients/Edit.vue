@@ -268,9 +268,7 @@
                             <div class="flex justify-end space-x-3">
                                 <Link :href="route('clients.index')">
                                 <SecondaryButton type="button">
-
                                     Cancelar
-
                                 </SecondaryButton>
                                 </Link>
                                 <PrimaryButton type="submit" :disabled="form.processing">

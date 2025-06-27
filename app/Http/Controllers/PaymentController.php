@@ -321,23 +321,27 @@ class PaymentController extends Controller
             if ($movement && $accounting)
             {
                 $movement->recordActivity('pay');
-                /*$procedure = Procedure::create([
+                $procedure = Procedure::create([
                     'user_id' => Auth::id(),
                     'action_id' => 4, // Ajuste conforme necessário
                     'department_id' => 7, // Ajuste conforme necessário
                     'movement_id' => $movement->id,
-                ]);*/
+                    'auditable_id' => $movement->id,
+                    'auditable_type' => Movement::class,
+                ]);
             
                 $records = collect($validated['records_list']['data'])
                     ->filter(function ($payRecord) {
                         return !$payRecord['past'];
                     })
-                    ->map(function ($payRecord) use ($procedure) {
+                    ->map(function ($payRecord) use ($procedure, $movement) {
                         return Record::create([
                             'procedure_id' => $procedure->id,
                             'amount' => $payRecord['amount'],
                             'payment_method' => $payRecord['payment_method'],
                             'register_date' => $payRecord['register_date'],
+                            'auditable_id' => $movement->id,
+                            'auditable_type' => Movement::class,
                         ]);
                     });
 
