@@ -12,12 +12,14 @@
         formatCNPJ,
         formatarCEP,
     } from '@/general.js';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import SecondaryButton from '@/Components/SecondaryButton.vue';
 
 
     const props = defineProps({
         page: {
             type: Object,
-            required: true,
+            required: false,
         },
         client: {
             type: Object,
@@ -121,7 +123,7 @@
 
 <template>
 
-    <Head :title="'Editar ' + page.singular_name" />
+    <Head :title="'Editar ' + page?.singular_name || 'Cliente'" />
     <AppLayout :page="page">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -264,9 +266,16 @@
 
                         <div class="mt-8 pt-5 border-t border-gray-200">
                             <div class="flex justify-end space-x-3">
-                                <Link :href="route('clients.index')" class="simple-button-neutral">Cancelar</Link>
-                                <button type="submit" class="simple-button-green" :disabled="form.processing">Atualizar
-                                    Cliente</button>
+                                <Link :href="route('clients.index')">
+                                <SecondaryButton type="button">
+
+                                    Cancelar
+
+                                </SecondaryButton>
+                                </Link>
+                                <PrimaryButton type="submit" :disabled="form.processing">
+                                    Atualizar
+                                    Cliente</PrimaryButton>
                             </div>
                         </div>
                     </form>

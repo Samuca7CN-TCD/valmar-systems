@@ -14,6 +14,7 @@
         ChevronRightIcon,
         EyeIcon,
     } from '@heroicons/vue/24/outline';
+    import SecondaryButton from '@/Components/SecondaryButton.vue';
 
     const props = defineProps({
         clients: {
@@ -26,7 +27,7 @@
         },
         page: {
             type: Object,
-            required: true
+            required: false
         }
     });
 
@@ -93,11 +94,11 @@
 
 <template>
 
-    <Head :title="page.name" />
+    <Head :title="page?.name || 'Clientes'" />
     <AppLayout :page="page">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ page.name }}
+                {{ page?.name || 'Clientes' }}
             </h2>
 
             <Link :href="route('clients.create')">

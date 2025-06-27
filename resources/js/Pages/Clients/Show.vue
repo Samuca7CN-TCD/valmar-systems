@@ -3,11 +3,13 @@
     import AppLayout from '@/Layouts/AppLayout.vue';
     import { toMoney, formatDate } from '@/general.js';
     import { BuildingOffice2Icon, UserIcon, MapPinIcon, ChatBubbleBottomCenterTextIcon, EnvelopeIcon, PhoneIcon, IdentificationIcon } from '@heroicons/vue/24/outline';
+    import SecondaryButton from '@/Components/SecondaryButton.vue';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
 
     const props = defineProps({
         page: {
             type: Object,
-            required: true,
+            required: false,
         },
         client: {
             type: Object,
@@ -35,7 +37,7 @@
 
 <template>
 
-    <Head :title="'Detalhes de ' + page.singular_name" />
+    <Head :title="'Detalhes do(a) ' + page?.singular_name || 'Cliente'" />
     <AppLayout :page="page">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -63,8 +65,12 @@
                                 </div>
                             </div>
                             <div class="flex space-x-2 mt-4 md:mt-0">
-                                <Link :href="route('clients.index')" class="simple-button-neutral">Voltar à Lista</Link>
-                                <Link :href="route('clients.edit', client.id)" class="simple-button-blue">Editar</Link>
+                                <Link :href="route('clients.index')" class="simple-button-neutral">
+                                <SecondaryButton>Voltar à Lista</SecondaryButton>
+                                </Link>
+                                <Link :href="route('clients.edit', client.id)" class="simple-button-blue">
+                                <PrimaryButton>Editar</PrimaryButton>
+                                </Link>
                             </div>
                         </div>
 
