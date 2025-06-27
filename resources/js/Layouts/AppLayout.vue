@@ -7,7 +7,7 @@
     import NavLink from '@/Components/NavLink.vue'
     import SubNavLink from '@/Components/SubNavLink.vue'
     import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue'
-    import { RectangleGroupIcon, ChevronDownIcon, ChevronUpIcon, ArrowDownIcon, UserGroupIcon, UserIcon, PresentationChartLineIcon, RectangleStackIcon, ArrowPathRoundedSquareIcon, BanknotesIcon, BriefcaseIcon } from '@heroicons/vue/24/outline'
+    import { RectangleGroupIcon, ChevronDownIcon, ChevronUpIcon, ArrowDownIcon, UserGroupIcon, UserIcon, PresentationChartLineIcon, RectangleStackIcon, ArrowPathRoundedSquareIcon, BanknotesIcon, BriefcaseIcon, UsersIcon } from '@heroicons/vue/24/outline'
 
     const props = defineProps({
         page: Object,
@@ -177,12 +177,27 @@
                                                 </DropdownLink>
                                             </template>
                                         </NavLink>
-                                        <NavLink v-if="$page.props.auth.user.hierarchy < 3"
-                                            :href="route('payments.index')" :active="route().current('payments.*')">
-                                            <span class="inline-block mx-2">
-                                                <BanknotesIcon class="w-4 h-4" />
-                                            </span>
-                                            <span class="inline-block">Pagamentos</span>
+                                        <NavLink v-if="$page.props.auth.user.hierarchy < 3" :has_dropdown="true"
+                                            :href="'#'" :active="route().current('payments.*')">
+                                            <template #trigger>
+                                                <span class="inline-block mx-2">
+                                                    <BriefcaseIcon class="w-4 h-4" />
+                                                </span>
+                                                Pagamentos
+                                                <ChevronDownIcon class="ml-2 -mr-0.5 mt-0.5 h-4 w-4 text-gray-700" />
+                                            </template>
+                                            <template #options>
+                                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                                    Página Principal
+                                                </div>
+                                                <DropdownLink :href="route('payments.index')">Pagamentos
+                                                </DropdownLink>
+                                                <div class="block px-4 py-2 text-xs text-gray-400">
+                                                    Outras opções
+                                                </div>
+                                                <DropdownLink :href="route('payments.previous')">Pagamentos Concluídos
+                                                </DropdownLink>
+                                            </template>
                                         </NavLink>
                                         <NavLink v-if="$page.props.auth.user.hierarchy < 3" :has_dropdown="true"
                                             :href="'#'"
@@ -208,6 +223,14 @@
                                                 <DropdownLink :href="route('budgets.index')">Orçamentos
                                                 </DropdownLink>
                                             </template>
+                                        </NavLink>
+                                        <NavLink v-if="$page.props.auth.user.hierarchy < 3"
+                                            :href="route('clients.index')"
+                                            :active="route().current('home') || route().current('clients.*')">
+                                            <span class="inline-block mx-2">
+                                                <UsersIcon class="w-4 h-4" />
+                                            </span>
+                                            <span class="inline-block">Clientes</span>
                                         </NavLink>
                                         <NavLink :has_dropdown="true" :href="'#'"
                                             :active="route().current('employees.*')">

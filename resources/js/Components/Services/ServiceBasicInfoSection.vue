@@ -1,6 +1,7 @@
 <script setup>
     import SelectSearchSell from '@/Components/SelectSearchSell.vue'; //	
     import { calcDeadlineDays, formatDate, toMoney } from '@/general.js';
+    import ClientSelector from '@/Components/ClientSelector.vue';
 
     const props = defineProps({
         service: Object,
@@ -31,12 +32,11 @@
             <div class="sm:col-span-6">
                 <label for="service-client"
                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Cliente</label>
-
                 <div class="mt-2">
-                    <input type="text" name="service-client" id="service-client" autocomplete="on"
-                        class="simple-input disabled:bg-gray-200" placeholder="Nome do cliente"
-                        :disabled="disable_services_inputs" v-model="service.client" required>
-                    <p v-if="service.errors.client" class="text-red-500 text-sm">{{ service.errors.client }}</p>
+                    <ClientSelector v-model="service.client_id" :disabled="disable_services_inputs"
+                        class="disabled:bg-gray-200" :required="true" />
+                    <p v-if="service.errors.client_id" class="text-red-500 text-sm">{{
+                        service.errors.client_id }}</p>
                 </div>
             </div>
 

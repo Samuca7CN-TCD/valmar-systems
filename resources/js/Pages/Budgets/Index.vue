@@ -231,22 +231,22 @@
                                         <table class="max-w-fit text-left text-sm font-light">
                                             <thead class="border-b bg-gray-50 font-medium">
                                                 <tr>
-                                                    <th scope="col" class="px-6 py-3 text-center">#</th>
-                                                    <th scope="col" class="px-6 py-3 text-left">Titulo</th>
-                                                    <th scope="col" class="px-6 py-3 text-left">Cliente</th>
-                                                    <th scope="col" class="px-6 py-3 text-left">Itens</th>
-                                                    <th scope="col" class="px-6 py-3 text-center">Valor Total</th>
-                                                    <th scope="col" class="px-6 py-3 text-center">Data Orçamento</th>
-                                                    <th scope="col" class="px-6 py-3 text-center">Status</th>
-                                                    <th scope="col" class="px-6 py-3 text-center print:hidden">Ações
+                                                    <th scope="col" class="px-3 py-3 text-center">#</th>
+                                                    <th scope="col" class="px-3 py-3 text-left">Titulo</th>
+                                                    <th scope="col" class="px-3 py-3 text-left">Cliente</th>
+                                                    <th scope="col" class="px-3 py-3 text-left">Itens</th>
+                                                    <th scope="col" class="px-3 py-3 text-center">Valor Total</th>
+                                                    <th scope="col" class="px-3 py-3 text-center">Data Orçamento</th>
+                                                    <th scope="col" class="px-3 py-3 text-center">Status</th>
+                                                    <th scope="col" class="px-3 py-3 text-center print:hidden">Ações
                                                     </th>
-                                                    <th scope="col" class="px-6 py-3 text-center print:hidden"
+                                                    <th scope="col" class="px-3 py-3 text-center print:hidden"
                                                         v-if="show_user_data">Criado Em</th>
-                                                    <th scope="col" class="px-6 py-3 text-center print:hidden"
+                                                    <th scope="col" class="px-3 py-3 text-center print:hidden"
                                                         v-if="show_user_data">Criado Por</th>
-                                                    <th scope="col" class="px-6 py-3 text-center print:hidden"
+                                                    <th scope="col" class="px-3 py-3 text-center print:hidden"
                                                         v-if="show_user_data">Modificado Em</th>
-                                                    <th scope="col" class="px-6 py-3 text-center print:hidden"
+                                                    <th scope="col" class="px-3 py-3 text-center print:hidden"
                                                         v-if="show_user_data">Modificado Por</th>
                                                 </tr>
                                             </thead>
@@ -254,26 +254,26 @@
                                                 <tr v-if="budgets_list.data.length" v-for="budget in budgets_list.data"
                                                     :key="budget.id"
                                                     class="border-b transition duration-300 ease-in-out hover:bg-neutral-100">
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center font-medium">{{
+                                                    <td class="whitespace-nowrap px-3 py-4 text-center font-medium">{{
                                                         budget.id }}
                                                     </td>
-                                                    <td class="whitespace-nowrap px-6 py-4 text-left">{{
+                                                    <td class="whitespace-nowrap px-3 py-4 text-left">{{
                                                         budget.title
-                                                    }}</td>
-                                                    <td class="whitespace-nowrap px-6 py-4 text-left">{{
-                                                        budget.client_name
-                                                    }}</td>
-                                                    <td class="whitespace-nowrap px-6 py-4 text-left"
+                                                        }}</td>
+                                                    <td class="whitespace-nowrap px-3 py-4 text-left">{{
+                                                        budget?.client?.name || budget.client_name
+                                                        }}</td>
+                                                    <td class="whitespace-nowrap px-3 py-4 text-left"
                                                         :title="budget.items.map(item => item.item_name).join('; ')">
                                                         <div class="max-w-xs truncate">
                                                             {{budget.items.map(item => item.item_name).join('; ')}}
                                                         </div>
                                                     </td>
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center">{{
+                                                    <td class="whitespace-nowrap px-3 py-4 text-center">{{
                                                         toMoney(budget.total_value) }}</td>
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center">{{
+                                                    <td class="whitespace-nowrap px-3 py-4 text-center">{{
                                                         formatDate(budget.budget_date, true) }}</td>
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center">
+                                                    <td class="whitespace-nowrap px-3 py-4 text-center">
                                                         <span class="px-2.5 py-0.5 rounded-full text-xs font-medium"
                                                             :class="{
                                                                 'bg-gray-100 text-gray-800': budget.status === 'Rascunho',
@@ -285,7 +285,7 @@
                                                             {{ budget.status }}
                                                         </span>
                                                     </td>
-                                                    <td class="whitespace-nowrap px-6 py-4 text-center print:hidden">
+                                                    <td class="whitespace-nowrap px-3 py-4 text-center print:hidden">
                                                         <div class="flex justify-center items-center space-x-5">
                                                             <Link :href="route('budgets.show', budget.id)"
                                                                 class="hover:text-blue-700" title="Ver Orçamento">
@@ -396,19 +396,19 @@
             <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm text-gray-700">
-                        Showing
+                        Mostrando
                         {{ ' ' }}
                         <span class="font-medium">{{ budgets_list.from }}</span>
                         {{ ' ' }}
-                        to
+                        à
                         {{ ' ' }}
                         <span class="font-medium">{{ budgets_list.to }}</span>
                         {{ ' ' }}
-                        of
+                        de
                         {{ ' ' }}
                         <span class="font-medium">{{ budgets_list.total }}</span>
                         {{ ' ' }}
-                        results
+                        registros
                     </p>
                 </div>
                 <div>

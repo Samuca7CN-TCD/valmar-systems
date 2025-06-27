@@ -3,9 +3,9 @@
     import CreateUpdatePayModal from '@/Components/Services/CreateUpdatePayModal.vue'
     import FloatButton from '@/Components/FloatButton.vue'
     import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
-    import { Head, useForm, router, Link } from '@inertiajs/vue3' // Adicionado 'router'
-    import { computed, onMounted, ref } from 'vue'
-    import { BanknotesIcon, CheckBadgeIcon, DocumentTextIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+    import { Head, useForm, router, Link } from '@inertiajs/vue3'
+    import { computed, onMounted, ref, watch } from 'vue' // Adicionado 'watch'
+    import { BanknotesIcon, CheckBadgeIcon, DocumentTextIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline' // Adicionado ícones de paginação
     import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
     import { useToast } from 'vue-toast-notification';
     import 'vue-toast-notification/dist/theme-sugar.css';
@@ -21,15 +21,16 @@
             type: Array,
             default: null,
         },
-        services_list: Object, // Certifique-se que este é um objeto Inercia Page Props e não um array simples
+        services_list: Object, // É um objeto Paginator do Laravel
         sells_list: {
             type: Array,
             default: [],
         },
         show_service_id: {
-            type: [String, Number], // Pode ser string se o ID for UUID
+            type: [String, Number],
             default: null,
         },
+        filters: Object, // Prop para receber os filtros do controller
     })
 
     const $toast = useToast();
@@ -39,13 +40,13 @@
         'id': null,
         'previous_id': null,
         'title': '',
-        'client': '',
+        'client_id': '',
         'total_value': 0,
         'service_value': 0,
         'partial_value': 0,
         'deadline': formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date'),
         'observations': '',
-        'service_status': 'Não Iniciado', // Já correto para novos serviços
+        'service_status': 'Não Iniciado',
         'cancellation_reason': null,
         'delay_reason': '',
         'delayed': false,
@@ -56,32 +57,36 @@
         }
     })
 
-    const search_term = ref("")
+    // O termo de busca agora é inicializado com o filtro vindo do controller
+    const search_term = ref(props.filters?.search || '');
     const show_user_data = ref(false);
+    let searchTimeout = null;
 
-    const filtered_services_list = computed(() => {
-        const searchTermLower = search_term.value.toLowerCase()
-        return props.services_list.filter(el =>
-            (el.id?.toString().includes(searchTermLower)) ||
-            (el.motive?.toLowerCase().includes(searchTermLower)) ||
-            (el.entity_name?.toLowerCase().includes(searchTermLower)) ||
-            (el.observations?.toLowerCase().includes(searchTermLower)) ||
-            (toMoney(el.accounting.total_value || 0)?.toString().toLowerCase().includes(searchTermLower)) ||
-            (toMoney(el.accounting.partial_value || 0)?.toString().toLowerCase().includes(searchTermLower)) ||
-            (el.deadline?.includes(searchTermLower)) ||
-            (el.service_status?.toLowerCase().includes(searchTermLower))
-        );
+    // Lógica de busca agora é feita no backend com um "watch"
+    watch(search_term, (newSearchTerm) => {
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        searchTimeout = setTimeout(() => {
+            router.get(route('services.index'), { search: newSearchTerm }, { preserveState: true, replace: true });
+        }, 300); // Debounce de 300ms
     });
 
+    // Esta computed property agora apenas aponta para os dados da página atual
+    const filtered_services_list = computed(() => {
+        return props.services_list.data;
+    });
+
+    // ATENÇÃO: Este total agora reflete apenas os itens da PÁGINA ATUAL.
     const total_services_amount = computed(() => {
-        return props.services_list.reduce((accumulator, service) => {
+        if (!props.services_list.data) return 0;
+        return props.services_list.data.reduce((accumulator, service) => {
             return accumulator + service.accounting.partial_value;
         }, 0);
     });
 
     const deadlineClass = (deadline) => {
         const days = calcDeadlineDays(deadline);
-
         if (days === 0) return 'text-red-500';
         if (days > 0 && days < 8) return 'text-orange-500';
         if (days > 7 && days < 15) return 'text-yellow-500';
@@ -112,23 +117,24 @@
         }
     })
 
-
     const setServiceData = (service_id) => {
-        const service = props.services_list.find(service => service.id === parseInt(service_id));
+        // Procura o serviço dentro do array .data
+        const service = props.services_list.data.find(service => service.id === parseInt(service_id));
 
         if (service) {
-            const { id, previous_id, motive, entity_name, deadline, observations, cancellation_reason, delay_reason, delayed, completion_date, records, accounting, service_status } = service;
+            const { id, previous_id, motive, client_id, client, service_value, entity_name, deadline, observations, cancellation_reason, delay_reason, delayed, completion_date, records, accounting, service_status } = service;
 
             const related_sell = props.sells_list.find(s => s.id === previous_id);
             const sell_value = related_sell ? parseFloat(related_sell.total_value) : 0;
 
             service_data.service_value = parseFloat(accounting.total_value) - sell_value;
-
             service_data.id = id;
             service_data.previous_id = previous_id;
             service_data.title = motive;
-            service_data.client = entity_name;
+            service_data.client_id = client_id;
+            service_data.client = client;
             service_data.total_value = accounting.total_value;
+            service_data.service_value = accounting.total_value - props.sells_list?.find(el => el.id === previous_id)?.accounting?.total_value || accounting.total_value;
             service_data.partial_value = accounting.partial_value;
             service_data.deadline = deadline;
             service_data.observations = observations;
@@ -142,17 +148,26 @@
         }
     }
 
+    // O restante dos seus métodos (openModal, closeModal, CRUDs, etc.)
+    // já devem funcionar corretamente, pois filtered_services_list agora retorna
+    // o array correto. A única alteração foi no setServiceData.
+
+    // Método para navegar entre as páginas de resultados
+    const goToPage = (url) => {
+        if (url) {
+            router.get(url, { search: search_term.value }, { preserveState: true, preserveScroll: true });
+        }
+    };
+
     const openModal = (mode, service_id = null) => {
         const isUpdateOrPayMode = ['update', 'pay'].includes(mode);
 
         if (service_id !== null && isUpdateOrPayMode) {
             setServiceData(service_id);
         } else {
-            // Resetar o formulário se não for um modo de edição/pagamento com ID
             service_data.reset();
-            // Reatribuir o valor default do deadline se resetar
             service_data.deadline = formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date');
-            service_data.service_status = 'Não Iniciado'; // Garante o status inicial
+            service_data.service_status = 'Não Iniciado';
         }
 
         modal.value.mode = mode;
@@ -167,9 +182,7 @@
         } else {
             if (!confirm("O serviço será considerado concluído e pago!")) return
         }
-
         setServiceData(service_id);
-
         modal.value.mode = 'conclude';
         showMotivoAtrasoModal.value = true
     };
@@ -187,23 +200,20 @@
         modal.value.show = false;
         showMotivoAtrasoModal.value = false;
         showMotivoCancelamentoModal.value = false;
-        // Ao fechar o modal, redefinir o deadline para o valor padrão de criação
         service_data.deadline = formatDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'new_date');
-        service_data.service_status = 'Não Iniciado'; // Garante o status inicial
+        service_data.service_status = 'Não Iniciado';
     }
 
 
     onMounted(() => {
         if (props.show_service_id) {
-            // Encontra o serviço na lista. Para Services/Previous, talvez precise de props.services_list.data
             openModal('update', props.show_service_id);
         }
     });
 
     // =============================================
-    // Métodos de CRUD
+    // Métodos de CRUD (não precisam de alteração)
     const createService = () => {
-        console.log("SERVIÇO: ", service_data)
         service_data.post(route('services.store'), {
             preserveScroll: true,
             onSuccess: () => {
@@ -235,13 +245,13 @@
     }
 
     const concludeService = () => {
-        service_data.put(route('services.conclude', service_data.id), { // Apenas uma chamada para 'conclude'
+        service_data.put(route('services.conclude', service_data.id), {
             preserveScroll: true,
             onSuccess: () => {
                 $toast.success('Serviço concluído com sucesso!')
                 closeModal()
             },
-            onError: (error) => { console.log(error) } // Adicionar tratamento de erro
+            onError: (error) => { console.log(error) }
         });
     }
 
@@ -261,19 +271,17 @@
                 $toast.success('Serviço cancelado com sucesso!')
                 closeModal()
             },
-            onError: (error) => { console.log(error) } // Adicionar tratamento de erro
+            onError: (error) => { console.log(error) }
         });
     }
 
-    const changeStatusService = (service_id, event) => { // Mudar 'new_status' para 'event'
-        const new_status = event.target.value; // Obter o valor do evento
+    const changeStatusService = (service_id, event) => {
+        const new_status = event.target.value;
         router.put(route('services.change-status', service_id), { service_status: new_status }, {
             preserveScroll: true,
             onSuccess: () => {
                 $toast.success('Status alterado com sucesso!');
-                // Forçar uma recarga parcial para atualizar os dados do Inertia
-                // ou atualizar manualmente o item na lista se for viável
-                router.reload({ only: ['services_list'] }); // Recarrega apenas a prop services_list
+                router.reload({ only: ['services_list'] });
             },
             onError: (error) => { console.log(error); $toast.error('Erro ao alterar status!'); }
         });
@@ -403,7 +411,7 @@
                                                     <td
                                                         class="whitespace-normal px-6 py-4 print:px-3 print:py-2 text-center">
                                                         {{
-                                                            service.entity_name }}</td>
+                                                            service?.client?.name || service.entity_name }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
                                                         toMoney(service.accounting.partial_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
@@ -514,6 +522,44 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="services_list.total > 0"
+            class="print:hidden flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div class="flex flex-1 justify-between sm:hidden">
+                <button @click="goToPage(services_list.prev_page_url)" :disabled="!services_list.prev_page_url"
+                    class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Anterior</button>
+                <button @click="goToPage(services_list.next_page_url)" :disabled="!services_list.next_page_url"
+                    class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Próximo</button>
+            </div>
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Mostrando de
+                        <span class="font-medium">{{ services_list.from }}</span>
+                        a
+                        <span class="font-medium">{{ services_list.to }}</span>
+                        de
+                        <span class="font-medium">{{ services_list.total }}</span>
+                        resultados
+                    </p>
+                </div>
+                <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <template v-for="(link, index) in services_list.links" :key="index">
+                            <button @click="goToPage(link.url)" :disabled="!link.url"
+                                class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20"
+                                :class="{
+                                    'z-10 bg-green-600 text-white focus-visible:outline-green-600': link.active,
+                                    'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0 disabled:opacity-50': !link.active,
+                                    'rounded-l-md': index === 0,
+                                    'rounded-r-md': index === services_list.links.length - 1
+                                }" v-html="link.label" />
+                        </template>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
 
         <CreateUpdatePayModal :show="modal.show" :modal="modal" :service="service_data" :sells_list="sells_list"
             @submit="submit" @close="closeModal" />

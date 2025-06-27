@@ -57,7 +57,7 @@ class EmployeeController extends Controller
         {
             $latestRecord = Procedure::where('department_id', 9)
                 ->where('action_id', 7)->latest('created_at')->first();
-            $search_date = $latestRecord ? $latestRecord->created_at->format('Y-m-d') : date('Y-m-d');
+            $search_date = $latestRecord? $latestRecord->created_at->format('Y-m-d') : date('Y-m-d');
         } else
         {
             $search_date = $date;
@@ -81,31 +81,29 @@ class EmployeeController extends Controller
     public function overtime_calculation_save(Request $request)
     {
         // Obtém os dados dos funcionários a partir da requisição
-        $employees = $request->input('employees', '[]');
+        $employees = $request->input('employees', '');
 
         return DB::transaction(function () use ($employees) {
+            /*
+            * NOTA DE ARQUITETURA:
+            * O logging manual foi mantido aqui intencionalmente.
+            * Esta ação ('save' para a tabela de horas extras) não opera sobre um único
+            * modelo Eloquent (como Employee ou Item), mas sim salva um payload de dados.
+            * O Trait 'Auditable' é projetado para ser acionado por eventos de modelo
+            * (created, updated, deleted). Como esta operação não dispara um desses eventos
+            * em um modelo auditável, o log manual continua sendo a abordagem correta.
+            */
+
             // Cria um novo procedimento
             $procedure = Procedure::create([
                 'user_id' => Auth::id(),
-                'action_id' => 10,
+                'action_id' => 10, // Ação: save
                 'department_id' => 11,
                 'movement_id' => null,
             ]);
 
             // Cria um novo registro
-            $record = Record::create([
-                'procedure_id' => $procedure->id,
-                'item_id' => null,
-                'name' => 'Salvamento automático - tabela de horas extras',
-                'quantity' => 0,
-                'measurement_unit' => null,
-                'price' => null,
-                'movement_quantity' => 0,
-                'amount' => 0,
-                'past' => true,
-                'content' => $employees,
-                'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
-            ]);
+            $record = Record::create();
 
             // Redireciona para a rota de cálculo de horas extras do empregado
             return redirect()->route('employee.overtime_calculation');
@@ -121,7 +119,7 @@ class EmployeeController extends Controller
         $account_types = AccountType::all();
         $payment_method = PaymentMethod::all();
         $banks = Bank::all();
-        $page_mode = $id ? 'old' : 'new';
+        $page_mode = $id? 'old' : 'new';
         $user = null;
         $procedure_date = null;
 
@@ -149,14 +147,14 @@ class EmployeeController extends Controller
         {
             $procedure = Procedure::findOrFail($id);
             $record = Record::where('procedure_id', $procedure->id)->first();
-            $employees = $record ? collect(json_decode($record->content)) : collect();
+            $employees = $record? collect(json_decode($record->content)) : collect();
             $user = User::findOrFail($procedure->user_id);
             $procedure_date = $procedure->created_at;
         }
 
         // Calculando valores totais apenas se $employees não estiver vazio
-        $total_fifty_percent_value = $employees->sum('fifty_percent_value') ?? 0;
-        $total_hundred_percent_value = $employees->sum('hundred_percent_value') ?? 0;
+        $total_fifty_percent_value = $employees->sum('fifty_percent_value')?? 0;
+        $total_hundred_percent_value = $employees->sum('hundred_percent_value')?? 0;
 
         // Retornando os dados para a renderização
         return Inertia::render('Employees/OvertimeCalculation', [
@@ -206,13 +204,16 @@ class EmployeeController extends Controller
                 'pix_token' => ['nullable', 'string', 'unique:employees'],
                 'bank_ag' => ['nullable', 'string', 'unique:employees'],
                 'account_type_id' => ['nullable', 'exists:account_types,id'],
-                'account_number' => ['nullable', 'string', 'unique:employees'],
+                'account_number' => ['nullable', 'string', 'unique:employees']
             ]);
 
             $contactsWithPrefix = array_map(function ($contact) {
-                return '+55' . $contact;
+                return '+55'. $contact;
             }, $validated->contacts);
 
+            // A chamada `Employee::create` irá disparar o evento 'created' do Eloquent.
+            // O Trait 'Auditable' no modelo Employee irá interceptar este evento
+            // e chamar `recordActivity('create')` automaticamente.
             $employee = Employee::create([
                 'name' => $validated->name,
                 'surname' => $validated->surname,
@@ -234,6 +235,8 @@ class EmployeeController extends Controller
                 'account_number' => $validated->account_number,
             ]);
 
+            /*
+            // Bloco de log manual removido. O Trait Auditable cuidará disso.
             $procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 1,
@@ -244,7 +247,7 @@ class EmployeeController extends Controller
             $record = Record::create([
                 'procedure_id' => $procedure->id,
                 'item_id' => null,
-                'name' => $validated->name . ' ' . $validated->surname,
+                'name' => $validated->name. ' '. $validated->surname,
                 'quantity' => 0,
                 'measurement_unit' => null,
                 'price' => null,
@@ -253,6 +256,7 @@ class EmployeeController extends Controller
                 'past' => true,
                 'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
+            */
 
             return back();
         });
@@ -294,18 +298,18 @@ class EmployeeController extends Controller
                 'payment_method_id' => ['nullable', 'exists:payment_methods,id'],
                 'overtime_payment_method_id' => ['nullable', 'exists:payment_methods,id'],
                 'bank_id' => ['nullable', 'exists:banks,id'],
-                'pix_cpf' => ['nullable', 'string', 'unique:employees,pix_cpf,' . $id],
-                'pix_email' => ['nullable', 'email', 'unique:employees,pix_email,' . $id],
-                'pix_phone_number' => ['nullable', 'string', 'unique:employees,pix_phone_number,' . $id],
-                'pix_token' => ['nullable', 'string', 'unique:employees,pix_token,' . $id],
-                'bank_ag' => ['nullable', 'string', 'unique:employees,bank_ag,' . $id],
+                'pix_cpf' => ['nullable', 'string', 'unique:employees,pix_cpf,'. $id],
+                'pix_email' => ['nullable', 'email', 'unique:employees,pix_email,'. $id],
+                'pix_phone_number' => ['nullable', 'string', 'unique:employees,pix_phone_number,'. $id],
+                'pix_token' => ['nullable', 'string', 'unique:employees,pix_token,'. $id],
+                'bank_ag' => ['nullable', 'string', 'unique:employees,bank_ag,'. $id],
                 'account_type_id' => ['nullable', 'exists:account_types,id'],
-                'account_number' => ['nullable', 'string', 'unique:employees,account_number,' . $id],
+                'account_number' => ['nullable', 'string', 'unique:employees,account_number,'. $id]
             ]);
 
             $contactsWithPrefix = array_map(function ($contact) {
                 // Adiciona "+55" apenas se o número não começar com "+55"
-                return strpos($contact, '+55') === 0 ? $contact : '+55' . $contact;
+                return strpos($contact, '+55') === 0? $contact : '+55'. $contact;
             }, $validated->contacts);
 
             // Atualiza os dados do empregado
@@ -327,9 +331,13 @@ class EmployeeController extends Controller
             $employee->account_type_id = $validated->account_type_id;
             $employee->account_number = $validated->account_number;
 
-            $employee->save(); // Salva as alterações no banco de dados
+            // A chamada `$employee->save()` irá disparar o evento 'updated' do Eloquent.
+            // O Trait 'Auditable' no modelo Employee irá interceptar este evento
+            // e chamar `recordActivity('update')` automaticamente.
+            $employee->save();
 
-            // Cria os registros relacionados
+            /*
+            // Bloco de log manual removido. O Trait Auditable cuidará disso.
             $procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 2,
@@ -340,7 +348,7 @@ class EmployeeController extends Controller
             $record = Record::create([
                 'procedure_id' => $procedure->id,
                 'item_id' => null,
-                'name' => $validated->name . ' ' . $validated->surname,
+                'name' => $validated->name. ' '. $validated->surname,
                 'quantity' => 0,
                 'measurement_unit' => null,
                 'price' => null,
@@ -349,6 +357,7 @@ class EmployeeController extends Controller
                 'past' => true,
                 'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
+            */
 
             return back();
         });
@@ -361,8 +370,14 @@ class EmployeeController extends Controller
             $employee = Employee::findOrFail($id);
 
             $employee->fired = true;
-            $employee->save();
+            $employee->save(); // O save() dispara o evento 'update' automaticamente.
 
+            // Chamamos manualmente a atividade 'fire' para registrar este evento específico.
+            // Isso cria um log de auditoria claro para a demissão, separado da simples atualização.
+            $employee->recordActivity('fire');
+
+            /*
+            // Bloco de log manual removido. A chamada acima para recordActivity substitui isso.
             $procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 6,
@@ -373,7 +388,7 @@ class EmployeeController extends Controller
             $record = Record::create([
                 'procedure_id' => $procedure->id,
                 'item_id' => null,
-                'name' => $employee->name . ' ' . $employee->surname,
+                'name' => $employee->name. ' '. $employee->surname,
                 'quantity' => 0,
                 'measurement_unit' => null,
                 'price' => null,
@@ -382,7 +397,10 @@ class EmployeeController extends Controller
                 'past' => true,
                 'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
+            */
 
+            // O delete() dispara o evento 'deleted' automaticamente, que também será logado.
+            // Isso é útil para ter um registro completo do ciclo de vida do objeto.
             $employee->delete();
             return back();
         });
@@ -397,6 +415,8 @@ class EmployeeController extends Controller
         return DB::transaction(function () use ($id) {
             $employee = Employee::findOrFail($id);
 
+            /*
+            // Bloco de log manual removido. O Trait Auditable cuidará disso.
             $procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 3,
@@ -407,7 +427,7 @@ class EmployeeController extends Controller
             $record = Record::create([
                 'procedure_id' => $procedure->id,
                 'item_id' => null,
-                'name' => $employee->name . ' ' . $employee->surname,
+                'name' => $employee->name. ' '. $employee->surname,
                 'quantity' => 0,
                 'measurement_unit' => null,
                 'price' => null,
@@ -416,7 +436,11 @@ class EmployeeController extends Controller
                 'past' => true,
                 'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
+            */
 
+            // A chamada `$employee->delete()` irá disparar o evento 'deleted' do Eloquent.
+            // O Trait 'Auditable' no modelo Employee irá interceptar este evento
+            // e chamar `recordActivity('delete')` automaticamente.
             $employee->delete();
             return back();
         });

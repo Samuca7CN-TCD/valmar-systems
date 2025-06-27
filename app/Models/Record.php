@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Record extends Model
 {
     use HasFactory, SoftDeletes;
-
+    
     protected $fillable = [
         'procedure_id',
         'item_id',
@@ -25,6 +25,15 @@ class Record extends Model
         'register_date',
         'filepath',
         'past',
+        'before_state',
+        'after_state',
+        'auditable_id',
+        'auditable_type',
+    ];
+
+    protected $casts = [
+        'before_state' => 'array',
+        'after_state' => 'array',
     ];
 
     public function procedure()
@@ -40,5 +49,10 @@ class Record extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function auditable()
+    {
+        return $this->morphTo();
     }
 }

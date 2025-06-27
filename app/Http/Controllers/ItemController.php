@@ -203,17 +203,17 @@ class ItemController extends Controller
                 'list_in_uses' => $validate->list_in_uses
             ]);
 
-            $procedure = Procedure::create([
+            /*$procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 1,
                 'department_id' => 2,
                 'movement_id' => null,
-            ]);
+            ]);*/
 
             $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
             $measuremtent_unit = $measuremtent_unit->abbreviation;
 
-            $record = Record::create([
+            /*$record = Record::create([
                 'procedure_id' => $procedure->id,
                 'item_id' => $item->id,
                 'name' => $item->name,
@@ -225,7 +225,7 @@ class ItemController extends Controller
                 'past' => true,
                 'content' => json_encode($item),
                 'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
-            ]);
+            ]);*/
             return back();
         });
     }
@@ -305,17 +305,17 @@ class ItemController extends Controller
             $item->list_in_uses = $request->list_in_uses;
             $item->save();
 
-            $procedure = Procedure::create([
+            /*$procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 2,
                 'department_id' => 2,
                 'movement_id' => null,
-            ]);
+            ]);*/
 
             $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
             $measuremtent_unit = $measuremtent_unit->abbreviation;
 
-            $record = Record::create([
+            /*$record = Record::create([
                 'procedure_id' => $procedure->id,
                 'item_id' => $item->id,
                 'item_name' => $item->name,
@@ -325,7 +325,7 @@ class ItemController extends Controller
                 'amount' => $item->price * $item->quantity,
                 'past' => true,
                 'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
-            ]);
+            ]);*/
 
             return back();
         });
@@ -339,17 +339,17 @@ class ItemController extends Controller
         return DB::transaction(function () use ($id) {
             $item = Item::findOrFail($id);
 
-            $procedure = Procedure::create([
+            /*$procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 3,
                 'department_id' => 2,
                 'movement_id' => null,
-            ]);
+            ]);*/
 
             $measuremtent_unit = MeasurementUnit::find($item->measurement_unit_id);
             $measuremtent_unit = $measuremtent_unit->abbreviation;
 
-            $record = Record::create([
+            /*$record = Record::create([
                 'procedure_id' => $procedure->id,
                 'item_id' => $item->id,
                 'item_name' => $item->name,
@@ -359,7 +359,7 @@ class ItemController extends Controller
                 'amount' => $item->price * $item->quantity,
                 'past' => true,
                 'register_date' => Carbon::now()->format('Y-m-d H:i:s'),
-            ]);
+            ]);*/
 
             $item->delete();
             return back();

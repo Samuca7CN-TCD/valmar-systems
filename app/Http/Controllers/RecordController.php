@@ -77,16 +77,16 @@ class RecordController extends Controller
                 'partial_value' => $accounting->partial_value + $record->amount,
             ]);
 
-            $new_procedure = Procedure::create([
+            /*$new_procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 9,
                 'department_id' => 7,
                 'movement_id' => $movement->id,
-            ]);
+            ]);*/
 
-            $record->update([
+            /*$record->update([
                 'procedure_id' => $new_procedure->id,
-            ]);
+            ]);*/
 
             $record->delete();
 

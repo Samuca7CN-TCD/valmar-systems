@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -19,6 +20,7 @@ class User extends Authenticatable
     use Notifiable;
     use TwoFactorAuthenticatable;
     use SoftDeletes;
+    use Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +35,12 @@ class User extends Authenticatable
         'hierarchy',
     ];
 
+    /**
+     * Define quais campos não devem ser logados.
+     * @var array
+     */
+    protected $doNotLogFields = [];
+    
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -70,5 +78,14 @@ class User extends Authenticatable
     public function procedures()
     {
         return $this->hasMany(Procedure::class);
+    }
+
+    /**
+     * Define o ID do departamento para este modelo.
+     * @return int
+     */
+    public function getDepartmentIdForAudit(): int
+    {
+        return 2; // ID do departamento 'Almoxarifado'
     }
 }

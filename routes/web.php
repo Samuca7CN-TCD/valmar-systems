@@ -12,6 +12,7 @@ use App\Http\Controllers\MovementSellController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PayslipController;
+use App\Http\Controllers\ClientController;
 
 require_once 'fortify.php';
 
@@ -44,6 +45,9 @@ Route::middleware([
     Route::delete('/warehouse/{werehouse}', [ItemController::class, 'destroy'])->where('wherehouse', '[0-9]+')->name('warehouse.destroy');
     Route::post('/warehouse/{werehouse}', [ItemController::class, 'update'])->where('warehouse', '[0-9]+')->name('warehouse.update');
     Route::get('/warehouse/filter/{werehouse?}', [ItemController::class, 'index'])->where('wherehouse', '[0-9]+')->name('warehouse.filter');
+
+    Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
+    Route::resource('clients', ClientController::class);
 
     Route::get('/print-items/{buy_option?}', [ItemController::class, 'print_items'])->name('warehouse.print_items');
     Route::get('/use-table/{month?}', [ItemController::class, 'use_table'])->name('warehouse.use_table');

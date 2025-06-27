@@ -7,6 +7,7 @@
     import { formatDate, toMoney } from '@/general.js';
     import { useForm } from '@inertiajs/vue3';
     import SelectSearchItem from '@/Components/SelectSearchItem.vue'
+    import ClientSelector from '@/Components/ClientSelector.vue';
 
     const emit = defineEmits(['close', 'submit']);
     const props = defineProps({
@@ -23,28 +24,18 @@
 
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     const canAddItems = computed(() => {
-        const { client, date } = props.sell;
-
-        if (!client || !client.length) return false;
-        const isDateValid = date && dateRegex.test(date);
-
-        return isDateValid;
+        const { client_id, date } = props.sell;
+        return !!client_id && date && dateRegex.test(date);
     });
 
     const enableSubmit = computed(() => {
-        const { client, date, estimated_value, total_value, entry_value, items_list } = props.sell;
+        const { client_id, date, total_value, items_list } = props.sell;
 
-        if (!client || !client.length) return false;
+        if (!client_id) return false;
         if (!date || !dateRegex.test(date)) return false;
+        if (!(total_value > 0)) return false;
 
-        const areValuesValid = estimated_value > 0 && total_value > 0 && entry_value <= total_value;
-        if (!areValuesValid) return false;
-
-        const items_okay = items_list.every(item => {
-            return item.quantity > 0 && item.movement_quantity <= item.quantity;
-        });
-
-        return items_okay; // Early return based on item checks
+        return items_list.every(item => item.quantity > 0 && item.movement_quantity <= item.quantity);
     });
 
     const partialValue = computed(() => {
@@ -196,11 +187,10 @@
                                 <label for="sell-client"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Cliente</label>
                                 <div class="mt-2">
-                                    <input type="text" name="sell-client" id="sell-client" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" :disabled="see_disabled"
-                                        placeholder="Nome do cliente" v-model="sell.client" required>
-                                    <p v-if="sell.errors.client" class="text-red-500 text-sm">{{
-                                        sell.errors.client }}</p>
+                                    <ClientSelector v-model="sell.client_id" :disabled="see_disabled"
+                                        class="disabled:bg-gray-200" :required="true" />
+                                    <p v-if="sell.errors.client_id" class="text-red-500 text-sm">{{
+                                        sell.errors.client_id }}</p>
                                 </div>
                             </div>
 
@@ -438,15 +428,15 @@
                             </div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Valor final: <span
                                     class="font-extrabold text-green-500">{{
-                                    toMoney(sell.total_value)
+                                        toMoney(sell.total_value)
                                     }}</span></div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Desconto (%): <span
                                     class="font-extrabold text-green-500">{{
                                         decimal_format(sell.discount_percent,
-                                    3) }}%</span></div>
+                                            3) }}%</span></div>
                             <div class="md:col-span-2 lg:col-span-1 text-gray-700">Desconto (R$): <span
                                     class="font-extrabold text-green-500">{{
-                                    toMoney(sell.discount)
+                                        toMoney(sell.discount)
                                     }}</span></div>
 
                             <div class="sm:col-span-2">

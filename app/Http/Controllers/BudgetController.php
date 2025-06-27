@@ -14,6 +14,7 @@ use App\Models\Accounting;
 use App\Models\Movement;
 use App\Models\Procedure;
 use App\Models\Record;
+use App\Models\Client;
 
 use App\Models\Budget;
 use App\Models\BudgetItem;
@@ -111,17 +112,11 @@ class BudgetController extends Controller
      */
     public function store(Request $request)
     {
-        // Autorização: Ex: $this->authorize('create', Budget::class);
-
+        // **AJUSTE:** A validação agora espera 'client_id' e remove os campos de cliente individuais.
         $validated = $request->validate([
+            'client_id' => ['required', 'exists:clients,id'],
             'title' => ['required', 'string', 'max:255'],
             'validity' => ['required', 'numeric'],
-            'client_name' => ['required', 'string', 'max:255'],
-            'client_email' => ['nullable', 'email', 'max:255'],
-            'client_phone' => ['required', 'string', 'max:20'],
-            'client_address' => ['nullable', 'string', 'max:255'],
-            'client_cpf_cnpj' => ['required', 'string', 'max:20'], // NOVO CAMPO
-            'client_cep' => ['required', 'string', 'max:10'],      // NOVO CAMPO
             'description' => ['nullable', 'string'],
             'budget_date' => ['required', 'date_format:Y-m-d'],
             'items' => ['required', 'array', 'min:1'],
@@ -129,61 +124,43 @@ class BudgetController extends Controller
             'items.*.item_description' => ['nullable', 'string'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
-            'discount_amount' => ['nullable', 'numeric', 'min:0'], // NOVO CAMPO
-            'additional_amount' => ['nullable', 'numeric', 'min:0'], // NOVO CAMPO
-            'contracted_responsibility' => ['nullable', 'string'], // NOVO CAMPO
-            'contractor_responsibility' => ['nullable', 'string'], // NOVO CAMPO
-            'deadline' => ['required', 'integer', 'min:0'], // Assumindo que deadline é o número de dias
-            'deadline_start_description' => ['nullable', 'string', 'max:255'], // NOVO CAMPO
-            'deadline_type' => ['required', 'in:dias úteis,dias corridos'], // NOVO CAMPO
-            'payment_method_description' => ['nullable', 'string'], // NOVO CAMPO
-            'bank_info_description' => ['nullable', 'string'],      // NOVO CAMPO
-            'budget_type' => ['required', 'in:Original,Correção'],  // NOVO CAMPO
-            'original_budget_id' => ['nullable', 'exists:budgets,id'], // NOVO CAMPO, se for correção
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'additional_amount' => ['nullable', 'numeric', 'min:0'],
+            'contracted_responsibility' => ['nullable', 'string'],
+            'contractor_responsibility' => ['nullable', 'string'],
+            'deadline' => ['required', 'integer', 'min:0'],
+            'deadline_start_description' => ['nullable', 'string', 'max:255'],
+            'deadline_type' => ['required', 'in:dias úteis,dias corridos'],
+            'payment_method_description' => ['nullable', 'string'],
+            'bank_info_description' => ['nullable', 'string'],
+            'budget_type' => ['required', 'in:Original,Correção'],
+            'original_budget_id' => ['nullable', 'exists:budgets,id'],
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
+        DB::transaction(function () use ($validated) {
+            // **AJUSTE:** Busca os dados do cliente a partir do ID fornecido.
+            $client = Client::findOrFail($validated['client_id']);
+
             $totalValue = 0;
             foreach ($validated['items'] as $item) {
                 $totalValue += $item['quantity'] * $item['unit_price'];
             }
-
-            // Aplicar desconto e acréscimo no total_value ANTES de criar o orçamento
             $finalTotalValue = $totalValue - ($validated['discount_amount'] ?? 0) + ($validated['additional_amount'] ?? 0);
-            if ($finalTotalValue < 0) $finalTotalValue = 0; // Garantir que não seja negativo
 
-            $budget = Budget::create([
-                'title' => $validated['title'],
-                'validity' => $validated['validity'],
-                'client_name' => $validated['client_name'],
-                'client_email' => $validated['client_email'],
-                'client_phone' => $validated['client_phone'],
-                'client_address' => $validated['client_address'],
-                'client_cpf_cnpj' => $validated['client_cpf_cnpj'], // NOVO CAMPO
-                'client_cep' => $validated['client_cep'],          // NOVO CAMPO
-                'description' => $validated['description'],
-                'budget_date' => $validated['budget_date'],
-                'total_value' => $finalTotalValue, // Total já com descontos/acréscimos
-                'discount_amount' => $validated['discount_amount'] ?? 0, // NOVO CAMPO
-                'additional_amount' => $validated['additional_amount'] ?? 0, // NOVO CAMPO
-                'deadline' => $validated['deadline'], // Campo já existente na migração de orçamentos, mas sem validação
-                'contracted_responsibility' => $validated['contracted_responsibility'] ?? 'Fornecer todo material de fabricação e consumo', // NOVO CAMPO
-                'contractor_responsibility' => $validated['contractor_responsibility'] ?? null, // NOVO CAMPO
-                'deadline_start_description' => $validated['deadline_start_description'] ?? 'a partir do pagamento de entrada', // NOVO CAMPO
-                'deadline_type' => $validated['deadline_type'], // NOVO CAMPO
-                'payment_method_description' => $validated['payment_method_description'] ?? '50% entrada' . PHP_EOL . '50% no ato da entrega do serviço', // NOVO CAMPO
-                'bank_info_description' => $validated['bank_info_description'] ?? 'BANCO DO BRASIL' . PHP_EOL . 'AG: 3175-5 | C/C: 20.439-0' . PHP_EOL . 'PIX: (73) 9 8855-9571', // NOVO CAMPO
-                'budget_type' => $validated['budget_type'], // NOVO CAMPO
-                'original_budget_id' => $validated['original_budget_id'] ?? null, // NOVO CAMPO
-                'status' => 'Rascunho', // Status inicial sempre 'Rascunho'
-            ]);
+            $budgetData = $validated;
+            $budgetData['total_value'] = $finalTotalValue;
+            
+            // **AJUSTE:** Preenche os campos legados do orçamento com os dados do cliente.
+            $budgetData['client_name'] = $client->name;
+            $budgetData['client_email'] = $client->email;
+            $budgetData['client_phone'] = $client->contacts[0] ?? null;
+            $budgetData['client_address'] = $client->address_street;
+            $budgetData['client_cpf_cnpj'] = $client->document;
+            $budgetData['client_cep'] = $client->postal_code;
 
-            $procedure = Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 1,
-                'department_id' => 15,
-                'budget_id' => $budget->id,
-            ]);
+            unset($budgetData['items']);
+
+            $budget = Budget::create($budgetData);
 
             foreach ($validated['items'] as $itemData) {
                 BudgetItem::create([
@@ -195,9 +172,6 @@ class BudgetController extends Controller
                     'subtotal' => $itemData['quantity'] * $itemData['unit_price'],
                 ]);
             }
-
-            // Opcional: Registrar uma Procedure para a criação do orçamento
-            // Procedure::create([...]);
         });
 
         return redirect()->route('budgets.index')->with('success', 'Orçamento criado com sucesso!');
@@ -273,52 +247,45 @@ class BudgetController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Budget $budget)
     {
-        $budget = Budget::findOrFail($id);
-        // Autorização: Ex: $this->authorize('update', $budget);
-
         if (!in_array($budget->status, ['Rascunho', 'Enviado']) || $budget->generated_service_id !== null) {
             return redirect()->route('budgets.show', $budget->id)
                              ->with('error', 'Este orçamento não pode ser atualizado.');
         }
 
+        // **AJUSTE:** A validação agora espera 'client_id'.
         $validated = $request->validate([
+            'client_id' => ['required', 'exists:clients,id'],
             'title' => ['required', 'string', 'max:255'],
             'validity' => ['required', 'numeric'],
-            'client_name' => ['required', 'string', 'max:255'],
-            'client_email' => ['nullable', 'email', 'max:255'],
-            'client_phone' => ['required', 'string', 'max:20'],
-            'client_address' => ['nullable', 'string', 'max:255'],
-            'client_cpf_cnpj' => ['required', 'string', 'max:20'], // NOVO CAMPO
-            'client_cep' => ['required', 'string', 'max:10'],      // NOVO CAMPO
             'description' => ['nullable', 'string'],
-            'budget_date' => ['required', 'date_format:Y-m-d'],
             'items' => ['required', 'array', 'min:1'],
+            'items.*.id' => ['nullable', 'integer'],
             'items.*.item_name' => ['required', 'string', 'max:255'],
             'items.*.item_description' => ['nullable', 'string'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
-            'discount_amount' => ['nullable', 'numeric', 'min:0'], // NOVO CAMPO
-            'additional_amount' => ['nullable', 'numeric', 'min:0'], // NOVO CAMPO
-            'contracted_responsibility' => ['nullable', 'string'], // NOVO CAMPO
-            'contractor_responsibility' => ['nullable', 'string'], // NOVO CAMPO
-            'deadline' => ['required', 'integer', 'min:0'], // Assumindo que deadline é o número de dias
-            'deadline_start_description' => ['nullable', 'string', 'max:255'], // NOVO CAMPO
-            'deadline_type' => ['required', 'in:dias úteis,dias corridos'], // NOVO CAMPO
-            'payment_method_description' => ['nullable', 'string'], // NOVO CAMPO
-            'bank_info_description' => ['nullable', 'string'],      // NOVO CAMPO
-            'budget_type' => ['required', 'in:Original,Correção'],  // NOVO CAMPO
-            'original_budget_id' => ['nullable', 'exists:budgets,id'], // NOVO CAMPO, se for correção
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'additional_amount' => ['nullable', 'numeric', 'min:0'],
+            'contracted_responsibility' => ['nullable', 'string'],
+            'contractor_responsibility' => ['nullable', 'string'],
+            'deadline' => ['required', 'integer', 'min:0'],
+            'deadline_start_description' => ['nullable', 'string', 'max:255'],
+            'deadline_type' => ['required', 'in:dias úteis,dias corridos'],
+            'payment_method_description' => ['nullable', 'string'],
+            'bank_info_description' => ['nullable', 'string'],
         ]);
 
         DB::transaction(function () use ($validated, $budget) {
+            // **AJUSTE:** Busca os dados do cliente a partir do ID para garantir que estão atualizados.
+            $client = Client::findOrFail($validated['client_id']);
+
             $totalValue = 0;
             $existingItemIds = [];
 
             foreach ($validated['items'] as $itemData) {
                 $totalValue += $itemData['quantity'] * $itemData['unit_price'];
-
                 if (isset($itemData['id'])) {
                     $item = BudgetItem::findOrFail($itemData['id']);
                     $item->update([
@@ -341,43 +308,24 @@ class BudgetController extends Controller
                     $existingItemIds[] = $newItem->id;
                 }
             }
-
             $budget->items()->whereNotIn('id', $existingItemIds)->delete();
 
-            // Aplicar desconto e acréscimo no total_value ANTES de atualizar
             $finalTotalValue = $totalValue - ($validated['discount_amount'] ?? 0) + ($validated['additional_amount'] ?? 0);
-            if ($finalTotalValue < 0) $finalTotalValue = 0; // Garantir que não seja negativo
+            
+            $updateData = $validated;
+            $updateData['total_value'] = $finalTotalValue;
 
-            $budget->update([
-                'title' => $validated['title'],
-                'validity' => $validated['validity'],
-                'client_name' => $validated['client_name'],
-                'client_email' => $validated['client_email'],
-                'client_phone' => $validated['client_phone'],
-                'client_address' => $validated['client_address'],
-                'client_cpf_cnpj' => $validated['client_cpf_cnpj'], // NOVO CAMPO
-                'client_cep' => $validated['client_cep'],          // NOVO CAMPO
-                'description' => $validated['description'],
-                'budget_date' => $validated['budget_date'],
-                'total_value' => $finalTotalValue, // Total já com descontos/acréscimos
-                'discount_amount' => $validated['discount_amount'] ?? 0, // NOVO CAMPO
-                'additional_amount' => $validated['additional_amount'] ?? 0, // NOVO CAMPO
-                'deadline' => $validated['deadline'], // Campo já existente na migração de orçamentos, mas sem validação
-                'contracted_responsibility' => $validated['contracted_responsibility'] ?? 'Fornecer todo material de fabricação e consumo', // NOVO CAMPO
-                'contractor_responsibility' => $validated['contractor_responsibility'] ?? null, // NOVO CAMPO
-                'deadline_start_description' => $validated['deadline_start_description'] ?? 'a partir do pagamento de entrada', // NOVO CAMPO
-                'deadline_type' => $validated['deadline_type'], // NOVO CAMPO
-                'payment_method_description' => $validated['payment_method_description'] ?? '50% entrada' . PHP_EOL . '50% no ato da entrega do serviço', // NOVO CAMPO
-                'bank_info_description' => $validated['bank_info_description'] ?? 'BANCO DO BRASIL' . PHP_EOL . 'AG: 3175-5 | C/C: 20.439-0' . PHP_EOL . 'PIX: (73) 9 8855-9571', // NOVO CAMPO
-                // 'budget_type' e 'original_budget_id' não são atualizados aqui
-            ]);
+            // **AJUSTE:** Atualiza os campos do orçamento com os dados do cliente.
+            $updateData['client_name'] = $client->name;
+            $updateData['client_email'] = $client->email;
+            $updateData['client_phone'] = $client->contacts[0] ?? null;
+            $updateData['client_address'] = $client->address_street;
+            $updateData['client_cpf_cnpj'] = $client->document;
+            $updateData['client_cep'] = $client->postal_code;
 
-            $procedure = Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 2,
-                'department_id' => 15,
-                'budget_id' => $budget->id,
-            ]);
+            unset($updateData['items']);
+
+            $budget->update($updateData);
         });
 
         return redirect()->route('budgets.index')->with('success', 'Orçamento atualizado com sucesso!');
@@ -407,12 +355,7 @@ class BudgetController extends Controller
                 'approval_rejection_date' => Carbon::now()->format('Y-m-d'),
             ]);
 
-            $procedure = Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 14,
-                'department_id' => 15,
-                'budget_id' => $budget->id,
-            ]);
+            $budget->recordActivity('14');
 
             $budget->delete(); // Soft delete
 
@@ -434,19 +377,10 @@ class BudgetController extends Controller
         if ($budget->generated_service_id !== null) {
              return back()->with('error', 'Este orçamento não pode ser excluído fisicamente pois já gerou um serviço. Cancele-o primeiro.');
         }
-        // Se este orçamento for uma "Correção", deve-se ter cuidado para não quebrar a FK do original
-        // ou remover explicitamente o original_budget_id antes de deletar se a FK não for CASCADE.
-        // Já definimos onDelete('set null') na migração, então isso é tratado automaticamente.
 
         // Remover itens associados primeiro (se onDelete('cascade') não for suficiente ou se houver arquivos)
         $budget->items()->forceDelete(); // Remove fisicamente os itens
 
-        $procedure = Procedure::create([
-            'user_id' => Auth::id(),
-            'action_id' => 3,
-            'department_id' => 15,
-            'budget_id' => $budget->id,
-        ]);
 
         $budget->forceDelete(); // Exclui fisicamente o orçamento
 
@@ -495,14 +429,8 @@ class BudgetController extends Controller
                 'generated_service_id' => $service->id, // Conecta o orçamento ao serviço gerado
             ]);
 
-            $procedure = Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 12,
-                'department_id' => 15,
-                'budget_id' => $budget->id,
-            ]);
-            // Opcional: Registrar Procedures para aprovação do orçamento e criação do serviço
-            // Procedure::create([...]);
+            $budget->recordActivity('approve');
+
         });
 
         return redirect()->route('budgets.show', $budget->id)->with('success', 'Orçamento aprovado e serviço gerado com sucesso!');
@@ -590,15 +518,7 @@ class BudgetController extends Controller
                 'approval_rejection_date' => Carbon::now()->format('Y-m-d'),
             ]);
 
-            $procedure = Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 13,
-                'department_id' => 15,
-                'budget_id' => $budget->id,
-            ]);
-
-            // Opcional: Registrar uma Procedure para a rejeição
-            // Procedure::create([...]);
+            $budget->recordActivity('reject');
         });
 
         return back()->with('success', 'Orçamento rejeitado com sucesso!');
@@ -651,16 +571,6 @@ class BudgetController extends Controller
                 $duplicatedItem->budget_id = $duplicatedBudget->id;
                 $duplicatedItem->save();
             }
-
-            $procedure = Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 1,
-                'department_id' => 15,
-                'budget_id' => $duplicatedBudget->id,
-            ]);
-
-            // Opcional: Registrar uma Procedure para a duplicação
-            // Procedure::create([...]);
         });
 
         // Retorna para a página de edição do orçamento duplicado para que o usuário possa revisá-lo
@@ -712,22 +622,10 @@ class BudgetController extends Controller
             }
 
             // 5. Registrar Procedures para o cancelamento do original e criação do novo
-            Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 14, // ID da ação "Cancelado" (ajuste conforme seu banco)
-                'department_id' => 15,
-                'budget_id' => $budget->id,
-                'rejection_reason' => $budget->rejection_reason, // Armazenar o motivo da procedure
-            ]);
+            $budget->recordActivity('cancel');
 
             $budget->delete();
 
-            Procedure::create([
-                'user_id' => Auth::id(),
-                'action_id' => 1, // ID da ação "Criação" (ajuste conforme seu banco)
-                'department_id' => 15,
-                'budget_id' => $newlyCreatedBudget->id,
-            ]);
         });
 
         // Redireciona para a página de edição do orçamento recém-criado
@@ -742,12 +640,8 @@ class BudgetController extends Controller
         $budget = Budget::with('items')->withTrashed()->findOrFail($id);
         // Autorização: Ex: $this->authorize('view', $budget);
 
-        $procedure = Procedure::create([
-            'user_id' => Auth::id(),
-            'action_id' => 7, // Action ID for "Printed"
-            'department_id' => 15,
-            'budget_id' => $budget->id,
-        ]);
+        $budget->recordActivity('print');
+        
 
         // Configure Dompdf
         $options = new Options();
@@ -783,12 +677,7 @@ class BudgetController extends Controller
             return back()->with('error', 'Somente orçamentos em rascunho podem ser enviados.');
         }
 
-        $procedure = Procedure::create([
-            'user_id' => Auth::id(),
-            'action_id' => 11,
-            'department_id' => 15,
-            'budget_id' => $budget->id,
-        ]);
+        $budget->recordActivity('send');
 
         $budget->update(['status' => 'Enviado']);
 

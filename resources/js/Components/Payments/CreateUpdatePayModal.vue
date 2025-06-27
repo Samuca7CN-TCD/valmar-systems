@@ -6,6 +6,7 @@
     import { ref, computed } from 'vue';
     import { formatDate, getPaymentMethodLabel, toMoney } from '@/general.js';
     import { useForm } from '@inertiajs/vue3';
+    import ClientSelector from '@/Components/ClientSelector.vue';
 
     const emit = defineEmits(['close', 'submit']);
     const props = defineProps({
@@ -44,7 +45,7 @@
     });
 
     const can_add_record = computed(() =>
-        props.payment.debt.length && props.payment.debtor.length && props.payment.total_value > 0
+        props.payment.debt.length && props.payment.client_id && props.payment.total_value > 0
     );
 
 
@@ -165,14 +166,14 @@
                             </div>
 
                             <div class="sm:col-span-3">
-                                <label for="payment-debtor"
+                                <label for="payment-client"
                                     class="block text-sm font-medium leading-6 text-gray-900 required-input-label">Devedor</label>
                                 <div class="mt-2">
-                                    <input type="text" name="payment-debtor" id="payment-debtor" autocomplete="on"
-                                        class="simple-input disabled:bg-gray-200" placeholder="Nome do devedor"
-                                        :disabled="disable_payments_inputs" v-model="payment.debtor" required>
-                                    <p v-if="payment.errors.debtor" class="text-red-500 text-sm">{{
-                                        payment.errors.debtor }}</p>
+                                    <ClientSelector v-model="payment.client_id"
+                                        :disabled="disable_payments_inputs || payment.type === 2"
+                                        class="disabled:bg-gray-200" :required="true" />
+                                    <p v-if="payment.errors.client_id" class="text-red-500 text-sm">{{
+                                        payment.errors.client_id }}</p>
                                 </div>
                             </div>
 
@@ -269,7 +270,7 @@
                                         :disabled="remaining_amount == 0" placeholder="Valor do serviço parcial"
                                         v-model="record.amount" />
                                     <p class="text-gray-400 text-xs py-1">Valor Restante: {{ toMoney(remaining_amount)
-                                        }}
+                                    }}
                                     </p>
                                     <p v-if="record.errors.amount" class="text-red-500 text-sm">{{
                                         record.errors.amount }}</p>
@@ -442,7 +443,7 @@
 
                                                         </div>
                                                         <p v-else>{{ getPaymentMethodLabel(record_item.payment_method)
-                                                            }}</p>
+                                                        }}</p>
                                                     </td>
 
                                                     <td v-if="modal.mode !== 'create'"

@@ -2,6 +2,8 @@
     import { ref, watch } from 'vue'
     import { useForm } from '@inertiajs/vue3';
     import { formatDate, } from '@/general.js';
+    import { PaperClipIcon, EyeIcon } from '@heroicons/vue/24/outline';
+    import AuditDetailModal from '@/Components/Dashboard/AuditDetailModal.vue';
 
     const props = defineProps({
         procedures: Array,
@@ -78,6 +80,11 @@
         // getLogs();
     };
 
+    const showDetails = (procedure) => {
+        selected_procedure.value = procedure;
+        modal.value = true;
+    }
+
 </script>
 
 <template>
@@ -148,6 +155,9 @@
                     <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-neutral-900">
                         Data
                     </th>
+                    <th scope="col" class="px-6 py-3 text-center text-sm font-medium text-neutral-900">
+                        Detalhes
+                    </th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-neutral-200">
@@ -166,6 +176,12 @@
                     <td class="px-6 py-4 text-sm text-neutral-500">
                         {{ formatDate(procedure.created_at, 'reading_date_time') }}
                     </td>
+                    <td class="px-6 py-4 text-sm text-center">
+                        <button v-i @click="showDetails(procedure)"
+                            class="mx-auto text-teal-600 hover:text-teal-900 focus:outline-none" title="Ver Detalhes">
+                            <EyeIcon class="w-5 h-5 text-green" />
+                        </button>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -173,4 +189,5 @@
             no
             período especificado.</p>
     </div>
+    <AuditDetailModal :show="modal" :procedure="selected_procedure" @close="closeModal" />
 </template>

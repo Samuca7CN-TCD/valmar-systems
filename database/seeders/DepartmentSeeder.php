@@ -33,8 +33,10 @@ class DepartmentSeeder extends Seeder
             ['type' => 'payslip', 'name' => 'Holerite', 'name_plural' => 'Holerites', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'pendence', 'name' => 'Pendência', 'name_plural' => 'Pendências', 'created_at' => $now, 'updated_at' => $now],
             ['type' => 'config', 'name' => 'Configuração', 'name_plural' => 'Configurações', 'created_at' => $now, 'updated_at' => $now],
-            */
             ['type' => 'service', 'name' => 'Orçamento', 'name_plural' => 'Orçamentos', 'created_at' => $now, 'updated_at' => $now],
+            */
+            ['type' => 'client', 'name' => 'Cliente', 'name_plural' => 'Clientes', 'created_at' => $now, 'updated_at' => $now],
+            
         ]);
     }
 }

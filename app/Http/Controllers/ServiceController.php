@@ -14,6 +14,7 @@ use App\Models\Accounting;
 use App\Models\Movement;
 use App\Models\Procedure;
 use App\Models\Record;
+use App\Models\Client;
 
 use App\Models\Employee;
 use App\Models\Item;
@@ -26,47 +27,74 @@ class ServiceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $page = Department::find(8);
+        $search = $request->input('search');
+        $perPage = 80;
 
-        $services = Movement::where('type', 1)->where('ready', false)->where('ready', false)->orderBy('deadline')->with(['accounting', 'procedures.records', 'procedures.records.procedure.user', 'procedures.user', 'budget'])->get()
-            ->map(function ($movement) {
-                $records = $movement->procedures->flatMap(function ($procedure) {
-                    return $procedure->records;
-                });
-                $movement->records = $records;
-                return $movement;
+        // Inicia a query base para serviços pendentes/em andamento
+        $servicesQuery = Movement::where('type', 1)
+            ->where('ready', false) // Condição para serviços pendentes
+            ->orderBy('deadline')
+            ->with(['accounting', 'procedures.records.procedure.user', 'procedures.user', 'budget', 'client']);
+
+        // Aplica o filtro de busca se um termo for fornecido
+        if ($search) {
+            $servicesQuery->where(function ($query) use ($search) {
+                $query->where('motive', 'like', '%' . $search . '%')
+                      ->orWhere('entity_name', 'like', '%' . $search . '%')
+                      ->orWhereHas('client', function ($q) use ($search) {
+                            $q->where('name', 'like', '%' . $search . '%');
+                        })
+                      ->orWhere('observations', 'like', '%' . $search . '%')
+                      // ===== FILTRO PELO NOME DO USUÁRIO ADICIONADO AQUI =====
+                      ->orWhereHas('procedures.records.procedure.user', function ($q) use ($search) {
+                          $q->where('name', 'like', '%' . $search . '%');
+                      });
             });
+        }
+
+        // Pagina os resultados
+        $services = $servicesQuery->paginate($perPage);
+
+        // Usa through() para manipular a coleção paginada
+        $services->through(function ($movement) {
+            $records = $movement->procedures->flatMap(function ($procedure) {
+                return $procedure->records;
+            });
+            $movement->records = $records;
+            return $movement;
+        });
 
         $sells = Movement::with(['accounting:id,total_value'])
             ->where('type', 2)
-            ->get(['id', 'entity_name', 'date', 'accounting_id']); 
-        
+            ->get(['id', 'entity_name', 'date', 'accounting_id']);
 
         return Inertia::render('Service', [
             'page' => $page,
             'services_list' => $services,
             'sells_list' => $sells,
+            'filters' => $request->only(['search']), // Passa os filtros para a view
         ]);
     }
 
     public function previous(Request $request)
     {
         $page = Department::find(8);
-
         $perPage = 80;
         $search = $request->input('search');
 
         $servicesQuery = Movement::where('type', 1)
-        ->whereIn('service_status', ['Finalizado', 'Cancelado'])
+            ->whereIn('service_status', ['Finalizado', 'Cancelado'])
             ->orderByDesc('completion_date')
             ->orderByDesc('deleted_at')
             ->with([
                 'accounting',
                 'procedures.records.procedure.user',
                 'procedures.user',
-                'budget'
+                'budget',
+                'client'
             ])
             ->withTrashed();
 
@@ -76,20 +104,29 @@ class ServiceController extends Controller
                 $query->where('id', 'like', '%' . $search . '%')
                       ->orWhere('motive', 'like', '%' . $search . '%')
                       ->orWhere('entity_name', 'like', '%' . $search . '%')
+                      ->orWhereHas('client', function ($q) use ($search) {
+                            $q->where('name', 'like', '%' . $search . '%');
+                        })
                       ->orWhere('observations', 'like', '%' . $search . '%')
-                      ->orWhere('service_status', 'like', '%' . $search . '%');
-
-                $query->orWhereHas('accounting', function ($q) use ($search) {
-                    $q->where('total_value', 'like', '%' . $search . '%')
-                      ->orWhere('partial_value', 'like', '%' . $search . '%');
-                });
+                      ->orWhere('service_status', 'like', '%' . $search . '%')
+                      ->orWhereHas('accounting', function ($q) use ($search) {
+                          $q->where('total_value', 'like', '%' . $search . '%')
+                            ->orWhere('partial_value', 'like', '%' . $search . '%');
+                      })
+                      // ===== FILTRO PELO NOME DO USUÁRIO ADICIONADO AQUI =====
+                      ->orWhereHas('procedures.records.procedure.user', function ($q) use ($search) {
+                          $q->where('name', 'like', '%' . $search . '%');
+                      });
             });
         }
 
-        $servicesQuery->whereHas('accounting', function ($query) {
-            $query->where('partial_value', 0);
-        });
-
+        // Esta condição foi removida pois os status 'Finalizado' e 'Cancelado'
+        // já implicam que o serviço foi concluído, e a busca no accounting já foi
+        // incluída no bloco de busca principal. Se for uma regra de negócio
+        // essencial, pode ser re-adicionada.
+        // $servicesQuery->whereHas('accounting', function ($query) {
+        //     $query->where('partial_value', 0);
+        // });
 
         $services = $servicesQuery->paginate($perPage);
 
@@ -105,12 +142,11 @@ class ServiceController extends Controller
             ->where('type', 2)
             ->get(['id', 'entity_name', 'date']);
 
-
         return Inertia::render('Services/Previous', [
             'page' => $page,
             'services_list' => $services,
             'sells_list' => $sells,
-            'filters' => $request->only(['search']), // Passa os filtros para o frontend
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -127,12 +163,10 @@ class ServiceController extends Controller
      */
     public function store(Request $request)
     {
-        //dd($request);
         return DB::transaction(function () use ($request) {
-            //dd($request);
             $validated = $request->validate([
                 'title' => ['required', 'string'],
-                'client' => ['required', 'string'],
+                'client_id' => ['required', 'exists:clients,id'],
                 'total_value' => ['required', 'numeric'],
                 'deadline' => ['required', 'date_format:Y-m-d'],
                 'observations' => ['nullable', 'string'],
@@ -152,42 +186,45 @@ class ServiceController extends Controller
                 'partial_value' => $validated['total_value'],
             ]);
 
+            $client = Client::findOrFail($validated['client_id']);
+
             $movement = Movement::create([
                 'type' => 1,
                 'accounting_id' => $accounting->id,
                 'motive' => $validated['title'],
                 'deadline' => $validated['deadline'],
-                'entity_name' => $validated['client'],
+                'client_id' => $validated['client_id'],
+                'entity_name' => $client->name,
                 'observations' => $validated['observations'],
                 'previous_id' => $validated['previous_id'],
                 'date' => now()->format('Y-m-d'),
             ]);
 
+            // A Procedure é criada para agrupar os múltiplos registros de pagamento
             $procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 1,
                 'department_id' => 7,
                 'movement_id' => $movement->id,
+                'auditable_id' => $movement->id,
+                'auditable_type' => Movement::class,
             ]);
-
-            $records = collect();
 
             if ($request->records_list['enable_records'])
             {
-                $records = collect($request->records_list['data'])->map(function ($payRecord) use ($procedure) {
+                $records = collect($request->records_list['data'])->map(function ($payRecord) use ($procedure, $movement) {
                     return Record::create([
                         'procedure_id' => $procedure->id,
                         'amount' => $payRecord['amount'],
                         'payment_method' => $payRecord['payment_method'],
                         'past' => true,
                         'register_date' => $payRecord['register_date'],
+                        'auditable_id' => $movement->id,
+                        'auditable_type' => Movement::class,
                     ]);
                 });
 
-                // Calcula a soma total dos valores dos registros
                 $totalRecordAmount = $records->sum('amount');
-
-                // Atualiza o campo partial_value da contabilidade após o loop
                 $accounting->partial_value -= $totalRecordAmount;
                 $accounting->save();
             }
@@ -329,7 +366,7 @@ class ServiceController extends Controller
         return DB::transaction(function () use ($id, $request) {
             $validated = $request->validate([
                 'title' => 'required|string',
-                'client' => 'required|string',
+                'client_id' => 'required|exists:clients,id',
                 'total_value' => 'required|numeric',
                 'deadline' => 'required|date_format:Y-m-d',
                 'previous_id' => 'nullable|numeric',
@@ -337,50 +374,33 @@ class ServiceController extends Controller
                 'delay_reason' => 'nullable|string',
                 'delayed' => 'nullable|boolean',
                 'completion_date' => 'nullable|date_format:Y-m-d',
-                'records_list' => 'required|array',
-                'records_list.enable_records' => 'required|boolean',
-                'records_list.data' => 'nullable|array',
-                'records_list.data.*.amount' => 'required|numeric',
-                'records_list.data.*.payment_method' => 'nullable|string',
-                'records_list.data.*.register_date' => 'required|date_format:Y-m-d',
-                'records_list.data.*.filepath' => 'nullable|file|mimes:pdf|max:2048',
             ]);
 
-            // Recupera o recurso existente pelo ID
             $movement = Movement::findOrFail($id);
             $accounting = $movement->accounting;
-
             
             if ($movement && $accounting)
             {
+                // Busca o nome do cliente para garantir consistência
+                $client = Client::findOrFail($validated['client_id']);
+
                 $paid_amount = $accounting->total_value - $accounting->partial_value;
                 $accounting->update([
                     'total_value' => $validated['total_value'],
                     'partial_value' => $validated['total_value'] - $paid_amount,
                 ]);
-
-                // Garante que o movimento exista antes de atualizar
-                $old_movement = $movement;
                 
+                // O Trait 'Auditable' no modelo Movement registrará esta atualização automaticamente
                 $movement->update([
                     'motive' => $validated['title'],
-                    'entity_name' => $validated['client'],
+                    'client_id' => $validated['client_id'],
+                    'entity_name' => $client->name, // Atualiza o nome para consistência
                     'observations' => $validated['observations'],
                     'deadline' => $validated['deadline'],
                     'previous_id' => $validated['previous_id'],
                     'delay_reason' => $validated['delay_reason'],
                     'delayed' => !empty($validated['delay_reason']) && empty($validated['delayed']),
                     'completion_date' => $validated['completion_date']
-                ]);
-
-                // Cria um novo procedimento para registrar a ação de atualização
-                $procedure = Procedure::create([
-                    'user_id' => Auth::id(),
-                    'action_id' => 2, // Ajuste conforme necessário
-                    'department_id' => 7, // Ajuste conforme necessário
-                    'movement_id' => $movement->id,
-                    //'old_movement' => json_encode($old_movement),
-                    //'new_movement' => json_encode($movement)
                 ]);
             }
             return back();
@@ -410,12 +430,13 @@ class ServiceController extends Controller
             if ($movement && $accounting)
             {
                 // Cria um novo procedimento para registrar a ação de pagamento
-                $procedure = Procedure::create([
+                $movement->recordActivity('pay');
+                /*$procedure = Procedure::create([
                     'user_id' => Auth::id(),
                     'action_id' => 4, // Ajuste conforme necessário
                     'department_id' => 8, // Ajuste conforme necessário
                     'movement_id' => $accounting->movement ? $accounting->movement->id : null,
-                ]);
+                ]);*/
 
                 $records = collect($validated['records_list']['data'])
                     ->filter(function ($payRecord) {
@@ -456,12 +477,13 @@ class ServiceController extends Controller
             ]);
 
             // Cria um novo procedimento para registrar a ação de pagamento
-            $procedure = Procedure::create([
+            $movement->recordActivity('conclude');
+            /*$procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 5, // Ajuste conforme necessário
                 'department_id' => 8, // Ajuste conforme necessário
                 'movement_id' => $movement->id,
-            ]);
+            ]);*/
 
             return back();
         });
@@ -475,12 +497,12 @@ class ServiceController extends Controller
         $movement = Movement::findOrFail($id);
         $accounting = Accounting::findOrFail($movement->accounting_id);
 
-        $procedure = Procedure::create([
+        /*$procedure = Procedure::create([
             'user_id' => Auth::id(),
             'action_id' => 3,
             'department_id' => 8,
             'movement_id' => $movement->id,
-        ]);
+        ]);*/
 
         // Buscar todos os procedimentos associados ao movimento
         //$procedures = Procedure::where('movement_id', $movement->id)->get();
@@ -506,16 +528,17 @@ class ServiceController extends Controller
         ]);
 
         $movement = Movement::findOrFail($id);
-
-        $procedure = Procedure::create([
+        /*$procedure = Procedure::create([
             'user_id' => Auth::id(),
             'action_id' => 3,
             'department_id' => 8,
             'movement_id' => $movement->id,
-        ]);
+        ]);*/
 
         $movement->service_status = $request->service_status;
         $movement->save();
+
+        $movement->recordActivity('update');
 
         return back()->with('success', 'Status alterado com sucesso!');
     }
@@ -528,16 +551,18 @@ class ServiceController extends Controller
 
         $movement = Movement::findOrFail($id);
 
-        $procedure = Procedure::create([
+        /*$procedure = Procedure::create([
             'user_id' => Auth::id(),
             'action_id' => 3,
             'department_id' => 8,
             'movement_id' => $movement->id,
-        ]);
+        ]);*/
 
         $movement->cancellation_reason = $request->cancellation_reason;
         $movement->service_status = 'Cancelado';
         $movement->save();
+
+        $movement->recordActivity('update');
 
         $movement->delete();
 

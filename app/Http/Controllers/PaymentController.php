@@ -14,6 +14,7 @@ use App\Models\Accounting;
 use App\Models\Movement;
 use App\Models\Procedure;
 use App\Models\Record;
+use App\Models\Client;
 
 use App\Models\Employee;
 use App\Models\Item;
@@ -26,51 +27,102 @@ class PaymentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
     {
         $page = Department::find(7);
+        $search = $request->input('search');
+        $perPage = 80;
 
-        $payments = Movement::where('type', '>', -1)->where('type', '<', 3)->with(['accounting', 'procedures.records.procedure.user', 'procedures.user'])
+        $paymentsQuery = Movement::query()
+            ->with(['accounting', 'procedures.records.procedure.user', 'procedures.user', 'client'])
+            // ===== ADICIONE ESTA LINHA PARA FILTRAR APENAS PAGAMENTOS =====
+            ->where('type', '>', -1)->where('type', '<', 3)
+            // Mantém a condição para buscar apenas pagamentos pendentes
             ->whereHas('accounting', function ($query) {
                 $query->where('partial_value', '>', 0);
-            })
-            ->get()
-            ->map(function ($movement) {
-                $records = $movement->procedures->flatMap(function ($procedure) {
-                    return $procedure->records;
-                });
-                $movement->records = $records->filter(function ($record) {
-                    return !$record->item_id;
-                })->values()->all();
-                return $movement;
             });
+
+        if ($search) {
+            $paymentsQuery->where(function ($query) use ($search) {
+                $query->where('motive', 'like', '%' . $search . '%')
+                      ->orWhere('entity_name', 'like', '%' . $search . '%')
+                      ->orWhereHas('client', function ($q) use ($search) {
+                            $q->where('name', 'like', '%' . $search . '%');
+                        })
+                      ->orWhereHas('procedures.records.procedure.user', function ($q) use ($search) {
+                          $q->where('name', 'like', '%' . $search . '%');
+                      });
+            });
+        }
+        
+        $payments = $paymentsQuery->paginate($perPage);
+
+        $payments->through(function ($movement) {
+            $records = $movement->procedures->flatMap(function ($procedure) {
+                return $procedure->records;
+            });
+            $movement->records = $records->filter(function ($record) {
+                return !$record->item_id;
+            })->values()->all();
+            return $movement;
+        });
 
         return Inertia::render('Payment', [
             'page' => $page,
             'payments_list' => $payments,
+            'filters' => $request->only(['search']),
         ]);
     }
 
-    public function previous()
+	public function previous(Request $request)
     {
         $page = Department::find(7);
+        $perPage = 80;
+        $search = $request->input('search');
 
-        $payments = Movement::where('type', 0)->with(['accounting', 'procedures.records.procedure.user', 'procedures.user'])
+        $paymentsQuery = Movement::where('type', 0)
+            ->with(['accounting', 'procedures.records.procedure.user', 'procedures.user'])
+            ->orderByDesc('updated_at')
             ->whereHas('accounting', function ($query) {
                 $query->where('partial_value', 0);
-            })
-            ->get()
-            ->map(function ($movement) {
-                $records = $movement->procedures->flatMap(function ($procedure) {
-                    return $procedure->records;
-                });
-                $movement->records = $records;
-                return $movement;
             });
+
+        if ($search) {
+            $paymentsQuery->where(function ($query) use ($search) {
+                $query->where('id', 'like', '%' . $search . '%')
+                    ->orWhere('motive', 'like', '%' . $search . '%')
+                    ->orWhere('entity_name', 'like', '%' . $search . '%')
+                    ->orWhereHas('client', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhere('observations', 'like', '%' . $search . '%')
+                    ->orWhereHas('accounting', function ($q) use ($search) {
+                        $q->where('total_value', 'like', '%' . $search . '%');
+                    })
+                    // ===== FILTRO PELO NOME DO USUÁRIO ADICIONADO AQUI =====
+                    ->orWhereHas('procedures.records.procedure.user', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        $payments = $paymentsQuery->paginate($perPage);
+
+        $payments->through(function ($movement) {
+            $records = $movement->procedures->flatMap(function ($procedure) {
+                return $procedure->records;
+            });
+            $movement->records = $records;
+            return $movement;
+        });
 
         return Inertia::render('Payments/Previous', [
             'page' => $page,
             'payments_list' => $payments,
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -93,7 +145,7 @@ class PaymentController extends Controller
             //dd($request);
             $validated = $request->validate([
                 'debt' => ['required', 'string'],
-                'debtor' => ['required', 'string'],
+                'client_id' => ['required', 'exists:clients,id'],
                 'total_value' => ['required', 'numeric'],
                 'observations' => ['nullable', 'string'],
                 'records_list' => ['required', 'array'],
@@ -111,11 +163,14 @@ class PaymentController extends Controller
                 'partial_value' => $validated['total_value'],
             ]);
 
+            $client = Client::find($validated['client_id']);
+
             $movement = Movement::create([
                 'type' => 0,
                 'accounting_id' => $accounting->id,
                 'motive' => $validated['debt'],
-                'entity_name' => $validated['debtor'],
+                'client_id' => $validated['client_id'],
+                'entity_name' => $client->name,
                 'observations' => $validated['observations'],
                 'date' => now()->format('Y-m-d'),
             ]);
@@ -125,19 +180,23 @@ class PaymentController extends Controller
                 'action_id' => 1,
                 'department_id' => 7,
                 'movement_id' => $movement->id,
+                'auditable_id' => $movement->id,
+                'auditable_type' => Movement::class,
             ]);
 
             $records = collect();
 
             if ($request->records_list['enable_records'])
             {
-                $records = collect($request->records_list['data'])->map(function ($payRecord) use ($procedure) {
+                $records = collect($request->records_list['data'])->map(function ($payRecord) use ($procedure, $movement) {
                     return Record::create([
                         'procedure_id' => $procedure->id,
                         'amount' => $payRecord['amount'],
                         'payment_method' => $payRecord['payment_method'],
                         'past' => true,
                         'register_date' => $payRecord['register_date'],
+                        'auditable_id' => $movement->id,
+                        'auditable_type' => Movement::class,
                     ]);
                 });
 
@@ -188,7 +247,7 @@ class PaymentController extends Controller
         return DB::transaction(function () use ($id, $request) {
             $validated = $request->validate([
                 'debt' => 'required|string',
-                'debtor' => 'required|string',
+                'client_id' => 'required|exists:clients,id',
                 'total_value' => 'required|numeric',
                 'observations' => 'nullable|string',
                 'records_list' => 'required|array',
@@ -218,17 +277,18 @@ class PaymentController extends Controller
 
                 $movement->update([
                     'motive' => $validated['debt'],
-                    'entity_name' => $validated['debtor'],
+                    'client_id' => $validated['client_id'],
+                    // 'entity_name' => $validated['debtor'],
                     'observations' => $validated['observations'],
                 ]);
 
                 // Cria um novo procedimento para registrar a ação de atualização
-                $procedure = Procedure::create([
+                /*$procedure = Procedure::create([
                     'user_id' => Auth::id(),
                     'action_id' => 2, // Ajuste conforme necessário
                     'department_id' => 7, // Ajuste conforme necessário
                     'movement_id' => $movement->id,
-                ]);
+                ]);*/
 
 
             }
@@ -260,12 +320,13 @@ class PaymentController extends Controller
 
             if ($movement && $accounting)
             {
-                $procedure = Procedure::create([
+                $movement->recordActivity('pay');
+                /*$procedure = Procedure::create([
                     'user_id' => Auth::id(),
                     'action_id' => 4, // Ajuste conforme necessário
                     'department_id' => 7, // Ajuste conforme necessário
                     'movement_id' => $movement->id,
-                ]);
+                ]);*/
             
                 $records = collect($validated['records_list']['data'])
                     ->filter(function ($payRecord) {
@@ -383,12 +444,12 @@ class PaymentController extends Controller
         $movement = Movement::findOrFail($id);
         $accounting = Accounting::findOrFail($movement->accounting_id);
 
-        $procedure = Procedure::create([
+        /*$procedure = Procedure::create([
             'user_id' => Auth::id(),
             'action_id' => 3,
             'department_id' => 7,
             'movement_id' => $movement->id,
-        ]);
+        ]);*/
 
         // Buscar todos os procedimentos associados ao movimento
         //$procedures = Procedure::where('movement_id', $movement->id)->get();

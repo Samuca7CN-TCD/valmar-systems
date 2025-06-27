@@ -131,12 +131,12 @@ class MovementEntryController extends Controller
                 'observations' => $validated['observations'],
             ]);
 
-            $procedure = Procedure::create([
+            /*$procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 1,
                 'department_id' => 3,
                 'movement_id' => $movement->id,
-            ]);
+            ]);*/
 
             $items = Item::whereIn('id', collect($validated['items_list'])->pluck('id'))->lockForUpdate()->get()->keyBy('id');
 
@@ -250,12 +250,12 @@ class MovementEntryController extends Controller
             $afterDelete = json_encode($movement->toArray());
 
             // Criar um procedimento de exclusão
-            $procedure = Procedure::create([
+            /*$procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 3, // ID da ação de exclusão
                 'department_id' => 3, // ID do departamento de entrada
                 'movement_id' => $movement->id,
-            ]);
+            ]);*/
 
             // Criar um novo record para registrar a exclusão
             Record::create([
@@ -287,12 +287,12 @@ class MovementEntryController extends Controller
             $accounting = Accounting::findOrFail($movement->accounting_id);
 
 
-            $procedure = Procedure::create([
+            /*$procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 3,
                 'department_id' => 3,
                 'movement_id' => $movement->id,
-            ]);
+            ]);*/
 
             // Buscar todos os procedimentos associados ao movimento
             $procedures = Procedure::where('movement_id', $movement->id)->get();

@@ -3,12 +3,13 @@
     import CreateUpdatePayModal from '@/Components/Payments/CreateUpdatePayModal.vue'
     import FloatButton from '@/Components/FloatButton.vue'
     import ExtraOptionsButton from '@/Components/ExtraOptionsButton.vue'
-    import { Head, useForm } from '@inertiajs/vue3'
-    import { computed, ref } from 'vue'
-    import { BanknotesIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+    import { Head, useForm, router } from '@inertiajs/vue3' // Importar o router
+    import { computed, ref, watch } from 'vue' // Importar o watch
+    import { BanknotesIcon, MagnifyingGlassIcon, PencilIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
     import { toMoney, formatDate, calcDeadlineDays } from '@/general.js'
     import { useToast } from 'vue-toast-notification';
     import 'vue-toast-notification/dist/theme-sugar.css';
+
     // =============================================
     // Informações exteriores
     const props = defineProps({
@@ -17,7 +18,8 @@
             type: Array,
             default: null,
         },
-        payments_list: Object,
+        payments_list: Object, // Continua sendo um Objeto (Paginator do Laravel)
+        filters: Object, // Prop para receber os filtros do controller
     })
 
     const $toast = useToast();
@@ -26,7 +28,7 @@
     const payment_data = useForm({
         'id': null,
         'debt': '',
-        'debtor': '',
+        'client_id': '',
         'total_value': 0,
         'partial_value': 0,
         'observations': '',
@@ -36,29 +38,40 @@
         }
     })
 
-    const search_term = ref("")
+    // O termo de busca agora é inicializado com o filtro vindo do controller
+    const search_term = ref(props.filters?.search || '');
     const show_services = ref(true)
     const show_user_data = ref(false);
+    let searchTimeout = null;
 
-    const filtered_payments_list = computed(() => {
-        const searchTermLower = search_term.value.toLowerCase();
-
-        return props.payments_list.filter(el =>
-            (el.motive.toLowerCase().includes(searchTermLower)) ||
-            (el.entity_name.toLowerCase().includes(searchTermLower)) ||
-            (toMoney(el.accounting.total_value).toString().toLowerCase().includes(searchTermLower)) ||
-            (toMoney(el.accounting.partial_value).toString().toLowerCase().includes(searchTermLower))
-        );
+    // Lógica de busca agora é feita no backend com um "watch"
+    watch(search_term, (newSearchTerm) => {
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        searchTimeout = setTimeout(() => {
+            // Usa o router do Inertia para fazer uma nova requisição GET para a mesma página
+            router.get(route('payments.index'), { search: newSearchTerm }, { preserveState: true, replace: true });
+        }, 300); // Debounce de 300ms para não sobrecarregar o servidor
     });
 
+    // Esta computed property agora apenas aponta para os dados da página atual
+    const filtered_payments_list = computed(() => {
+        return props.payments_list.data;
+    });
+
+    // ATENÇÃO: Estes totais agora refletem apenas os itens da PÁGINA ATUAL.
+    // Se precisar de um total geral, ele deve ser calculado e enviado separadamente pelo controller.
     const total_payments_amount = computed(() => {
-        return props.payments_list.reduce((accumulator, payment) => {
+        // Acessa o array de dados com .data
+        return props.payments_list.data.reduce((accumulator, payment) => {
             return accumulator + payment.accounting.partial_value;
         }, 0);
     });
 
     const total_payments_amount_without_services = computed(() => {
-        return props.payments_list.filter(el => el.type !== 1).reduce((accumulator, payment) => {
+        // Acessa o array de dados com .data
+        return props.payments_list.data.filter(el => el.type !== 1).reduce((accumulator, payment) => {
             return accumulator + payment.accounting.partial_value;
         }, 0);
     });
@@ -88,14 +101,16 @@
         const isUpdateOrPayMode = ['update', 'pay'].includes(mode);
 
         if (payment_id !== null && isUpdateOrPayMode) {
-            const payment = props.payments_list.find(payment => payment.id === payment_id);
+            // Procura o pagamento dentro do array .data
+            const payment = props.payments_list.data.find(payment => payment.id === payment_id);
 
             if (payment) {
-                const { id, type, motive, entity_name, observations, records, accounting } = payment;
+                const { id, type, client_id, client, motive, entity_name, observations, records, accounting } = payment;
                 payment_data.id = id;
                 payment_data.type = type;
                 payment_data.debt = motive;
-                payment_data.debtor = entity_name;
+                payment_data.client_id = client_id;
+                payment_data.client = client;
                 payment_data.total_value = accounting.total_value;
                 payment_data.partial_value = accounting.partial_value;
                 payment_data.observations = observations;
@@ -108,16 +123,20 @@
         modal.value.show = true;
     };
 
-
     const closeModal = () => {
         payment_data.reset()
         modal.value.show = false
     }
 
-
+    // Método para navegar entre as páginas de resultados
+    const goToPage = (url) => {
+        if (url) {
+            router.get(url, { search: search_term.value }, { preserveState: true, preserveScroll: true });
+        }
+    };
 
     // =============================================
-    // Métodos de CRUD
+    // Métodos de CRUD (permanecem os mesmos)
     const createPayment = () => {
         payment_data.post(route('payments.store'), {
             preserveScroll: true,
@@ -241,7 +260,7 @@
                                             </thead>
                                             <tbody>
                                                 <tr v-if="filtered_payments_list.length"
-                                                    v-for="payment in filtered_payments_list"
+                                                    v-for="payment in filtered_payments_list" :key="payment.id"
                                                     class="border-b transition duration-300 ease-in-out hover:bg-neutral-100 print:break-inside-avoid"
                                                     :class="{ 'hidden': payment.type === 1 && show_services === false }">
                                                     <td class="whitespace-nowrap py-4 text-center font-medium">{{
@@ -253,7 +272,7 @@
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>
                                                     <td class="whitespace-normal px-6 py-4 text-center">{{
-                                                        payment.entity_name }}</td>
+                                                        payment?.client?.name || payment.entity_name }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
                                                         toMoney(payment.accounting.partial_value) }}</td>
                                                     <td class="whitespace-nowrap px-2 py-4 text-center">{{
@@ -315,6 +334,44 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="payments_list.total > 0"
+            class="print:hidden flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div class="flex flex-1 justify-between sm:hidden">
+                <button @click="goToPage(payments_list.prev_page_url)" :disabled="!payments_list.prev_page_url"
+                    class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Anterior</button>
+                <button @click="goToPage(payments_list.next_page_url)" :disabled="!payments_list.next_page_url"
+                    class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Próximo</button>
+            </div>
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Mostrando de
+                        <span class="font-medium">{{ payments_list.from }}</span>
+                        a
+                        <span class="font-medium">{{ payments_list.to }}</span>
+                        de
+                        <span class="font-medium">{{ payments_list.total }}</span>
+                        resultados
+                    </p>
+                </div>
+                <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <template v-for="(link, index) in payments_list.links" :key="index">
+                            <button @click="goToPage(link.url)" :disabled="!link.url"
+                                class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20"
+                                :class="{
+                                    'z-10 bg-green-600 text-white focus-visible:outline-green-600': link.active,
+                                    'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0 disabled:opacity-50': !link.active,
+                                    'rounded-l-md': index === 0,
+                                    'rounded-r-md': index === payments_list.links.length - 1
+                                }" v-html="link.label" />
+                        </template>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
 
         <CreateUpdatePayModal :show="modal.show" :modal="modal" :payment="payment_data" @submit="submit"
             @close="closeModal" />

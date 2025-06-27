@@ -14,7 +14,7 @@
     } from '@heroicons/vue/24/outline'; // Ajustei os ícones
     import { useToast } from 'vue-toast-notification';
     import 'vue-toast-notification/dist/theme-sugar.css';
-    import { toMoney, formatDate } from '@/general.js';
+    import { toMoney, formatDate, formatPhoneNumber, formatCPF, formatCNPJ, formatarCEP } from '@/general.js';
     import BudgetRejectionCancellationModal from '@/Components/Budgets/BudgetRejectionCancellationModal.vue';
 
     const props = defineProps({
@@ -332,32 +332,63 @@
 
                             <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
                                 <h4 class="text-lg font-semibold text-gray-800 mb-3">Informações do Cliente</h4>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-500">Nome do Cliente:</p>
-                                        <p class="text-sm text-gray-900">{{ budget.client_name }}</p>
+                                <!-- O v-if verifica se o orçamento tem um cliente relacionado (nova estrutura) -->
+                                <dl v-if="budget.client"
+                                    class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                                    <div class="sm:col-span-2">
+                                        <dt class="font-medium text-gray-500">Nome</dt>
+                                        <dd class="mt-1 text-gray-900 font-semibold">{{ budget.client.name }}</dd>
                                     </div>
-                                    <div v-if="budget.client_email">
-                                        <p class="text-sm font-medium text-gray-500">Email:</p>
-                                        <p class="text-sm text-gray-900">{{ budget.client_email }}</p>
+                                    <div class="sm:col-span-1">
+                                        <dt class="font-medium text-gray-500">{{ budget.client.type === 'fisica' ? 'CPF'
+                                            : 'CNPJ' }}</dt>
+                                        <dd class="mt-1 text-gray-900">{{ budget.client.type === 'fisica' ?
+                                            formatCPF(budget.client.document) : formatCNPJ(budget.client.document) }}
+                                        </dd>
                                     </div>
-                                    <div v-if="budget.client_phone">
-                                        <p class="text-sm font-medium text-gray-500">Telefone:</p>
-                                        <p class="text-sm text-gray-900">{{ budget.client_phone }}</p>
+                                    <div class="sm:col-span-1">
+                                        <dt class="font-medium text-gray-500">Email</dt>
+                                        <dd class="mt-1 text-gray-900">{{ budget.client.email || 'Não informado' }}</dd>
                                     </div>
-                                    <div v-if="budget.client_cpf_cnpj">
-                                        <p class="text-sm font-medium text-gray-500">CPF/CNPJ:</p>
-                                        <p class="text-sm text-gray-900">{{ budget.client_cpf_cnpj }}</p>
+                                    <div class="sm:col-span-1">
+                                        <dt class="font-medium text-gray-500">Contatos</dt>
+                                        <dd class="mt-1 text-gray-900">
+                                            <span v-if="budget.client.contacts?.length"
+                                                v-for="contact in budget.client.contacts" class="block">
+                                                {{ formatPhoneNumber(contact) }}
+                                            </span>
+                                            <span v-else>Não informado</span>
+                                        </dd>
                                     </div>
-                                    <div v-if="budget.client_address">
-                                        <p class="text-sm font-medium text-gray-500">Endereço:</p>
-                                        <p class="text-sm text-gray-900">{{ budget.client_address }}</p>
+                                    <div class="sm:col-span-1">
+                                        <dt class="font-medium text-gray-500">Endereço</dt>
+                                        <dd class="mt-1 text-gray-900">
+                                            {{ budget.client.address_street || 'Endereço não informado' }}
+                                        </dd>
                                     </div>
-                                    <div v-if="budget.client_cep">
-                                        <p class="text-sm font-medium text-gray-500">CEP:</p>
-                                        <p class="text-sm text-gray-900">{{ budget.client_cep }}</p>
+                                    <div class="sm:col-span-2 text-right">
+                                        <Link :href="route('clients.show', budget.client.id)" target="_blank"
+                                            class="text-blue-600 hover:underline text-xs font-medium">
+                                        Ver Perfil Completo do Cliente
+                                        </Link>
                                     </div>
-                                </div>
+                                </dl>
+                                <!-- O v-else serve como fallback para orçamentos antigos sem client_id -->
+                                <dl v-else class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                                    <div class="sm:col-span-2">
+                                        <dt class="font-medium text-gray-500">Nome do Cliente</dt>
+                                        <dd class="mt-1 text-gray-900 font-semibold">{{ budget.client_name }}</dd>
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                        <dt class="font-medium text-gray-500">CPF/CNPJ</dt>
+                                        <dd class="mt-1 text-gray-900">{{ budget.client_cpf_cnpj || 'Não informado' }}
+                                        </dd>
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                        <dt class="font-medium text-gray-500">Telefone</dt>
+                                        <dd class="mt-1 text-gray-900">{{ budget.client_phone || 'Não informado' }}</dd>
+                                    </div>
+                                </dl>
                             </div>
                         </div>
 
@@ -420,7 +451,7 @@
                                         <p class="text-sm font-medium text-gray-500">Prazo de Entrega:</p>
                                         <p class="text-sm text-gray-900">{{ budget.deadline }} {{
                                             budget.deadline_type
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                     <div>
                                         <p class="text-sm font-medium text-gray-500">Início do Prazo:</p>
@@ -432,7 +463,7 @@
                                         </p>
                                         <p class="text-sm text-gray-900 whitespace-pre-wrap">{{
                                             budget.contracted_responsibility
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                     <div v-if="budget.contractor_responsibility">
                                         <p class="text-sm font-medium text-gray-500">Responsabilidade do
@@ -440,7 +471,7 @@
                                         </p>
                                         <p class="text-sm text-gray-900 whitespace-pre-wrap">{{
                                             budget.contractor_responsibility
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                 </div>
                             </div>

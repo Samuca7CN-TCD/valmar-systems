@@ -250,12 +250,12 @@ class PayslipController extends Controller
         $payslip = Payslip::create($validated);
 
         // Opcional: Criação de procedimento ou registro associado
-        $procedure = Procedure::create([
+        /*$procedure = Procedure::create([
             'user_id' => Auth::id(),
             'action_id' => 1,
             'department_id' => 12,
             'movement_id' => null,
-        ]);
+        ]);*/
 
         $record = Record::create([
             'procedure_id' => $procedure->id,
@@ -307,12 +307,12 @@ class PayslipController extends Controller
         $payslip->update($validated);
 
         // Opcional: Criação de procedimento ou registro associado
-        $procedure = Procedure::create([
+        /*$procedure = Procedure::create([
             'user_id' => Auth::id(),
             'action_id' => 2,
             'department_id' => 12,
             'movement_id' => null,
-        ]);
+        ]);*/
 
         $record = Record::create([
             'procedure_id' => $procedure->id,
@@ -368,12 +368,12 @@ class PayslipController extends Controller
     public function destroy(string $id)
     {
         $paysplip = Payslip::find($id);
-        $procedure = Procedure::create([
+        /*$procedure = Procedure::create([
             'user_id' => Auth::id(),
             'action_id' => 3,
             'department_id' => 12,
             'movement_id' => null,
-        ]);
+        ]);*/
 
         $record = Record::create([
             'procedure_id' => $procedure->id,

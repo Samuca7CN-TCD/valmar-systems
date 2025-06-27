@@ -38,14 +38,14 @@ class DatabaseSeeder extends Seeder
             // UserSeeder::class,
             // MeasurementUnitSeeder::class,
             // CategorySeeder::class,
-            ActionSeeder::class,
+            // ActionSeeder::class,
             DepartmentSeeder::class,
             // PaymentMethodSeeder::class,
             // AccountTypeSeeder::class,
             // BankSeeder::class,
             // ItemSeeder::class,
             // EmployeeSeeder::class,
-            UpdateMovementStatusSeeder::class,
+            // UpdateMovementStatusSeeder::class,
         ]);
     }
 }

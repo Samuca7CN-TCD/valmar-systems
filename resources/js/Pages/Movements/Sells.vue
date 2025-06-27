@@ -27,7 +27,7 @@
     // Informações do OBJETO
     const sell_data = useForm({
         'id': null,
-        'client': '',
+        'client_id': null,
         'date': formatDate(),
         'estimated_value': 0,
         'total_value': 0,
@@ -72,7 +72,7 @@
 
 
     const total_sells_amount = computed(() => {
-        return props.sells_list.reduce((accumulator, sell) => {
+        return props.sells_list?.reduce((accumulator, sell) => {
             return accumulator + sell.accounting.partial_value;
         }, 0);
     });
@@ -102,10 +102,11 @@
         if (sell_id !== null && isUpdateOrSeeMode) {
             const sell = props.sells_list.find(sell => sell.id === sell_id);
             if (sell) {
-                const { id, entity_name, date, observations, accounting, items } = sell;
+                const { id, client_id, client, date, observations, accounting, items } = sell;
 
                 sell_data.id = id;
-                sell_data.client = entity_name;
+                sell_data.client_id = client_id;
+                sell_data.client = client;
                 sell_data.date = date;
                 sell_data.estimated_value = accounting.estimated_value;
                 sell_data.total_value = accounting.total_value;
@@ -294,7 +295,7 @@
                                                         sell.id }}
                                                     </td>
                                                     <td class="whitespace-normal px-6 py-4 text-center trim">{{
-                                                        sell.entity_name }}
+                                                        sell?.client?.name || sell.entity_name }}
                                                         <span v-if="sell.observations" :title="sell.observations"
                                                             class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-help">OBS</span>
                                                     </td>

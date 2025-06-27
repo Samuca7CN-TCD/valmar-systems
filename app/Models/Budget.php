@@ -2,14 +2,21 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Budget extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Auditable;
 
+    /**
+     * Define quais campos não devem ser logados.
+     * @var array
+     */
+    protected $doNotLogFields = [];
+    
     protected $fillable = [
         'client_name',
         'client_email',
@@ -40,7 +47,8 @@ class Budget extends Model
         'budget_type',            // Adicionado: Tipo de orçamento (Original/Correção)
         'original_budget_id',     // Adicionado: ID do orçamento original (para correções)
         'discount_amount',
-        'additional_amount'
+        'additional_amount',
+        'client_id',
     ];
 
     protected $casts = [
@@ -80,5 +88,19 @@ class Budget extends Model
     public function correctionBudget()
     {
         return $this->hasOne(Budget::class, 'original_budget_id');
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Define o ID do departamento para este modelo.
+     * @return int
+     */
+    public function getDepartmentIdForAudit(): int
+    {
+        return 15; // ID do departamento 'Almoxarifado'
     }
 }

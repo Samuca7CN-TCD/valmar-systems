@@ -15,6 +15,7 @@ use App\Models\Action;
 use App\Models\Accounting;
 use App\Models\Procedure;
 use App\Models\Record;
+use App\Models\Client;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -39,8 +40,8 @@ class MovementSellController extends Controller
 
         $sells = Movement::where('type', 2)
             ->whereBetween('date', [$parameters['start_date'], $parameters['end_date']])
-            ->with(['accounting', 'procedures.records']);
-
+            ->with(['accounting', 'procedures.records', 'client']);
+        
         if ($parameters['entity_name'])
         {
             $sells->whereHas('procedures.records', function ($query) use ($parameters) {
@@ -86,10 +87,9 @@ class MovementSellController extends Controller
      */
     public function store(Request $request)
     {
-        //dd($request);
         return DB::transaction(function () use ($request) {
             $validated = $request->validate([
-                'client' => ['required', 'string'],
+                'client_id' => ['required', 'exists:clients,id'],
                 'date' => ['required', 'date', 'date_format:Y-m-d'],
                 'estimated_value' => ['required', 'numeric', 'gt:0'],
                 'total_value' => ['required', 'numeric', 'gt:0'],
@@ -105,6 +105,8 @@ class MovementSellController extends Controller
                 'items_list.*.amount' => ['required', 'numeric', 'gt:0'],
             ]);
 
+            $client = Client::find($validated['client_id']);
+
             $accounting = Accounting::create([
                 'estimated_value' => $validated['estimated_value'],
                 'total_value' => $validated['total_value'],
@@ -115,54 +117,68 @@ class MovementSellController extends Controller
                 'type' => 2,
                 'accounting_id' => $accounting->id,
                 'motive' => 'Venda de Material',
-                'entity_name' => $validated['client'],
+                'client_id' => $validated['client_id'],
+                'entity_name' => $client->name, // Adicionado para compatibilidade
                 'date' => $validated['date'],
                 'observations' => $validated['observations'],
             ]);
-
+            
+            // O Trait Auditable no Movement já cuidou do log de criação do movimento.
+            // No entanto, criamos uma Procedure separada para agrupar os múltiplos
+            // 'records' que representam os itens vendidos e o pagamento de entrada.
             $procedure = Procedure::create([
                 'user_id' => Auth::id(),
-                'action_id' => 1,
-                'department_id' => 5,
-                'movement_id' => $movement->id,
+                'action_id' => 1, // 'create'
+                'department_id' => 5, // 'Vendas'
+                'movement_id' => $movement->id, // Mantido por compatibilidade
+                // Associando a procedure ao movimento que a gerou
+                'auditable_id' => $movement->id,
+                'auditable_type' => Movement::class,
             ]);
 
             $items = Item::whereIn('id', collect($validated['items_list'])->pluck('id'))->lockForUpdate()->get()->keyBy('id');
 
-            $records = collect($validated['items_list'])->map(function ($sellRecord) use ($procedure, $validated, $items) {
-                $itemId = $sellRecord['id'];
-                $item = $items->get($itemId);
+            // Para cada item vendido, criar um registro
+            collect($validated['items_list'])->map(function ($sellRecord) use ($procedure, $validated, $items, $movement) {
+                $item = $items->get($sellRecord['id']);
 
-                if (!$item)
-                {
-                    throw new \Exception("Item com ID $itemId não existe.");
+                if (!$item) {
+                    throw new \Exception("Item com ID {$sellRecord['id']} não existe.");
                 }
 
                 $item->quantity -= $sellRecord['movement_quantity'];
                 $item->save();
 
+                // **CORREÇÃO:** Adicionados auditable_id e auditable_type
                 return Record::create([
-                    'item_id' => $itemId,
+                    'item_id' => $item->id,
+                    'procedure_id' => $procedure->id,
                     'name' => $sellRecord['name'],
                     'quantity' => $sellRecord['quantity'],
                     'movement_quantity' => $sellRecord['movement_quantity'],
                     'measurement_unit' => $sellRecord['measurement_unit'],
                     'price' => $sellRecord['price'],
                     'amount' => $sellRecord['amount'],
-                    'procedure_id' => $procedure->id,
                     'past' => true,
                     'content' => json_encode($sellRecord),
                     'register_date' => $validated['date'],
+                    // Apontando para a venda (Movement) como a entidade auditável deste registro específico
+                    'auditable_id' => $movement->id,
+                    'auditable_type' => Movement::class,
                 ]);
             });
 
-            if ($validated['entry_value'] > 0)
-            {
+            // Se houver pagamento de entrada, criar um registro para ele
+            if ($validated['entry_value'] > 0) {
+                 // **CORREÇÃO:** Adicionados auditable_id e auditable_type
                 Record::create([
                     'procedure_id' => $procedure->id,
                     'amount' => $validated['entry_value'],
                     'past' => true,
                     'register_date' => $validated['date'],
+                    // Apontando também para a venda (Movement)
+                    'auditable_id' => $movement->id,
+                    'auditable_type' => Movement::class,
                 ]);
             }
 
@@ -204,12 +220,12 @@ class MovementSellController extends Controller
             $accounting = Accounting::findOrFail($movement->accounting_id);
 
 
-            $procedure = Procedure::create([
+            /*$procedure = Procedure::create([
                 'user_id' => Auth::id(),
                 'action_id' => 3,
                 'department_id' => 5,
                 'movement_id' => $movement->id,
-            ]);
+            ]);*/
 
             // Buscar todos os procedimentos associados ao movimento
             $procedures = Procedure::where('movement_id', $movement->id)->get();

@@ -50,7 +50,7 @@
     });
 
     const can_add_record = computed(() =>
-        !!(props.service.title.length && props.service.client.length && props.service.total_value > 0)
+        !!(props.service.title.length && props.service?.client_id && props.service.total_value > 0)
     );
 
     watch(
